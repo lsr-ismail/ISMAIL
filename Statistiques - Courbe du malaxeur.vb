@@ -1,0 +1,3 @@
+﻿Public Class Statistiques___Courbe_du_malaxeur
+
+End Class

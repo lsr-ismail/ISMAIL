@@ -1,0 +1,678 @@
+﻿' ================================================================
+'  ModuleArchivageGachees.vb
+'  Gestion du cycle de dosage :
+'  1. Envoyer DYC (M4.5) apres envoi formule
+'  2. Surveiller Fin gachee (M64.6) → archiver dans SQL
+'  3. Surveiller Fin commande (M50.3) → cloturer BL
+' ================================================================
+
+Imports S7.Net
+Imports System.Windows.Forms
+
+Public Class ModuleArchivageGachees
+
+    ' ── Adresses PLC ─────────────────────────────────────────────
+    Private Const ADR_DYC As String = "M4.5"   ' Depart cycle
+    Private Const ADR_FIN_GACHEE As String = "M64.6"  ' Fin gachee
+    Private Const ADR_FIN_COMMANDE As String = "M50.3"  ' Fin commande
+
+    ' ── Variables ────────────────────────────────────────────────
+    Private _plc As Plc = Nothing
+    Private _numeroBL As String = ""
+    Private _idPlanning As Integer = 0
+    Private _nGachee As Integer = 0
+    Private _actif As Boolean = False
+
+    ' Cumuls par camion
+    Private _totalConsAGR As Double = 0
+    Private _totalPoseAGR As Double = 0
+    Private _totalEcartAGR As Double = 0
+    Private _totalConsCIM As Double = 0
+    Private _totalPoseCIM As Double = 0
+    Private _totalEcartCIM As Double = 0
+    Private _totalConsEAU As Double = 0
+    Private _totalPoseEAU As Double = 0
+    Private _totalEcartEAU As Double = 0
+    Private _totalConsADJ As Double = 0
+    Private _totalPoseADJ As Double = 0
+    Private _totalEcartADJ As Double = 0
+    ' Timer supprime - surveillance via SurveillanceCycleUI appelee depuis Synoptique.Timer2
+
+    ' ── Proprietes publiques pour affichage Synoptique ──────────
+    Public ReadOnly Property NumeroBL As String
+        Get
+            Return _numeroBL
+        End Get
+    End Property
+    Public ReadOnly Property NombreGachees As Integer
+        Get
+            Return _nGachee
+        End Get
+    End Property
+    Public ReadOnly Property VolumeLivre As Double
+        Get
+            Return CDbl(LireDBD(19, 66))
+        End Get
+    End Property
+    Public ReadOnly Property EstActif As Boolean
+        Get
+            Return _actif
+        End Get
+    End Property
+    Public ReadOnly Property IdPlanning As Integer
+        Get
+            Return _idPlanning
+        End Get
+    End Property
+
+    ' ── Singleton ────────────────────────────────────────────────
+    Private Shared _instance As ModuleArchivageGachees
+    Public Shared ReadOnly Property Instance As ModuleArchivageGachees
+        Get
+            If _instance Is Nothing Then _instance = New ModuleArchivageGachees()
+            Return _instance
+        End Get
+    End Property
+
+    ' ════════════════════════════════════════════════════════════
+    '  DEMARRER LE CYCLE
+    '  Appeler depuis Form_ConfirmationBL apres EnvoyerVersCPU
+    ' ════════════════════════════════════════════════════════════
+    Public Sub DemarrerCycle(plc As Plc, numeroBL As String, idPlanning As Integer)
+        _plc = plc
+        _numeroBL = numeroBL
+        _idPlanning = idPlanning
+        _nGachee = 0
+        _actif = True
+        _totalConsAGR = 0 : _totalPoseAGR = 0 : _totalEcartAGR = 0
+        _totalConsCIM = 0 : _totalPoseCIM = 0 : _totalEcartCIM = 0
+        _totalConsEAU = 0 : _totalPoseEAU = 0 : _totalEcartEAU = 0
+        _totalConsADJ = 0 : _totalPoseADJ = 0 : _totalEcartADJ = 0
+
+        ' 1. Envoyer bit Depart Cycle (DYC) une seule fois
+        Try
+            _plc.Write(ADR_DYC, 1)   ' Mise a 1
+            System.Threading.Thread.Sleep(200)
+            _plc.Write(ADR_DYC, 0)   ' Remise a 0 immediatement (impulsion)
+            Synoptique.EnregistrerAction("CYCLE", "Depart cycle envoye",
+                "BL=" & numeroBL, ADR_DYC, "1→0", "PLC_WRITE")
+        Catch ex As Exception
+            Debug.WriteLine("Erreur DYC : " & ex.Message)
+        End Try
+
+        ' Surveillance via SurveillanceCycleUI appelee depuis Synoptique.Timer2
+    End Sub
+
+    ' ════════════════════════════════════════════════════════════
+    '  SURVEILLANCE — appelee depuis Synoptique.Timer2
+    ' ════════════════════════════════════════════════════════════
+    Public Sub SurveillanceCycleUI(plc As S7.Net.Plc)
+
+        ' ── GARDE-FOU : liaison non active → on n'interprete RIEN ──
+        ' On NE clot RIEN, on NE reset RIEN, on NE derive AUCUNE BL.
+        ' Le BL en cours reste affiche "en attente" jusqu'au retour PLC.
+        If plc Is Nothing OrElse Not plc.IsConnected Then
+            PLCData.Connecte = False
+            Exit Sub
+        End If
+
+        _plc = plc
+
+        Try
+            ' ── Fin gachee (M64.6) — lecture protegee ────────────
+            If _actif Then
+                Dim finGachee As Boolean
+                Try
+                    finGachee = CBool(plc.Read(ADR_FIN_GACHEE))
+                Catch
+                    ' Lecture echouee → connexion pas fiable : on attend
+                    PLCData.Connecte = False
+                    Exit Sub
+                End Try
+
+                If finGachee Then
+                    ArchiverGachee()
+                    plc.Write(ADR_FIN_GACHEE, 0)
+                End If
+            End If
+
+            ' ── Fin commande (M50.3) — lecture protegee ───────────
+            If _numeroBL <> "" Then
+                Dim finCommande As Boolean
+                Try
+                    finCommande = CBool(plc.Read(ADR_FIN_COMMANDE))
+                Catch
+                    PLCData.Connecte = False
+                    Exit Sub
+                End Try
+
+                If finCommande Then
+                    _actif = False
+                    Dim volLivre As Double = CDbl(LireDBD(19, 66))
+                    ModuleDb.Executer(
+                    "UPDATE dbo.Planning_journalier SET " &
+                    " QuantiteLivree = ISNULL(QuantiteLivree,0) + @vol, " &
+                    " StatutPlanning = 'Terminé', DateModification = GETDATE() " &
+                    "WHERE IdPlanning = @id",
+                    Sub(cmd)
+                        cmd.Parameters.AddWithValue("@vol", volLivre)
+                        cmd.Parameters.AddWithValue("@id", _idPlanning)
+                    End Sub)
+                    ModuleDb.Executer(
+                    "UPDATE dbo.BonsLivraison SET Statut='LIVRE' WHERE NumeroBL=@bl",
+                    Sub(cmd) cmd.Parameters.AddWithValue("@bl", _numeroBL))
+                    Synoptique.EnregistrerAction("COMMANDE", "Livraison auto M50.3",
+                    "BL=" & _numeroBL & " Vol=" & volLivre.ToString("0.00") & "m3",
+                    ADR_FIN_COMMANDE, "1", "PLC_WRITE")
+
+                    Dim blLivre As String = _numeroBL
+                    Dim gachees As Integer = _nGachee
+                    _numeroBL = ""
+                    _idPlanning = 0
+                    _nGachee = 0
+                    MessageBox.Show("✅ Livraison automatique !" & vbCrLf &
+                    "BL: " & blLivre & vbCrLf &
+                    "Gachees: " & gachees & vbCrLf &
+                    "Volume: " & volLivre.ToString("0.00") & " m³",
+                    "M50.3 = FIN COMMANDE", MessageBoxButtons.OK, MessageBoxIcon.Information)
+
+                    For Each frm As Form In Application.OpenForms
+                        If TypeOf frm Is Synoptique Then
+                            CType(frm, Synoptique).ImprimerBLDetail(blLivre)
+                            Exit For
+                        End If
+                    Next
+                End If
+            End If
+
+            PLCData.Connecte = True
+
+        Catch ex As Exception
+            PLCData.Connecte = False
+            Debug.WriteLine("SurveillanceCycleUI : " & ex.Message)
+        End Try
+    End Sub
+
+    ' ════════════════════════════════════════════════════════════
+    '  ARCHIVER UNE GACHEE
+    ' ════════════════════════════════════════════════════════════
+    Private Sub ArchiverGachee()
+        Try
+            _nGachee += 1
+
+            ' ── Consignes (DB8) ──────────────────────────────────
+            Dim consG1 As Single = LireDBD(8, 0)
+            Dim consSC As Single = LireDBD(8, 4)
+            Dim consSL As Single = LireDBD(8, 8)
+            Dim consD2 As Single = LireDBD(8, 12)
+            Dim consCIM As Single = LireDBD(8, 16)
+            Dim consEAU As Single = LireDBD(18, 20)
+            Dim consADJ1 As Single = LireDBD(8, 216)
+            Dim consADJ2 As Single = LireDBD(8, 228)
+            Dim consADJ3 As Single = LireDBD(78, 0)
+            Dim consADJ4 As Single = LireDBD(78, 4)
+
+            ' ── Poses reelles (DB18) ─────────────────────────────
+            Dim poseG1 As Single = LireDBD(18, 2)
+            Dim poseSC As Single = LireDBD(18, 6)
+            Dim poseSL As Single = LireDBD(18, 10)
+            Dim poseD2 As Single = LireDBD(18, 14)
+            Dim poseS1 As Single = LireDBD(18, 18)  ' Silo 1
+            Dim poseS2 As Single = LireDBD(18, 58)  ' Silo 2
+            Dim poseEAU As Single = LireDBD(18, 22)
+            Dim poseADJ1 As Single = LireDBD(18, 62)
+            Dim poseADJ2 As Single = LireDBD(18, 66)
+            Dim poseADJ3 As Single = LireDBD(18, 70)
+            Dim poseADJ4 As Single = LireDBD(18, 74)
+
+            ' ── Ecarts (DB18/DB4) ────────────────────────────────
+            Dim ecarG1 As Single = LireDBD(18, 26)
+            Dim ecarSC As Single = LireDBD(18, 30)
+            Dim ecarSL As Single = LireDBD(18, 34)
+            Dim ecarD2 As Single = LireDBD(18, 38)
+            Dim ecarCIM As Single = LireDBD(18, 42)
+            Dim ecarEAU As Single = LireDBD(18, 46)
+            Dim ecarADJ1 As Single = LireDBD(4, 98)
+            Dim ecarADJ2 As Single = LireDBD(4, 102)
+            Dim ecarADJ3 As Single = LireDBD(4, 114)
+            Dim ecarADJ4 As Single = LireDBD(4, 118)
+
+            ' ── Totaux granulats ─────────────────────────────────
+            Dim totalConsGran As Single = consG1 + consSC + consSL + consD2
+            Dim totalPoseGran As Single = poseG1 + poseSC + poseSL + poseD2
+            Dim totalEcartGran As Single = ecarG1 + ecarSC + ecarSL + ecarD2
+
+            ' ── Cumuler les totaux par camion ────────────────────
+            _totalConsAGR += CDbl(consG1 + consSC + consSL + consD2)
+            _totalPoseAGR += CDbl(poseG1 + poseSC + poseSL + poseD2)
+            _totalEcartAGR += CDbl(ecarG1 + ecarSC + ecarSL + ecarD2)
+            _totalConsCIM += CDbl(consCIM)
+            _totalPoseCIM += CDbl(poseS1 + poseS2)
+            _totalEcartCIM += CDbl(ecarCIM)
+            _totalConsEAU += CDbl(consEAU)
+            _totalPoseEAU += CDbl(poseEAU)
+            _totalEcartEAU += CDbl(ecarEAU)
+            _totalConsADJ += CDbl(consADJ1 + consADJ2 + consADJ3 + consADJ4)
+            _totalPoseADJ += CDbl(poseADJ1 + poseADJ2 + poseADJ3 + poseADJ4)
+            _totalEcartADJ += CDbl(ecarADJ1 + ecarADJ2 + ecarADJ3 + ecarADJ4)
+
+            ' ── INSERT dbo.GacheesDetails (Tr1/Tr2/Tr3/Tr4) ─────
+            ModuleDb.Executer(
+                "INSERT INTO dbo.GacheesDetails (" &
+                "  DateHeure, NumeroBL, NumeroGachee, " &
+                "  ConsTr1, PoseTr1, EcartTr1, " &
+                "  ConsTr2, PoseTr2, EcartTr2, " &
+                "  ConsTr3, PoseTr3, EcartTr3, " &
+                "  ConsTr4, PoseTr4, EcartTr4, " &
+                "  ConsS1,  PoseS1,  ConsS2,  PoseS2,  EcartCIM, " &
+                "  ConsEAU, PoseEAU, EcartEAU, " &
+                "  ConsADJ1, PoseADJ1, EcartADJ1, " &
+                "  ConsADJ2, PoseADJ2, EcartADJ2, " &
+                "  ConsADJ3, PoseADJ3, EcartADJ3, " &
+                "  ConsADJ4, PoseADJ4, EcartADJ4, " &
+                "  TotalConsTr, TotalPoseTr, TotalEcartTr, " &
+                "  Operateur) " &
+                "VALUES (" &
+                "  GETDATE(), @bl, @ng, " &
+                "  @ct1, @pt1, @et1, " &
+                "  @ct2, @pt2, @et2, " &
+                "  @ct3, @pt3, @et3, " &
+                "  @ct4, @pt4, @et4, " &
+                "  @cs1, @ps1, @cs2, @ps2, @ecim, " &
+                "  @ceau, @peau, @eeau, " &
+                "  @ca1, @pa1, @ea1, " &
+                "  @ca2, @pa2, @ea2, " &
+                "  @ca3, @pa3, @ea3, " &
+                "  @ca4, @pa4, @ea4, " &
+                "  @tcg, @tpg, @teg, " &
+                "  @op)",
+                Sub(cmd)
+                    cmd.Parameters.AddWithValue("@bl", _numeroBL)
+                    cmd.Parameters.AddWithValue("@ng", _nGachee)
+                    cmd.Parameters.AddWithValue("@ct1", CDbl(consG1)) : cmd.Parameters.AddWithValue("@pt1", CDbl(poseG1)) : cmd.Parameters.AddWithValue("@et1", CDbl(ecarG1))
+                    cmd.Parameters.AddWithValue("@ct2", CDbl(consSC)) : cmd.Parameters.AddWithValue("@pt2", CDbl(poseSC)) : cmd.Parameters.AddWithValue("@et2", CDbl(ecarSC))
+                    cmd.Parameters.AddWithValue("@ct3", CDbl(consSL)) : cmd.Parameters.AddWithValue("@pt3", CDbl(poseSL)) : cmd.Parameters.AddWithValue("@et3", CDbl(ecarSL))
+                    cmd.Parameters.AddWithValue("@ct4", CDbl(consD2)) : cmd.Parameters.AddWithValue("@pt4", CDbl(poseD2)) : cmd.Parameters.AddWithValue("@et4", CDbl(ecarD2))
+                    cmd.Parameters.AddWithValue("@cs1", CDbl(consCIM)) : cmd.Parameters.AddWithValue("@ps1", CDbl(poseS1))
+                    cmd.Parameters.AddWithValue("@cs2", CDbl(consCIM)) : cmd.Parameters.AddWithValue("@ps2", CDbl(poseS2)) : cmd.Parameters.AddWithValue("@ecim", CDbl(ecarCIM))
+                    cmd.Parameters.AddWithValue("@ceau", CDbl(consEAU)) : cmd.Parameters.AddWithValue("@peau", CDbl(poseEAU)) : cmd.Parameters.AddWithValue("@eeau", CDbl(ecarEAU))
+                    cmd.Parameters.AddWithValue("@ca1", CDbl(consADJ1)) : cmd.Parameters.AddWithValue("@pa1", CDbl(poseADJ1)) : cmd.Parameters.AddWithValue("@ea1", CDbl(ecarADJ1))
+                    cmd.Parameters.AddWithValue("@ca2", CDbl(consADJ2)) : cmd.Parameters.AddWithValue("@pa2", CDbl(poseADJ2)) : cmd.Parameters.AddWithValue("@ea2", CDbl(ecarADJ2))
+                    cmd.Parameters.AddWithValue("@ca3", CDbl(consADJ3)) : cmd.Parameters.AddWithValue("@pa3", CDbl(poseADJ3)) : cmd.Parameters.AddWithValue("@ea3", CDbl(ecarADJ3))
+                    cmd.Parameters.AddWithValue("@ca4", CDbl(consADJ4)) : cmd.Parameters.AddWithValue("@pa4", CDbl(poseADJ4)) : cmd.Parameters.AddWithValue("@ea4", CDbl(ecarADJ4))
+                    cmd.Parameters.AddWithValue("@tcg", CDbl(totalConsGran))
+                    cmd.Parameters.AddWithValue("@tpg", CDbl(totalPoseGran))
+                    cmd.Parameters.AddWithValue("@teg", CDbl(totalEcartGran))
+                    cmd.Parameters.AddWithValue("@op", NomUtilisateur)
+                End Sub)
+            ' ── Décrémenter les stocks (quantités réelles dosées) ──
+            DecrementerStocks(poseG1, poseSC, poseSL, poseD2,
+                              poseS1, poseS2, poseEAU,
+                              poseADJ1, poseADJ2, poseADJ3, poseADJ4)
+            Synoptique.EnregistrerAction("GACHEE", "Gachee " & _nGachee & " archivee",
+                String.Format("BL={0} G{1} | G1={2} SC={3} CIM={4} EAU={5} | EcarCIM={6}",
+                    _numeroBL, _nGachee, poseG1, poseSC, poseS1 + poseS2, poseEAU, ecarCIM),
+                "", "", "CLIC")
+
+        Catch ex As Exception
+            Debug.WriteLine("ArchiverGachee : " & ex.Message)
+        End Try
+    End Sub
+
+    ' ================================================================
+    '  PATCH ModuleArchivageGachees — DÉCRÉMENTATION DES STOCKS
+    '  ----------------------------------------------------------------
+    '  À chaque fin de gâchée, les quantités RÉELLEMENT dosées
+    '  (lues du CPU) sont déjà archivées dans GacheesDetails.
+    '  Ce patch ajoute la SOUSTRACTION AUTOMATIQUE des stocks :
+    '
+    '   • Materiaux.Stock  ← décrémenté pour CHAQUE élément
+    '     (trémies, silos, eau, adjuvants) via la configuration
+    '     (Cases/Silos/Bascules.IdMateriau), avec conversion
+    '     d'unité (kg dosé → T stocké si UniteStockage='T',
+    '     L dosé → m3 si 'm3')
+    '
+    '   • T_STOCK          ← STO_Stock décrémenté et
+    '     STO_Somme_Sorties incrémenté (si la fiche stock existe,
+    '     liaison par MAT_Code = CodeMateriau) — reste cohérent
+    '     avec vos formulaires Entrées/Sorties MP
+    '
+    '   • Silos (CIMENT)   ← NiveauActuel (%) recalculé d'après
+    '     les kg dosés PAR SILO (poseS1 / poseS2 lus séparément
+    '     du CPU), avec trace dans HistoriqueNiveaux
+    '
+    '  INSTALLATION (2 étapes) dans ModuleArchivageGachees.vb :
+    '
+    '   ÉTAPE 1 — Dans ArchiverGachee, juste APRÈS le gros INSERT
+    '   GacheesDetails (avant Synoptique.EnregistrerAction),
+    '   ajouter cette ligne :
+    '
+    '       DecrementerStocks(poseG1, poseSC, poseSL, poseD2,
+    '                         poseS1, poseS2, poseEAU,
+    '                         poseADJ1, poseADJ2, poseADJ3, poseADJ4)
+    '
+    '   ÉTAPE 2 — Copier les deux méthodes ci-dessous dans la
+    '   classe ModuleArchivageGachees (par ex. après ArchiverGachee).
+    ' ================================================================
+
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  DÉCRÉMENTATION DES STOCKS — appelée à chaque gâchée
+    '  Toutes les quantités sont les POSES RÉELLES (kg / L)
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub DecrementerStocks(pTr1 As Single, pTr2 As Single,
+                                  pTr3 As Single, pTr4 As Single,
+                                  pS1 As Single, pS2 As Single,
+                                  pEau As Single,
+                                  pA1 As Single, pA2 As Single,
+                                  pA3 As Single, pA4 As Single)
+        Try
+            ' ── 1. TRÉMIES : matériau affecté à chaque case ──────
+            Dim posesTr() As Single = {pTr1, pTr2, pTr3, pTr4}
+            For n As Integer = 1 To 4
+                If posesTr(n - 1) > 0.01F Then
+                    Dim idMat As Integer = ModuleDb.LireValeur(Of Integer)(
+                        "SELECT ISNULL(IdMateriau, 0) FROM dbo.Cases WHERE NumeroCase = @n",
+                        Sub(cmd) cmd.Parameters.AddWithValue("@n", CShort(n)))
+                    If idMat > 0 Then SortieStock(idMat, CDbl(posesTr(n - 1)))
+                End If
+            Next
+
+            ' ── 2. SILOS CIMENT : soustraction PAR SILO ──────────
+            '     (poseS1 / poseS2 lus séparément du CPU)
+            Dim posesSilo() As Single = {pS1, pS2}
+            Dim dtSilos As DataTable = ModuleDb.Lire(
+                "SELECT SiloID, ISNULL(IdMateriau,0) AS IdMateriau, " &
+                "       ISNULL(CapaciteMax_kg,0) AS Cap " &
+                "FROM dbo.Silos WHERE EstActif = 1 " &
+                "ORDER BY Position, SiloID")
+
+            For i As Integer = 0 To Math.Min(1, dtSilos.Rows.Count - 1)
+                Dim kg As Double = CDbl(posesSilo(i))
+                If kg <= 0.01 Then Continue For
+
+                Dim siloID As Integer = CInt(dtSilos.Rows(i)("SiloID"))
+                Dim idMat As Integer = CInt(dtSilos.Rows(i)("IdMateriau"))
+                Dim cap As Double = CDbl(dtSilos.Rows(i)("Cap"))
+
+                ' a) Stock du matériau (Materiaux + T_STOCK)
+                If idMat > 0 Then SortieStock(idMat, kg)
+
+                ' b) Niveau du silo (%) + trace HistoriqueNiveaux
+                If cap > 0 Then
+                    ModuleDb.Executer(
+                        "UPDATE dbo.Silos SET " &
+                        "  NiveauActuel = CASE WHEN ISNULL(NiveauActuel,0) - (@kg / CapaciteMax_kg * 100) < 0 " &
+                        "                 THEN 0 ELSE ISNULL(NiveauActuel,0) - (@kg / CapaciteMax_kg * 100) END, " &
+                        "  DateModif = GETDATE() " &
+                        "WHERE SiloID = @id; " &
+                        "INSERT INTO dbo.HistoriqueNiveaux (SiloID, NiveauPct, NiveauKg, DateMesure) " &
+                        "SELECT SiloID, NiveauActuel, CapaciteMax_kg * NiveauActuel / 100, GETDATE() " &
+                        "FROM dbo.Silos WHERE SiloID = @id;",
+                        Sub(cmd)
+                            cmd.Parameters.AddWithValue("@kg", kg)
+                            cmd.Parameters.AddWithValue("@id", siloID)
+                        End Sub)
+                End If
+            Next
+
+            ' ── 3. EAU : bascule type EAU ────────────────────────
+            If pEau > 0.01F Then
+                Dim idMatEau As Integer = ModuleDb.LireValeur(Of Integer)(
+                    "SELECT TOP 1 ISNULL(b.IdMateriau, 0) FROM dbo.Bascules b " &
+                    "JOIN dbo.TypesBascule t ON b.TypeID = t.TypeID " &
+                    "WHERE t.NomType LIKE '%EAU%' AND b.Actif = 1")
+                If idMatEau > 0 Then SortieStock(idMatEau, CDbl(pEau))
+            End If
+
+            ' ── 4. ADJUVANTS : bascules par ordre ────────────────
+            Dim posesAdj() As Single = {pA1, pA2, pA3, pA4}
+            Dim dtAdj As DataTable = ModuleDb.Lire(
+                "SELECT ISNULL(b.IdMateriau,0) AS IdMateriau, " &
+                "       ROW_NUMBER() OVER (ORDER BY b.Ordre, b.BasculeID) AS Rang " &
+                "FROM dbo.Bascules b " &
+                "JOIN dbo.TypesBascule t ON b.TypeID = t.TypeID " &
+                "WHERE t.NomType LIKE '%ADJUVANT%'")
+            For Each row As DataRow In dtAdj.Rows
+                Dim rang As Integer = CInt(row("Rang"))
+                If rang >= 1 AndAlso rang <= 4 AndAlso posesAdj(rang - 1) > 0.001F Then
+                    Dim idMat As Integer = CInt(row("IdMateriau"))
+                    If idMat > 0 Then SortieStock(idMat, CDbl(posesAdj(rang - 1)))
+                End If
+            Next
+
+        Catch ex As Exception
+            ' Ne jamais bloquer le cycle de production pour un souci de stock
+            Debug.WriteLine("DecrementerStocks : " & ex.Message)
+            Synoptique.EnregistrerAction("STOCK", "Erreur décrément stock",
+                ex.Message, "", "", "AUTO")
+        End Try
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  SORTIE DE STOCK pour un matériau
+    '  qteDosage = quantité en unité de DOSAGE (kg ou L)
+    '  Conversion automatique vers l'unité de STOCKAGE :
+    '    kg → T   (/1000) si UniteStockage = 'T'
+    '    L  → m3  (/1000) si UniteStockage = 'm3'
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub SortieStock(idMateriau As Integer, qteDosage As Double)
+        ' 1) Materiaux.Stock (avec conversion d'unité en SQL)
+        ModuleDb.Executer(
+            "UPDATE dbo.Materiaux SET " &
+            "  Stock = ISNULL(Stock, 0) - " &
+            "    CASE WHEN UPPER(ISNULL(UniteStockage,'')) IN ('T','M3') " &
+            "         THEN @q / 1000.0 ELSE @q END, " &
+            "  DerniereModification = GETDATE() " &
+            "WHERE IdMateriau = @id AND ISNULL(GestionStocks, 1) = 1",
+            Sub(cmd)
+                cmd.Parameters.AddWithValue("@q", qteDosage)
+                cmd.Parameters.AddWithValue("@id", idMateriau)
+            End Sub)
+
+        ' 2) T_STOCK si la fiche existe (cohérence avec Entrées/Sorties MP)
+        ModuleDb.Executer(
+            "UPDATE s SET " &
+            "  s.STO_Stock = s.STO_Stock - " &
+            "    CASE WHEN UPPER(s.STO_Unite) IN ('T','M3') THEN @q / 1000.0 ELSE @q END, " &
+            "  s.STO_Somme_Sorties = s.STO_Somme_Sorties + " &
+            "    CASE WHEN UPPER(s.STO_Unite) IN ('T','M3') THEN @q / 1000.0 ELSE @q END, " &
+            "  s.STO_DateModification = GETDATE() " &
+            "FROM dbo.T_STOCK s " &
+            "JOIN dbo.Materiaux m ON s.MAT_Code = m.CodeMateriau " &
+            "WHERE m.IdMateriau = @id",
+            Sub(cmd)
+                cmd.Parameters.AddWithValue("@q", qteDosage)
+                cmd.Parameters.AddWithValue("@id", idMateriau)
+            End Sub)
+    End Sub
+
+
+
+    ' ════════════════════════════════════════════════════════════
+    '  CLOTURER LA COMMANDE
+    ' ════════════════════════════════════════════════════════════
+    Private Sub CloturerCommande()
+        Try
+            ' ── Lire totaux depuis CPU (DB101=theorique, DB65=reel, DB114=ecart%) ──
+            ' ── Theorique camion DB101 (mapping exact) ───────────
+            ' Tr1=DBD80  Tr2=DBD84  Tr3=DBD88  Tr4=DBD92
+            ' Silo1=DBD96  Silo2=DBD100  EAU=DBD104
+            ' ADJ1=DBD108  ADJ2=DBD112  ADJ3=DBD116
+            Dim thTr1 As Single = LireDBD(101, 80)
+            Dim thTr2 As Single = LireDBD(101, 84)
+            Dim thTr3 As Single = LireDBD(101, 88)
+            Dim thTr4 As Single = LireDBD(101, 92)
+            Dim thS1 As Single = LireDBD(101, 96)   ' Silo1
+            Dim thS2 As Single = LireDBD(101, 100)   ' Silo2
+            Dim thEAU As Single = LireDBD(101, 104)
+            Dim thADJ1 As Single = LireDBD(101, 108)
+            Dim thADJ2 As Single = LireDBD(101, 112)
+            Dim thADJ3 As Single = LireDBD(101, 116)
+
+            ' ── Reel camion DB65 (mapping exact) ─────────────────
+            ' Tr1=DBD0  Tr2=DBD8  Tr3=DBD16  Tr4=DBD24
+            ' Silo1=DBD32  Silo2=DBD48  EAU=DBD56
+            ' ADJ1=DBD64  ADJ2=DBD80  ADJ3=DBD88
+            Dim rlTr1 As Single = LireDBD(65, 0)
+            Dim rlTr2 As Single = LireDBD(65, 8)
+            Dim rlTr3 As Single = LireDBD(65, 16)
+            Dim rlTr4 As Single = LireDBD(65, 24)
+            Dim rlS1 As Single = LireDBD(65, 32)   ' Silo1
+            Dim rlS2 As Single = LireDBD(65, 48)   ' Silo2
+            Dim rlEAU As Single = LireDBD(65, 56)
+            Dim rlADJ1 As Single = LireDBD(65, 64)
+            Dim rlADJ2 As Single = LireDBD(65, 80)
+            Dim rlADJ3 As Single = LireDBD(65, 88)
+
+            ' ── Calcul totaux ────────────────────────────────────
+            Dim consAGR As Double = CDbl(thTr1 + thTr2 + thTr3 + thTr4)
+            Dim poseAGR As Double = CDbl(rlTr1 + rlTr2 + rlTr3 + rlTr4)
+            Dim consCIM As Double = CDbl(thS1 + thS2)
+            Dim poseCIM As Double = CDbl(rlS1 + rlS2)
+            Dim consEAU As Double = CDbl(thEAU)
+            Dim poseEAU As Double = CDbl(rlEAU)
+            Dim consADJ As Double = CDbl(thADJ1 + thADJ2 + thADJ3)
+            Dim poseADJ As Double = CDbl(rlADJ1 + rlADJ2 + rlADJ3)
+
+            ' ── Lire temps malaxage depuis DB19 ──────────────────
+            Dim tempsMlx As Single = LireDBD(19, 0)  ' A ajuster selon adresse reelle
+
+            ' ── INSERT Production complet ─────────────────────────
+            ModuleDb.Executer(
+                "INSERT INTO dbo.Production " &
+                "(DateHeure, Operateur, NumeroBL, NombreGachees, " &
+                " ConsTr1, PoseTr1, EcartTr1, " &
+                " ConsTr2, PoseTr2, EcartTr2, " &
+                " ConsTr3, PoseTr3, EcartTr3, " &
+                " ConsTr4, PoseTr4, EcartTr4, " &
+                " ConsS1,  PoseS1,  EcartS1, " &
+                " ConsS2,  PoseS2,  EcartS2, " &
+                " ConsEAU, PoseEAU, EcartEAU, " &
+                " ConsADJ1, PoseADJ1, EcartADJ1, " &
+                " ConsADJ2, PoseADJ2, EcartADJ2, " &
+                " ConsADJ3, PoseADJ3, EcartADJ3, " &
+                " TotalGranCons, TotalGranPose, TotalGranEcart, " &
+                " TotalCamionCons, TotalCamionPose, TempsMalaxage) " &
+                "VALUES (GETDATE(), @op, @bl, @ng, " &
+                " @ct1, @pt1, @et1, " &
+                " @ct2, @pt2, @et2, " &
+                " @ct3, @pt3, @et3, " &
+                " @ct4, @pt4, @et4, " &
+                " @cs1, @ps1, @es1, " &
+                " @cs2, @ps2, @es2, " &
+                " @ceau, @peau, @eeau, " &
+                " @ca1, @pa1, @ea1, " &
+                " @ca2, @pa2, @ea2, " &
+                " @ca3, @pa3, @ea3, " &
+                " @tgc, @tgp, @tge, " &
+                " @tcc, @tcp, @tmx)",
+                Sub(cmd)
+                    cmd.Parameters.AddWithValue("@op", NomUtilisateur)
+                    cmd.Parameters.AddWithValue("@bl", _numeroBL)
+                    cmd.Parameters.AddWithValue("@ng", _nGachee)
+                    ' Tremies
+                    cmd.Parameters.AddWithValue("@ct1", CDbl(thTr1)) : cmd.Parameters.AddWithValue("@pt1", CDbl(rlTr1)) : cmd.Parameters.AddWithValue("@et1", CDbl(rlTr1 - thTr1))
+                    cmd.Parameters.AddWithValue("@ct2", CDbl(thTr2)) : cmd.Parameters.AddWithValue("@pt2", CDbl(rlTr2)) : cmd.Parameters.AddWithValue("@et2", CDbl(rlTr2 - thTr2))
+                    cmd.Parameters.AddWithValue("@ct3", CDbl(thTr3)) : cmd.Parameters.AddWithValue("@pt3", CDbl(rlTr3)) : cmd.Parameters.AddWithValue("@et3", CDbl(rlTr3 - thTr3))
+                    cmd.Parameters.AddWithValue("@ct4", CDbl(thTr4)) : cmd.Parameters.AddWithValue("@pt4", CDbl(rlTr4)) : cmd.Parameters.AddWithValue("@et4", CDbl(rlTr4 - thTr4))
+                    ' Silos
+                    cmd.Parameters.AddWithValue("@cs1", CDbl(thS1)) : cmd.Parameters.AddWithValue("@ps1", CDbl(rlS1)) : cmd.Parameters.AddWithValue("@es1", CDbl(rlS1 - thS1))
+                    cmd.Parameters.AddWithValue("@cs2", CDbl(thS2)) : cmd.Parameters.AddWithValue("@ps2", CDbl(rlS2)) : cmd.Parameters.AddWithValue("@es2", CDbl(rlS2 - thS2))
+                    ' Eau
+                    cmd.Parameters.AddWithValue("@ceau", CDbl(thEAU)) : cmd.Parameters.AddWithValue("@peau", CDbl(rlEAU)) : cmd.Parameters.AddWithValue("@eeau", CDbl(rlEAU - thEAU))
+                    ' Adjuvants
+                    cmd.Parameters.AddWithValue("@ca1", CDbl(thADJ1)) : cmd.Parameters.AddWithValue("@pa1", CDbl(rlADJ1)) : cmd.Parameters.AddWithValue("@ea1", CDbl(rlADJ1 - thADJ1))
+                    cmd.Parameters.AddWithValue("@ca2", CDbl(thADJ2)) : cmd.Parameters.AddWithValue("@pa2", CDbl(rlADJ2)) : cmd.Parameters.AddWithValue("@ea2", CDbl(rlADJ2 - thADJ2))
+                    cmd.Parameters.AddWithValue("@ca3", CDbl(thADJ3)) : cmd.Parameters.AddWithValue("@pa3", CDbl(rlADJ3)) : cmd.Parameters.AddWithValue("@ea3", CDbl(rlADJ3 - thADJ3))
+                    ' Totaux granulats
+                    cmd.Parameters.AddWithValue("@tgc", consAGR)
+                    cmd.Parameters.AddWithValue("@tgp", poseAGR)
+                    cmd.Parameters.AddWithValue("@tge", poseAGR - consAGR)
+                    ' Total camion
+                    cmd.Parameters.AddWithValue("@tcc", consAGR + consCIM + consEAU + consADJ)
+                    cmd.Parameters.AddWithValue("@tcp", poseAGR + poseCIM + poseEAU + poseADJ)
+                    ' Temps malaxage
+                    cmd.Parameters.AddWithValue("@tmx", CDbl(tempsMlx))
+                End Sub)
+
+            ' Mettre BL en LIVRE avec poids reels
+            ModuleDb.Executer(
+                "UPDATE dbo.BonsLivraison SET Statut='LIVRE', DateModification=GETDATE(), " &
+                " PoidsGranulat=@gran, PoidsCiment=@cim, PoidsEau=@eau " &
+                "WHERE NumeroBL=@bl",
+                Sub(cmd)
+                    cmd.Parameters.AddWithValue("@bl", _numeroBL)
+                    cmd.Parameters.AddWithValue("@gran", poseAGR)
+                    cmd.Parameters.AddWithValue("@cim", poseCIM)
+                    cmd.Parameters.AddWithValue("@eau", poseEAU)
+                End Sub)
+
+            ' Mettre Planning en TERMINE + mettre a jour DejaLivres
+            Dim volLivre As Double = CDbl(rlTr1 + rlTr2 + rlTr3 + rlTr4 + rlS1 + rlS2 + rlEAU) / 1000.0
+            ModuleDb.Executer(
+                "UPDATE dbo.Planning_journalier SET StatutPlanning='Terminé', DateModification=GETDATE(), " &
+                " QuantiteLivree = ISNULL(QuantiteLivree,0) + @vol " &
+                "WHERE IdPlanning=@Id",
+                Sub(cmd)
+                    cmd.Parameters.AddWithValue("@Id", _idPlanning)
+                    cmd.Parameters.AddWithValue("@vol", volLivre)
+                End Sub)
+            ' Mettre à jour QteCumulee dans BonsLivraison = livraisons cumulées APRES ce BL
+            Dim totalLivre As Decimal = CDec(ModuleDb.LireValeur(Of Object)(
+    "SELECT ISNULL(SUM(VolumeM3), 0) " &
+    "FROM dbo.BonsLivraison " &
+    "WHERE IdPlanning = @id AND Statut = 'LIVRE'",
+    Sub(cmd) cmd.Parameters.AddWithValue("@id", _idPlanning)))
+
+            ModuleDb.Executer(
+    "UPDATE dbo.BonsLivraison " &
+    "SET QteCumulee = @cumul " &
+    "WHERE NumeroBL = @bl",
+    Sub(cmd)
+        cmd.Parameters.AddWithValue("@cumul", totalLivre)
+        cmd.Parameters.AddWithValue("@bl", _numeroBL)
+    End Sub)
+
+
+
+            Synoptique.EnregistrerAction("COMMANDE", "Commande terminee",
+                "BL=" & _numeroBL & " Gachees=" & _nGachee,
+                ADR_FIN_COMMANDE, "1", "CLIC")
+
+            MessageBox.Show("✅ Commande terminée !" & vbCrLf &
+                "BL N° " & _numeroBL & vbCrLf &
+                _nGachee & " gâchées archivées.",
+                "Fin de commande", MessageBoxButtons.OK, MessageBoxIcon.Information)
+
+        Catch ex As Exception
+            Debug.WriteLine("CloturerCommande : " & ex.Message)
+        End Try
+    End Sub
+
+    ' ── Helper lecture PLC ───────────────────────────────────────
+    Private Function LireDBD(db As Integer, offset As Integer) As Single
+        Try
+            Return CSng(_plc.Read(DataType.DataBlock, db, offset, VarType.Real, 1))
+        Catch
+            Return 0.0F
+        End Try
+    End Function
+
+    ' ── Arreter la surveillance ──────────────────────────────────
+    Public Sub Arreter()
+        _actif = False
+    End Sub
+
+    ' ── Methodes Shared compatibles avec Module1 ─────────────────
+    Public Shared Sub Demarrer(plc As Plc)
+        ' Appel depuis Module1 au demarrage — juste stocker la reference PLC
+        ' Le cycle demarre seulement via DemarrerCycle() depuis Form_ConfirmationBL
+        Instance._plc = plc
+    End Sub
+
+    Public Shared Sub Arreter_Shared()
+        Instance.Arreter()
+    End Sub
+
+End Class

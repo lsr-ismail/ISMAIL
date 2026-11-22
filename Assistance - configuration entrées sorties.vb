@@ -1,0 +1,3 @@
+﻿Public Class Assistance___configuration_entrées_sorties
+
+End Class

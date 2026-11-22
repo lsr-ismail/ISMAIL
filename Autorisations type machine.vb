@@ -1,0 +1,3 @@
+﻿Public Class Autorisations_type_machine
+
+End Class

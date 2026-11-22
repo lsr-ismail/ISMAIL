@@ -1,0 +1,2988 @@
+﻿Imports System.Drawing
+Imports System.IO
+Imports Microsoft.Data.SqlClient
+Imports System.Data
+Imports S7.Net
+
+Public Class Synoptique
+    ' ── Variables config éléments (chargées depuis SQL) ──────────
+    Private _nomTR(4) As String : Private _stockTR(4) As Decimal
+    Private _capaciteTR(4) As Decimal : Private _seuilTR(4) As Decimal
+    Private _nomS(2) As String : Private _niveauS(2) As Decimal
+    Private _miniS(2) As Decimal : Private _capKgS(2) As Decimal
+    Private _nomADJ(4) As String : Private _nomEAU As String
+    ' ═══════════════════════════════════════════════════════════════
+    '  LABELS DYNAMIQUES — 1 label par élément (trémie/silo/adj/eau)
+    '  Clé = code élément  ex: "TR1", "TR2", "S1", "S2", "ADJ1", "EAU"
+    ' ═══════════════════════════════════════════════════════════════
+    Private _labelsStock As New Dictionary(Of String, Label)()
+    Private _labelsNom As New Dictionary(Of String, Label)()
+    ' ═══ BITS CAPTEURS DENSITÉ M26 / M25 / M6 / M7 / M5 ════════════
+    Private _bitDens1 As Boolean = False  ' M26.0 → Picture1
+    Private _bitDens2 As Boolean = False  ' M26.1 → Picture2
+    Private _bitDens3 As Boolean = False  ' M26.2 → Picture3
+    Private _bitDens4 As Boolean = False  ' M26.3 → Picture4
+    Private _bitDens5 As Boolean = False  ' M25.4 → Picture5
+    Private _bitDens6 As Boolean = False  ' M25.2 → Picture6
+    Private _bitDens7 As Boolean = False  ' M25.1 → Picture7
+    Private _bitDens8 As Boolean = False  ' M25.0 → Picture8
+    Private _bitDens9 As Boolean = False  ' M25.3 → Picture9
+    Private _bitDens10 As Boolean = False ' M6.7  → Picture10
+    Private _bitDens11 As Boolean = False ' M7.0  → Picture11
+    Private _bitDens12 As Boolean = False ' M5.3  → Picture12
+    Private _reconnexionEnCours As Boolean = False
+    Private _visEnEcriture As Boolean = False
+    '  VARIABLES ETAT
+    Private _etatTremie(8) As Integer
+    Private _etatTapis As Integer
+    Private _etatSkip As Integer
+    Private _etatMalaxeur As Integer
+    Private _etatSilo(4) As Integer
+    Private _etatBasculeCim As Integer
+    Private _etatPompe(2) As Integer
+    Private _etatBasculeEau As Integer
+    Private _etatAdj(4) As Integer
+    Private _etatBasculeAdj As Integer
+
+    '  VARIABLES PLC TEMPS REEL
+    Friend _plc As Plc = Nothing
+    Friend _plcConnecte As Boolean = False
+    Private _tickCount As Integer = 0
+    Private _poids_AGR As Single = 0
+    Private _poids_CIM As Single = 0
+    Private _poids_EAU As Single = 0
+    Private _poids_ADJ As Single = 0
+    Private _nGachee As Integer = 0
+    Private _malaxeurON As Boolean = False
+    Private _cycleEnCours As Boolean = False
+    Private _arretUrg As Boolean = False
+    Private _modeAuto As Boolean = False      ' M9.1
+    Private _defautActif As Boolean = False   ' M5.0
+    Private _finChargement As Boolean = False ' M50.3
+    Private _vidangeMlx As Boolean = False    ' M58.3
+    Private _consigneTapis As Single = 0  ' DB8 DBD126
+    Private _poidsTapis As Single = 0     ' DB4 DBD0
+    Private _tapisPlein As Boolean = False
+    Private _skipPlein As Boolean = False   ' M57.1
+    Private _skipHaut As Boolean = False    ' M25.0
+    Private _skipAttente As Boolean = False ' M25.1
+    Private _skipBas As Boolean = False     ' M25.2
+    Private _malaxeurPlein As Boolean = False   ' M57.0
+    ' ═══════════════════════════════════════════════════════════════
+    '  VARIABLES TABLEAU POIDS — MAPPING CPU REEL
+    '  CONSIGNES : DB8 / DB18 / DB78
+    '  POSES     : DB18
+    '  ECARTS    : DB18 / DB4  (lus depuis CPU, pas recalcules)
+    ' ═══════════════════════════════════════════════════════════════
+
+    ' --- Consignes ---
+    Private _cons_G1 As Single = 0   ' DB8  DBD0
+    Private _cons_SC As Single = 0   ' DB8  DBD4
+    Private _cons_SL As Single = 0   ' DB8  DBD8
+    Private _cons_D2 As Single = 0   ' DB8  DBD12
+    Private _cons_CIM As Single = 0   ' DB8  DBD16  (commun Silo1 et Silo2)
+    Private _cons_EAU2 As Single = 0   ' DB18 DBD20
+    Private _cons_ADJ1 As Single = 0   ' DB8  DBD216
+    Private _cons_ADJ2 As Single = 0   ' DB8  DBD228
+    Private _cons_ADJ3 As Single = 0   ' DB78 DBD0
+    Private _cons_ADJ4 As Single = 0   ' DB78 DBD4
+
+    ' --- Poses (poids reels) ---
+    Private _pose_G1 As Single = 0   ' DB18 DBD2
+    Private _pose_SC As Single = 0   ' DB18 DBD6
+    Private _pose_SL As Single = 0   ' DB18 DBD10
+    Private _pose_D2 As Single = 0   ' DB18 DBD14
+    Private _pose_CIM_S1 As Single = 0   ' DB18 DBD18  Silo 1
+    Private _pose_CIM_S2 As Single = 0   ' DB18 DBD58  Silo 2
+    Private _pose_EAU2 As Single = 0   ' DB18 DBD22
+    Private _pose_ADJ1 As Single = 0   ' DB18 DBD62
+    Private _pose_ADJ2 As Single = 0   ' DB18 DBD66
+    Private _pose_ADJ3 As Single = 0   ' DB18 DBD70
+    Private _pose_ADJ4 As Single = 0   ' DB18 DBD74
+
+    ' --- Ecarts lus depuis CPU ---
+    Private _ecar_G1 As Single = 0   ' DB18 DBD26
+    Private _ecar_SC As Single = 0   ' DB18 DBD30
+    Private _ecar_SL As Single = 0   ' DB18 DBD34
+    Private _ecar_D2 As Single = 0   ' DB18 DBD38
+    Private _ecar_CIM As Single = 0   ' DB18 DBD42  (commun Silo1 et Silo2)
+    Private _ecar_EAU2 As Single = 0   ' DB18 DBD46
+    Private _ecar_ADJ1 As Single = 0   ' DB4  DBD98
+    Private _ecar_ADJ2 As Single = 0   ' DB4  DBD102
+    Private _ecar_ADJ3 As Single = 0   ' DB4  DBD114
+    Private _ecar_ADJ4 As Single = 0   ' DB4  DBD118
+
+    ' --- Ciment : 1 seul silo actif a la fois ---
+    Private _siloCimentActif As Integer = 1   ' 1 ou 2
+
+    ' --- Phase et Decalage (lus depuis FormuleComposition) ---
+    Private _phase_G1 As Integer = 1
+    Private _phase_SC As Integer = 1
+    Private _phase_SL As Integer = 1
+    Private _phase_D2 As Integer = 1
+    Private _phase_CIM As Integer = 1
+    Private _phase_EAU2 As Integer = 1
+    Private _phase_ADJ1 As Integer = 1
+    Private _phase_ADJ2 As Integer = 1
+    Private _phase_ADJ3 As Integer = 1
+    Private _phase_ADJ4 As Integer = 1
+
+    Private _decal_G1 As Single = 0
+    Private _decal_SC As Single = 0
+    Private _decal_SL As Single = 0
+    Private _decal_D2 As Single = 0
+    Private _decal_CIM As Single = 0
+    Private _decal_EAU2 As Single = 0
+    Private _decal_ADJ1 As Single = 0
+    Private _decal_ADJ2 As Single = 0
+    Private _decal_ADJ3 As Single = 0
+    Private _decal_ADJ4 As Single = 0
+
+    Private _pct_G1 As Single = 100
+    Private _pct_SC As Single = 100
+    Private _pct_SL As Single = 100
+    Private _pct_D2 As Single = 100
+    Private _pct_CIM As Single = 100
+    Private _pct_EAU2 As Single = 100
+    Private _pct_ADJ1 As Single = 100
+    Private _pct_ADJ2 As Single = 100
+    Private _pct_ADJ3 As Single = 100
+    Private _pct_ADJ4 As Single = 100
+
+    ' --- Capacite malaxeur et camion ---
+
+    ' --- Variables CPU supplementaires ---
+    Private _nGacheeTotal As Integer = 0   ' DB19  DBD70
+    Private _nGacheeReste As Integer = 0   ' DB101 DBD120
+    Private _compGachee As Single = 0   ' DB8   DBD330
+    Private _comptCIMEAU As Single = 0   ' DB8   DBD240
+    Private _capMalaxeur As Single = 0   ' DB19  DBD58
+    Private _capCamion As Single = 0   ' DB19  DBD66
+
+    ' Capacite malaxeur par element (DB101 DBD40-76) — calcule par CPU
+    Private _mlx_G1 As Single = 0   ' DB101 DBD40
+    Private _mlx_SC As Single = 0   ' DB101 DBD44
+    Private _mlx_SL As Single = 0   ' DB101 DBD48
+    Private _mlx_D2 As Single = 0   ' DB101 DBD52
+    Private _mlx_CIM As Single = 0   ' DB101 DBD56
+    Private _mlx_EAU As Single = 0   ' DB101 DBD60
+    Private _mlx_ADJ1 As Single = 0   ' DB101 DBD64
+    Private _mlx_ADJ2 As Single = 0   ' DB101 DBD68
+    Private _mlx_ADJ3 As Single = 0   ' DB101 DBD72
+    Private _mlx_ADJ4 As Single = 0   ' DB101 DBD76
+
+    ' Dosage theorique camion (DB101 DBD80-116) — calcule par CPU
+    Private _th_G1 As Single = 0   ' DB101 DBD80
+    Private _th_SC As Single = 0   ' DB101 DBD84
+    Private _th_SL As Single = 0   ' DB101 DBD88
+    Private _th_D2 As Single = 0   ' DB101 DBD92
+    Private _th_CIM As Single = 0   ' DB101 DBD96
+    Private _th_EAU As Single = 0   ' DB101 DBD100
+    Private _th_ADJ1 As Single = 0   ' DB101 DBD104
+    Private _th_ADJ2 As Single = 0   ' DB101 DBD108
+    Private _th_ADJ3 As Single = 0   ' DB101 DBD112
+    Private _th_ADJ4 As Single = 0   ' DB101 DBD116
+
+    ' Dosage reel camion (DB65)
+    Private _reel_G1 As Single = 0   ' DB65 DBD0
+    Private _reel_SC As Single = 0   ' DB65 DBD8
+    Private _reel_SL As Single = 0   ' DB65 DBD16
+    Private _reel_D2 As Single = 0   ' DB65 DBD24
+    Private _reel_CIM As Single = 0   ' DB65 DBD32
+    Private _reel_EAU As Single = 0   ' DB65 DBD48
+    Private _reel_ADJ1 As Single = 0   ' DB65 DBD56
+    Private _reel_ADJ2 As Single = 0   ' DB65 DBD64
+    Private _reel_ADJ3 As Single = 0   ' DB65 DBD80
+    Private _reel_ADJ4 As Single = 0   ' DB65 DBD88
+
+    ' Ecart % camion (DB114)
+    Private _pctEcar_G1 As Single = 0   ' DB114 DBD0
+    Private _pctEcar_SC As Single = 0   ' DB114 DBD4
+    Private _pctEcar_SL As Single = 0   ' DB114 DBD8
+    Private _pctEcar_D2 As Single = 0   ' DB114 DBD12
+    Private _pctEcar_CIM As Single = 0   ' DB114 DBD16
+    Private _pctEcar_EAU As Single = 0   ' DB114 DBD20
+    Private _pctEcar_ADJ1 As Single = 0   ' DB114 DBD24
+    Private _pctEcar_ADJ2 As Single = 0   ' DB114 DBD28
+    Private _pctEcar_ADJ3 As Single = 0   ' DB114 DBD32
+    Private _pctEcar_ADJ4 As Single = 0   ' DB114 DBD36
+    ' ── Clignotement fleche ──────────────────────────────────────
+    Private _flecheVisible As Boolean = True
+    Private _bitTr1 As Boolean = False   ' M12.0
+    Private _bitTr2 As Boolean = False   ' M12.1
+    Private _bitTr3 As Boolean = False   ' M12.2
+    Private _bitTr4 As Boolean = False   ' M12.3
+    Private _bitMx As Boolean = False    ' M15.1
+    Private _bitS1 As Boolean = False    ' M13.2
+    Private _bitS2 As Boolean = False    ' M13.3
+    Private _bitSl As Boolean = False    ' M13.4
+    Private _bitEa1 As Boolean = False   ' M13.7
+    Private _bitEau As Boolean = False   ' M14.1
+    Private _bitAdj1 As Boolean = False  ' M14.3
+    Private _bitAdj2 As Boolean = False  ' M14.4
+    Private _bitAdj3 As Boolean = False  ' M14.5
+    Private _bitAdj4 As Boolean = False  ' M14.6
+    Private _bitEaadjj As Boolean = False ' M19.6
+
+    ' --- Tolerances ---
+    Private Const TOL_KG As Single = 2.0F
+    Private Const TOL_L As Single = 1.0F
+    Private Const TOL_ADJ As Single = 0.05F
+
+    ' --- DataGridViews ---
+    Private WithEvents timerHistorique As New Timer()
+    Private WithEvents Timer2 As New Timer()   ' Timer SQL 500ms
+    Private lblCapMalaxeur As New Label()
+    Private lblCapCamion As New Label()
+
+    Private DossierImages As String = ""
+    Private _cacheImages As New Dictionary(Of String, Image)()
+
+    Private Sub InitDossier()
+        DossierImages = Application.StartupPath & "\images\Synoptique\"
+    End Sub
+
+    ' Charger image avec cache — evite relecture disque a chaque tick
+    Private Function ChargerImageCachee(chemin As String) As Image
+        If _cacheImages.ContainsKey(chemin) Then
+            Return _cacheImages(chemin)
+        End If
+        If File.Exists(chemin) Then
+            Try
+                Dim ms As New MemoryStream(File.ReadAllBytes(chemin))
+                Dim img As Image = Image.FromStream(ms)
+                _cacheImages(chemin) = img
+                Return img
+            Catch
+            End Try
+        End If
+        Return Nothing
+    End Function
+    ' ═══════════════════════════════════════════════════════════════
+    '  CLIGNOTEMENT FLECHE — M=1 affiche flech.png, M=0 cache
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub AppliquerFleche(pb As PictureBox, bitActif As Boolean)
+        If bitActif Then
+            Dim chemin As String = DossierImages & "flech.jpg"
+            Dim img As Image = ChargerImageCachee(chemin)
+            If img IsNot Nothing Then
+                pb.Image = img
+                pb.SizeMode = PictureBoxSizeMode.StretchImage
+                pb.BackColor = Color.Transparent
+            Else
+                pb.Image = Nothing
+                pb.BackColor = Color.LimeGreen
+            End If
+            pb.Visible = True
+        Else
+            pb.Visible = False
+            pb.Image = Nothing
+        End If
+    End Sub
+    ' ═══════════════════════════════════════════════════════════════
+    '  LOAD
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub Form_Synoptique_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ModulePLCDuplex.DemarrerDuplex()
+        AddHandler ModulePLCDuplex.NouvellesValeurs, AddressOf SurNouvellesValeursPLC
+        ' ── Uniquement l interface — pas de SQL ni PLC ici ────────
+        InitDossier()
+        InitLabelsDepuisConfig()
+        InitMenusClicDroit()
+        InitClicsGaucheForcage()
+        InitBoutonsForcage()
+        InitTableauPoids()
+        InitBoutonsOperateur()       ' UNE SEULE FOIS (corrige)
+        InitCommandesPrincipales()   ' vide, garde pour compatibilite
+        InitHistoriqueGachees()
+        InitJournalActions()
+        MettreAJourLabelsConfig()
+        ' La fenetre s affiche instantanement apres ce Load leger
+        ComboBoxvis.Items.Add("Vis 1")
+        ComboBoxvis.Items.Add("Vis 2")
+        ComboBoxvis.DropDownStyle = ComboBoxStyle.DropDownList
+        AddHandler ComboBoxvis.SelectedIndexChanged, AddressOf ComboBoxvis_Changed
+
+    End Sub
+    ' ═══════════════════════════════════════════════════════════════
+    '  RAFRAÎCHISSEMENT PILOTÉ PAR LE DUPLEX (~300 ms)
+    '  Remplace Timer1 — cadences gérées par compteur :
+    '   • chaque événement (~300ms) : tableau poids + labels bascules
+    '   • 1 sur 3 (~1s)  : images synoptique + boutons + labels config
+    '   • 1 sur 33 (~10s): archivage SQL des tags
+    ' ═══════════════════════════════════════════════════════════════
+    Private _majEnCours As Boolean = False
+    Private _compteurDuplex As Long = 0
+
+    Private Sub SurNouvellesValeursPLC()
+        If _majEnCours Then Exit Sub
+        If Not Me.IsHandleCreated OrElse Me.IsDisposed Then Exit Sub
+
+        Try
+            Me.BeginInvoke(Sub()
+                               If _majEnCours Then Exit Sub
+                               _majEnCours = True
+                               Try
+                                   _compteurDuplex += 1
+                                   _plcConnecte = PLCData.Connecte
+                                   _plc = Module1.PLCInstance
+
+                                   ' ── RAPIDE : chaque cycle (~300 ms) ──
+                                   SynchroniserDepuisPLCData()
+                                   MettreAJourTableauPoids()
+                                   MettreAJourLabels()
+
+                                   ' ── MOYEN : ~1 seconde (1 cycle sur 3) ──
+                                   If _compteurDuplex Mod 3 = 0 Then
+                                       MettreAJourSynoptique()
+                                       MettreAJourBoutonsOperateur()
+                                       AfficherLabelsContinu()
+                                   End If
+
+                                   ' ── LENT : ~10 secondes (1 cycle sur 33) ──
+                                   If _compteurDuplex Mod 33 = 0 AndAlso _plcConnecte Then
+                                       ArchiverTagsSQL()
+                                   End If
+                               Finally
+                                   _majEnCours = False
+                               End Try
+                           End Sub)
+        Catch
+        End Try
+    End Sub
+    ' ═══════════════════════════════════════════════════════════════
+    '  MÉTHODE PUBLIQUE — appelée depuis Configuration_silos
+    '  après chaque sauvegarde → recharge config + affiche labels
+    ' ═══════════════════════════════════════════════════════════════
+    ' ================================================================
+    '  PATCH SYNOPTIQUE — Affichage des noms trémies/silos depuis la BDD
+    '  ----------------------------------------------------------------
+    '  PROBLÈME : les noms "G1, SC, SL, D2, CIM S1, CIM S2" sont codés
+    '  en dur dans InitTableauPoids(). Le Synoptique ne lit jamais la
+    '  base, donc modifier un nom dans Configuration_silos ne change
+    '  rien à l'écran. De plus la méthode
+    '  RechercherConfigEtMettreAJourLabels() appelée par
+    '  Configuration_silos N'EXISTE PAS dans le Synoptique.
+    '
+    '  INSTRUCTIONS (2 étapes) :
+    '
+    '  ÉTAPE 1 : Copier la méthode ci-dessous DANS la classe Synoptique
+    '            (par exemple juste après InitTableauPoids).
+    '
+    '  ÉTAPE 2 : Ajouter l'appel dans Form_Synoptique_Load, après
+    '            l'appel à InitTableauPoids :
+    '
+    '            RechercherConfigEtMettreAJourLabels()
+    ' ================================================================
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  NOMS TRÉMIES / SILOS DEPUIS LA BASE
+    '  Appelée au Load ET par Configuration_silos après sauvegarde.
+    '  Met à jour les en-têtes des colonnes 0-5 du tableau de poids :
+    '    col 0-3 = TR1..TR4 (Cases.CodeCase)
+    '    col 4-5 = Silos S1/S2 (Silos.NomSilo)
+    ' ═══════════════════════════════════════════════════════════════
+    Public Sub RechercherConfigEtMettreAJourLabels()
+        Try
+            ' ── Trémies : CodeCase de dbo.Cases → colonnes 0 à 3 ────
+            Dim dtCases As DataTable = ModuleDb.Lire(
+                "SELECT NumeroCase, CodeCase FROM dbo.Cases " &
+                "WHERE NumeroCase BETWEEN 1 AND 4 ORDER BY NumeroCase")
+
+            For Each row As DataRow In dtCases.Rows
+                Dim num As Integer = CInt(row("NumeroCase"))
+                Dim code As String = row("CodeCase").ToString().Trim()
+                If num >= 1 AndAlso num <= 4 AndAlso code <> "" Then
+                    ' colonne = NumeroCase - 1  (TR1 → col 0, TR4 → col 3)
+                    DataGridViewdomend.Columns(num - 1).HeaderText = code
+                End If
+            Next
+
+            ' ── Silos : NomSilo de dbo.Silos → colonnes 4 et 5 ──────
+            Dim dtSilos As DataTable = ModuleDb.Lire(
+                "SELECT TOP 2 SiloID, NomSilo FROM dbo.Silos " &
+                "WHERE EstActif = 1 ORDER BY Position, SiloID")
+
+            For i As Integer = 0 To dtSilos.Rows.Count - 1
+                Dim nom As String = dtSilos.Rows(i)("NomSilo").ToString().Trim()
+                If nom <> "" AndAlso (4 + i) <= 5 Then
+                    DataGridViewdomend.Columns(4 + i).HeaderText = nom
+                End If
+            Next
+
+            ' Rafraîchir l'affichage de la grille
+            DataGridViewdomend.Invalidate()
+
+        Catch ex As Exception
+            Debug.WriteLine("RechercherConfigEtMettreAJourLabels : " & ex.Message)
+        End Try
+    End Sub
+    ' ═══════════════════════════════════════════════════════════════
+    '  REMPLIR LABELS DEPUIS CONFIGURATION
+    '  Appeler dans : Synoptique_Load  ET  Timer2_Tick
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub MettreAJourLabelsConfig()
+        Try
+
+            ' ════════════════════════════════════════════════════
+            '  TRÉMIES — depuis dbo.Cases
+            ' ════════════════════════════════════════════════════
+            Dim dtCases As DataTable = ModuleDb.Lire(
+            "SELECT NumeroCase, NomCase, CodeMateriau, " &
+            "       NiveauKg, CapaciteKg, SeuilAlerteKg " &
+            "FROM dbo.Cases WHERE Actif = 1 ORDER BY NumeroCase")
+
+            Dim lblsNomTR() As Label = {lblNomTR1, lblNomTR2, lblNomTR3, lblNomTR4}
+            Dim lblsStockTR() As Label = {lblStockTR1, lblStockTR2, lblStockTR3, lblStockTR4}
+
+            Dim i As Integer = 0
+            For Each row As DataRow In dtCases.Rows
+                If i >= 4 Then Exit For
+
+                Dim nomCase As String = row("NomCase").ToString()
+                Dim codeMat As String = row("CodeMateriau").ToString()
+                Dim niveauKg As Decimal = If(IsDBNull(row("NiveauKg")), 0, CDec(row("NiveauKg")))
+                Dim capaciteKg As Decimal = If(IsDBNull(row("CapaciteKg")), 1, CDec(row("CapaciteKg")))
+                Dim seuilKg As Decimal = If(IsDBNull(row("SeuilAlerteKg")), 0, CDec(row("SeuilAlerteKg")))
+                Dim pct As Integer = If(capaciteKg > 0, CInt(niveauKg / capaciteKg * 100), 0)
+                pct = Math.Max(0, Math.Min(100, pct))
+
+                ' ── Nom produit
+                lblsNomTR(i).Text = codeMat & " - " & nomCase
+                lblsNomTR(i).ForeColor = Color.DarkBlue
+
+                ' ── Stock + niveau %
+                lblsStockTR(i).Text = niveauKg.ToString("N0") & " kg  " & pct & "%"
+                lblsStockTR(i).ForeColor = If(niveauKg < seuilKg, Color.Red,
+                                        If(pct < 40, Color.OrangeRed,
+                                        Color.DarkGreen))
+                i += 1
+            Next
+
+            ' ════════════════════════════════════════════════════
+            '  SILOS CIMENT — depuis dbo.Silos
+            ' ════════════════════════════════════════════════════
+            Dim dtSilos As DataTable = ModuleDb.Lire(
+            "SELECT s.NomSilo, s.NiveauActuel, s.NiveauMini, " &
+            "       s.CapaciteMax_kg, p.Reference AS ProduitRef " &
+            "FROM dbo.Silos s " &
+            "LEFT JOIN dbo.Produits p ON s.ProduitID = p.ProduitID " &
+            "WHERE s.EstActif = 1 ORDER BY s.Position, s.SiloID")
+
+            Dim lblsNomS() As Label = {lblNomS1, lblNomS2}
+            Dim lblsNiveauS() As Label = {lblNiveauS1, lblNiveauS2}
+
+            Dim j As Integer = 0
+            For Each row As DataRow In dtSilos.Rows
+                If j >= 2 Then Exit For
+
+                Dim nomSilo As String = row("NomSilo").ToString()
+                Dim produit As String = If(IsDBNull(row("ProduitRef")), "CIM", row("ProduitRef").ToString())
+                Dim niveauPct As Decimal = If(IsDBNull(row("NiveauActuel")), 0, CDec(row("NiveauActuel")))
+                Dim miniPct As Decimal = If(IsDBNull(row("NiveauMini")), 0, CDec(row("NiveauMini")))
+                Dim capKg As Decimal = If(IsDBNull(row("CapaciteMax_kg")), 0, CDec(row("CapaciteMax_kg")))
+                Dim niveauKg As Decimal = capKg * niveauPct / 100
+
+                ' ── Nom produit
+                lblsNomS(j).Text = produit & " - " & nomSilo
+                lblsNomS(j).ForeColor = Color.DarkSlateBlue
+
+                ' ── Niveau %  + kg
+                lblsNiveauS(j).Text = niveauKg.ToString("N0") & " kg  " &
+                                   niveauPct.ToString("0.0") & "%"
+                lblsNiveauS(j).ForeColor = If(niveauPct < miniPct, Color.Red,
+                                         If(niveauPct < miniPct + 10, Color.OrangeRed,
+                                         Color.DarkGreen))
+                j += 1
+            Next
+
+            ' ════════════════════════════════════════════════════
+            '  ADJUVANTS — depuis dbo.Bascules
+            ' ════════════════════════════════════════════════════
+            Dim dtAdj As DataTable = ModuleDb.Lire(
+            "SELECT b.NomBascule " &
+            "FROM dbo.Bascules b " &
+            "JOIN dbo.TypesBascule t ON b.TypeID = t.TypeID " &
+            "WHERE t.NomType LIKE '%ADJUVANT%' AND b.Actif = 1 " &
+            "ORDER BY b.BasculeID")
+
+            Dim lblsAdj() As Label = {lblNomADJ1, lblNomADJ2, lblNomADJ3, lblNomADJ4}
+
+            Dim k As Integer = 0
+            For Each row As DataRow In dtAdj.Rows
+                If k >= 4 Then Exit For
+                lblsAdj(k).Text = row("NomBascule").ToString()
+                lblsAdj(k).ForeColor = Color.DarkViolet
+                k += 1
+            Next
+
+            ' Vider les adjuvants non configurés
+            For m As Integer = k To 3
+                lblsAdj(m).Text = "-"
+                lblsAdj(m).ForeColor = Color.Gray
+            Next
+
+            ' ════════════════════════════════════════════════════
+            '  EAU — depuis dbo.Bascules
+            ' ════════════════════════════════════════════════════
+            Dim dtEau As DataTable = ModuleDb.Lire(
+            "SELECT TOP 1 b.NomBascule " &
+            "FROM dbo.Bascules b " &
+            "JOIN dbo.TypesBascule t ON b.TypeID = t.TypeID " &
+            "WHERE t.NomType LIKE '%EAU%' AND b.Actif = 1")
+
+            If dtEau IsNot Nothing AndAlso dtEau.Rows.Count > 0 Then
+                lblNomEAU.Text = dtEau.Rows(0)("NomBascule").ToString()
+                lblNomEAU.ForeColor = Color.DarkCyan
+            Else
+                lblNomEAU.Text = "EAU"
+                lblNomEAU.ForeColor = Color.Gray
+            End If
+
+        Catch ex As Exception
+            Debug.WriteLine("MettreAJourLabelsConfig : " & ex.Message)
+        End Try
+    End Sub
+    ' ═══════════════════════════════════════════════════════════════
+    '  RAFRAÎCHIR LES LABELS STOCK DEPUIS LA BDD
+    '  Appelé depuis Timer2 (toutes les 2s)
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub RafraichirLabelsStock()
+        Try
+            ' ── Trémies ─────────────────────────────────────────
+            Dim dtCases As DataTable = ModuleDb.Lire(
+            "SELECT NumeroCase, NiveauKg, CapaciteKg, SeuilAlerteKg " &
+            "FROM dbo.Cases WHERE Actif = 1 ORDER BY NumeroCase")
+
+            Dim numTremie As Integer = 1
+            For Each row As DataRow In dtCases.Rows
+                If numTremie > 4 Then Exit For
+                Dim cle As String = "TR" & numTremie
+
+                If _labelsStock.ContainsKey(cle) Then
+                    Dim niveauKg As Decimal = If(IsDBNull(row("NiveauKg")), 0, CDec(row("NiveauKg")))
+                    Dim capaciteKg As Decimal = If(IsDBNull(row("CapaciteKg")), 1, CDec(row("CapaciteKg")))
+                    Dim seuilKg As Decimal = If(IsDBNull(row("SeuilAlerteKg")), 0, CDec(row("SeuilAlerteKg")))
+                    Dim pct As Integer = If(capaciteKg > 0, CInt(niveauKg / capaciteKg * 100), 0)
+                    pct = Math.Max(0, Math.Min(100, pct))
+
+                    Dim lbl As Label = _labelsStock(cle)
+                    lbl.Text = niveauKg.ToString("N0") & " kg" & vbCrLf & pct & "%"
+                    lbl.ForeColor = If(niveauKg < seuilKg, Color.Red,
+                                 If(pct < 40, Color.OrangeRed, Color.DarkGreen))
+                End If
+                numTremie += 1
+            Next
+
+            ' ── Silos ────────────────────────────────────────────
+            Dim dtSilos As DataTable = ModuleDb.Lire(
+            "SELECT NiveauActuel, NiveauMini, CapaciteMax_kg " &
+            "FROM dbo.Silos WHERE EstActif = 1 ORDER BY Position, SiloID")
+
+            Dim numSilo As Integer = 1
+            For Each row As DataRow In dtSilos.Rows
+                If numSilo > 2 Then Exit For
+                Dim cle As String = "S" & numSilo
+
+                If _labelsStock.ContainsKey(cle) Then
+                    Dim niveauPct As Decimal = If(IsDBNull(row("NiveauActuel")), 0, CDec(row("NiveauActuel")))
+                    Dim miniPct As Decimal = If(IsDBNull(row("NiveauMini")), 0, CDec(row("NiveauMini")))
+                    Dim capKg As Decimal = If(IsDBNull(row("CapaciteMax_kg")), 0, CDec(row("CapaciteMax_kg")))
+                    Dim niveauKg As Decimal = capKg * niveauPct / 100
+
+                    Dim lbl As Label = _labelsStock(cle)
+                    lbl.Text = niveauKg.ToString("N0") & " kg" & vbCrLf &
+                           niveauPct.ToString("0.0") & "%"
+                    lbl.ForeColor = If(niveauPct < miniPct, Color.Red,
+                                 If(niveauPct < miniPct + 10, Color.OrangeRed,
+                                 Color.DarkGreen))
+                End If
+                numSilo += 1
+            Next
+
+        Catch ex As Exception
+            Debug.WriteLine("RafraichirLabelsStock : " & ex.Message)
+        End Try
+    End Sub
+    ' ═══════════════════════════════════════════════════════════════
+    '  INITIALISER LES LABELS DYNAMIQUES DEPUIS LA CONFIGURATION
+    '  Appelé une seule fois dans Synoptique_Load
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub InitLabelsDepuisConfig()
+        Try
+            ' ── Supprimer les anciens labels dynamiques si rechargement ──
+            For Each lbl As Label In _labelsStock.Values
+                Me.Controls.Remove(lbl)
+            Next
+            For Each lbl As Label In _labelsNom.Values
+                Me.Controls.Remove(lbl)
+            Next
+            _labelsStock.Clear()
+            _labelsNom.Clear()
+
+            ' ════════════════════════════════════════════════════
+            '  1. TRÉMIES — depuis dbo.Cases
+            ' ════════════════════════════════════════════════════
+            Dim dtCases As DataTable = ModuleDb.Lire(
+            "SELECT NumeroCase, NomCase, CodeMateriau, " &
+            "       NiveauKg, CapaciteKg, SeuilAlerteKg, Actif " &
+            "FROM dbo.Cases WHERE Actif = 1 " &
+            "ORDER BY NumeroCase")
+
+            ' Position X des 4 trémies sur le synoptique
+            ' (basé sur PictureBox1=82, PB2=249, PB3=415, PB4=583)
+            Dim posXTremies() As Integer = {82, 249, 415, 583}
+            Dim posYTremie As Integer = 350   ' au-dessus des PictureBox (y=378)
+
+            Dim numTremie As Integer = 0
+            For Each row As DataRow In dtCases.Rows
+                If numTremie >= 4 Then Exit For   ' max 4 trémies visibles
+
+                Dim num As Integer = numTremie + 1
+                Dim cle As String = "TR" & num
+                Dim xPos As Integer = posXTremies(numTremie)
+                Dim nomMat As String = row("CodeMateriau").ToString()
+                Dim nomCase As String = row("NomCase").ToString()
+                Dim niveauKg As Decimal = If(IsDBNull(row("NiveauKg")), 0, CDec(row("NiveauKg")))
+                Dim capaciteKg As Decimal = If(IsDBNull(row("CapaciteKg")), 1, CDec(row("CapaciteKg")))
+                Dim pct As Integer = If(capaciteKg > 0, CInt(niveauKg / capaciteKg * 100), 0)
+                pct = Math.Max(0, Math.Min(100, pct))
+
+                ' Label NOM produit (ex: "G1 / Gravier")
+                Dim lblNom As New Label() With {
+                .Name = "dynNom_" & cle,
+                .Text = nomMat,
+                .Location = New Point(xPos + 5, posYTremie),
+                .Size = New Size(130, 20),
+                .Font = New Font("Segoe UI", 8, FontStyle.Bold),
+                .ForeColor = Color.DarkBlue,
+                .BackColor = Color.Transparent,
+                .TextAlign = ContentAlignment.MiddleCenter
+            }
+
+                ' Label STOCK (ex: "45 000 kg  47%")
+                Dim couleur As Color = If(pct < 20, Color.Red,
+                                   If(pct < 40, Color.OrangeRed, Color.DarkGreen))
+                Dim lblStock As New Label() With {
+                .Name = "dynStock_" & cle,
+                .Text = niveauKg.ToString("N0") & " kg" & vbCrLf & pct & "%",
+                .Location = New Point(xPos + 5, posYTremie + 22),
+                .Size = New Size(130, 36),
+                .Font = New Font("Segoe UI", 8, FontStyle.Regular),
+                .ForeColor = couleur,
+                .BackColor = Color.Transparent,
+                .TextAlign = ContentAlignment.MiddleCenter
+            }
+
+                Me.Controls.Add(lblNom)
+                Me.Controls.Add(lblStock)
+                lblNom.BringToFront()
+                lblStock.BringToFront()
+
+                _labelsNom(cle) = lblNom
+                _labelsStock(cle) = lblStock
+
+                numTremie += 1
+            Next
+
+            ' ════════════════════════════════════════════════════
+            '  2. SILOS CIMENT — depuis dbo.Silos
+            ' ════════════════════════════════════════════════════
+            Dim dtSilos As DataTable = ModuleDb.Lire(
+            "SELECT s.SiloID, s.NomSilo, s.NiveauActuel, " &
+            "       s.NiveauMini, s.CapaciteMax_kg, " &
+            "       p.Reference AS ProduitRef, p.NomProduit " &
+            "FROM dbo.Silos s " &
+            "LEFT JOIN dbo.Produits p ON s.ProduitID = p.ProduitID " &
+            "WHERE s.EstActif = 1 ORDER BY s.Position, s.SiloID")
+
+            ' Position des silos ciment
+            ' PictureBox12 = (1007, 67)   PictureBox13 = (1130, 67)
+            Dim posXSilos() As Integer = {1007, 1130}
+            Dim posYSilo As Integer = 40
+
+            Dim numSilo As Integer = 0
+            For Each row As DataRow In dtSilos.Rows
+                If numSilo >= 2 Then Exit For
+
+                Dim cle As String = "S" & (numSilo + 1)
+                Dim xPos As Integer = posXSilos(numSilo)
+                Dim niveauPct As Decimal = If(IsDBNull(row("NiveauActuel")), 0, CDec(row("NiveauActuel")))
+                Dim miniPct As Decimal = If(IsDBNull(row("NiveauMini")), 0, CDec(row("NiveauMini")))
+                Dim capKg As Decimal = If(IsDBNull(row("CapaciteMax_kg")), 0, CDec(row("CapaciteMax_kg")))
+                Dim niveauKg As Decimal = capKg * niveauPct / 100
+                Dim nomProduit As String = If(IsDBNull(row("ProduitRef")), "CIM", row("ProduitRef").ToString())
+                Dim nomSilo As String = row("NomSilo").ToString()
+
+                Dim couleur As Color = If(niveauPct < miniPct, Color.Red,
+                                    If(niveauPct < miniPct + 10, Color.OrangeRed,
+                                    Color.DarkGreen))
+
+                Dim lblNom As New Label() With {
+                .Name = "dynNom_" & cle,
+                .Text = nomProduit,
+                .Location = New Point(xPos + 5, posYSilo),
+                .Size = New Size(115, 20),
+                .Font = New Font("Segoe UI", 8, FontStyle.Bold),
+                .ForeColor = Color.DarkSlateBlue,
+                .BackColor = Color.Transparent,
+                .TextAlign = ContentAlignment.MiddleCenter
+            }
+
+                Dim lblStock As New Label() With {
+                .Name = "dynStock_" & cle,
+                .Text = niveauKg.ToString("N0") & " kg" & vbCrLf &
+                        niveauPct.ToString("0.0") & "%",
+                .Location = New Point(xPos + 5, posYSilo + 22),
+                .Size = New Size(115, 36),
+                .Font = New Font("Segoe UI", 8, FontStyle.Regular),
+                .ForeColor = couleur,
+                .BackColor = Color.Transparent,
+                .TextAlign = ContentAlignment.MiddleCenter
+            }
+
+                Me.Controls.Add(lblNom)
+                Me.Controls.Add(lblStock)
+                lblNom.BringToFront()
+                lblStock.BringToFront()
+
+                _labelsNom(cle) = lblNom
+                _labelsStock(cle) = lblStock
+
+                numSilo += 1
+            Next
+
+            ' ════════════════════════════════════════════════════
+            '  3. ADJUVANTS — depuis dbo.Bascules (type ADJUVANT)
+            ' ════════════════════════════════════════════════════
+            Dim dtAdj As DataTable = ModuleDb.Lire(
+            "SELECT b.BasculeID, b.NomBascule, b.Actif " &
+            "FROM dbo.Bascules b " &
+            "JOIN dbo.TypesBascule t ON b.TypeID = t.TypeID " &
+            "WHERE t.NomType LIKE '%ADJUVANT%' AND b.Actif = 1 " &
+            "ORDER BY b.BasculeID")
+
+            ' Position des adjuvants
+            ' PictureBoxadj1=(1465,174) PictureBoxadj2=(1516,174)
+            ' PictureBoxadj3=(1568,174) PictureBoxadj4=(1620,174)
+            Dim posXAdj() As Integer = {1452, 1504, 1556, 1608}
+            Dim posYAdj As Integer = 148
+
+            Dim numAdj As Integer = 0
+            For Each row As DataRow In dtAdj.Rows
+                If numAdj >= 4 Then Exit For
+
+                Dim cle As String = "ADJ" & (numAdj + 1)
+                Dim xPos As Integer = posXAdj(numAdj)
+                Dim nom As String = row("NomBascule").ToString()
+                ' Nom court : garder max 6 caractères pour tenir dans 30px
+                Dim nomCourt As String = If(nom.Length > 6, nom.Substring(0, 6), nom)
+
+                Dim lblNom As New Label() With {
+                .Name = "dynNom_" & cle,
+                .Text = nomCourt,
+                .Location = New Point(xPos, posYAdj),
+                .Size = New Size(44, 20),
+                .Font = New Font("Segoe UI", 7, FontStyle.Bold),
+                .ForeColor = Color.DarkViolet,
+                .BackColor = Color.Transparent,
+                .TextAlign = ContentAlignment.MiddleCenter
+            }
+
+                Me.Controls.Add(lblNom)
+                lblNom.BringToFront()
+                _labelsNom(cle) = lblNom
+
+                numAdj += 1
+            Next
+
+            ' ════════════════════════════════════════════════════
+            '  4. EAU — depuis dbo.Bascules (type EAU)
+            ' ════════════════════════════════════════════════════
+            Dim dtEau As DataTable = ModuleDb.Lire(
+            "SELECT TOP 1 b.NomBascule FROM dbo.Bascules b " &
+            "JOIN dbo.TypesBascule t ON b.TypeID = t.TypeID " &
+            "WHERE t.NomType LIKE '%EAU%' AND b.Actif = 1")
+
+            If dtEau IsNot Nothing AndAlso dtEau.Rows.Count > 0 Then
+                ' PictureBoxeau position ≈ (1328, 102)
+                Dim lblEau As New Label() With {
+                .Name = "dynNom_EAU",
+                .Text = "EAU",
+                .Location = New Point(1330, 80),
+                .Size = New Size(60, 18),
+                .Font = New Font("Segoe UI", 7, FontStyle.Bold),
+                .ForeColor = Color.DarkCyan,
+                .BackColor = Color.Transparent,
+                .TextAlign = ContentAlignment.MiddleCenter
+            }
+                Me.Controls.Add(lblEau)
+                lblEau.BringToFront()
+                _labelsNom("EAU") = lblEau
+            End If
+
+        Catch ex As Exception
+            Debug.WriteLine("InitLabelsDepuisConfig : " & ex.Message)
+        End Try
+    End Sub
+    Private Sub ComboBoxvis_Changed(sender As Object, e As EventArgs)
+        If Not _plcConnecte Then Exit Sub
+        Try
+            _visEnEcriture = True
+            Dim valeur As Short = CShort(ComboBoxvis.SelectedIndex)
+            ModulePLCDuplex.EcrireInt("DB8.DBW324", valeur)
+            EnregistrerAction("CIMENT", "Choix Vis", "Vis " & (valeur + 1), "DB8.DBW324", valeur.ToString(), "PLC_WRITE")
+            ' Bloquer la relecture pendant 1s sans geler l'UI
+            Dim t As New Timer() : t.Interval = 1000
+            AddHandler t.Tick, Sub()
+                                   _visEnEcriture = False : t.Stop() : t.Dispose()
+                               End Sub
+            t.Start()
+        Catch ex As Exception
+            _visEnEcriture = False
+        End Try
+    End Sub
+    ' ── Shown : appele une fois apres affichage complet ──────────────
+    Private Sub Form_Synoptique_Shown(sender As Object, e As EventArgs) Handles MyBase.Shown
+        ' Lancer dans un thread pour ne pas bloquer l ecran
+        Dim t As New System.Threading.Thread(Sub()
+                                                 Try
+                                                     ' 1. Creer table journal si absente (SQL rapide)
+                                                     CreerTableJournalSiAbsente()
+
+                                                     ' 2. Charger etats BDD
+                                                     ChargerEtatsBDD()
+
+                                                     ' 3. Connecter PLC + demarrer timers sur UI thread
+                                                     Me.BeginInvoke(Sub()
+                                                                        MettreAJourSynoptique()
+                                                                        ConnecterPLC()
+                                                                        Timer1.Interval = 1000
+                                                                        Timer1.Start()
+                                                                        Timer2.Interval = 1000
+                                                                        Timer2.Start()
+                                                                    End Sub)
+
+                                                 Catch ex As Exception
+                                                     Debug.WriteLine("Erreur Shown : " & ex.Message)
+                                                 End Try
+                                             End Sub)
+        t.IsBackground = True
+        t.Start()
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  JOURNAL ACTIONS
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub CreerTableJournalSiAbsente()
+        Try
+            ModuleDb.Executer(
+            "IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='JournalActions') " &
+            "BEGIN CREATE TABLE dbo.JournalActions (" &
+            "Id INT IDENTITY(1,1) PRIMARY KEY," &
+            "DateHeure DATETIME NOT NULL DEFAULT GETDATE()," &
+            "Operateur NVARCHAR(100) NULL, Module NVARCHAR(50) NULL," &
+            "Action NVARCHAR(200) NULL, Detail NVARCHAR(500) NULL," &
+            "Adresse_PLC NVARCHAR(50) NULL, Valeur_PLC NVARCHAR(50) NULL," &
+            "TypeAction NVARCHAR(30) NULL) END")
+        Catch ex As Exception
+            Debug.WriteLine("Erreur creation table journal : " & ex.Message)
+        End Try
+    End Sub
+
+    ' File d attente pour INSERT asynchrone — evite de bloquer l UI
+    Private Shared _queueJournal As New System.Collections.Concurrent.ConcurrentQueue(Of String())
+    Private Shared _threadJournal As System.Threading.Thread = Nothing
+    Private Shared _stopJournal As Boolean = False
+
+    Public Shared Sub EnregistrerAction(
+        module_ As String, action As String,
+        Optional detail As String = "",
+        Optional adressePLC As String = "",
+        Optional valeurPLC As String = "",
+        Optional typeAction As String = "CLIC")
+
+        ' Mettre en file d attente — retour immediat sans bloquer
+        _queueJournal.Enqueue({NomUtilisateur, module_, action,
+                                detail, adressePLC, valeurPLC, typeAction})
+
+        ' Demarrer le thread de vidage si pas encore lance
+        If _threadJournal Is Nothing OrElse Not _threadJournal.IsAlive Then
+            _threadJournal = New System.Threading.Thread(AddressOf ViderQueueJournal)
+            _threadJournal.IsBackground = True
+            _threadJournal.Name = "ThreadJournal"
+            _threadJournal.Start()
+        End If
+    End Sub
+
+    ' Thread qui vide la file et insere en SQL — 1 connexion pour N inserts
+    Private Shared Sub ViderQueueJournal()
+        Do While Not _stopJournal
+            Try
+                Dim item() As String = Nothing
+                Do While _queueJournal.TryDequeue(item)
+                    ModuleDb.Executer(
+                    "INSERT INTO dbo.JournalActions " &
+                    "(DateHeure,Operateur,Module,Action,Detail,Adresse_PLC,Valeur_PLC,TypeAction) " &
+                    "VALUES (GETDATE(),@op,@mod,@act,@det,@adr,@val,@typ)",
+                    Sub(cmd)
+                        cmd.Parameters.AddWithValue("@op", item(0))
+                        cmd.Parameters.AddWithValue("@mod", item(1))
+                        cmd.Parameters.AddWithValue("@act", item(2))
+                        cmd.Parameters.AddWithValue("@det", item(3))
+                        cmd.Parameters.AddWithValue("@adr", item(4))
+                        cmd.Parameters.AddWithValue("@val", item(5))
+                        cmd.Parameters.AddWithValue("@typ", item(6))
+                    End Sub)
+                Loop
+            Catch ex As Exception
+                Debug.WriteLine("Erreur thread journal : " & ex.Message)
+            End Try
+            ' Attendre 200ms avant de revider
+            System.Threading.Thread.Sleep(200)
+        Loop
+    End Sub
+
+    Private Sub InitJournalActions()
+        DataGridViewJournal.Font = New Font("Consolas", 7.5)
+        DataGridViewJournal.RowHeadersVisible = False
+        DataGridViewJournal.AllowUserToAddRows = False
+        DataGridViewJournal.AllowUserToDeleteRows = False
+        DataGridViewJournal.ReadOnly = True
+        DataGridViewJournal.SelectionMode = DataGridViewSelectionMode.FullRowSelect
+        DataGridViewJournal.BackgroundColor = Color.FromArgb(15, 15, 25)
+        DataGridViewJournal.GridColor = Color.FromArgb(50, 50, 70)
+        DataGridViewJournal.DefaultCellStyle.BackColor = Color.FromArgb(20, 20, 35)
+        DataGridViewJournal.DefaultCellStyle.ForeColor = Color.FromArgb(180, 220, 180)
+        DataGridViewJournal.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(11, 61, 92)
+        DataGridViewJournal.ColumnHeadersDefaultCellStyle.ForeColor = Color.White
+        DataGridViewJournal.ColumnHeadersDefaultCellStyle.Font = New Font("Segoe UI", 7.5, FontStyle.Bold)
+        DataGridViewJournal.EnableHeadersVisualStyles = False
+        DataGridViewJournal.BorderStyle = BorderStyle.Fixed3D
+
+        Dim colonnesJ() As (String, Integer) = {
+            ("Heure", 60), ("Operateur", 80), ("Module", 90),
+            ("Action", 200), ("Detail", 250), ("PLC Adr", 70),
+            ("PLC Val", 60), ("Type", 60)}
+
+        Dim cj As (String, Integer)
+        For Each cj In colonnesJ
+            Dim col As New DataGridViewTextBoxColumn()
+            col.HeaderText = cj.Item1
+            col.Width = cj.Item2
+            col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft
+            DataGridViewJournal.Columns.Add(col)
+        Next
+
+        ' Couleurs appliquees directement dans ChargerJournalActions
+
+        ChargerJournalActions()   ' Chargement initial
+    End Sub
+
+    ' Memorise la derniere ligne pour eviter rechargement inutile
+    Private _dernierHeureJournal As String = ""
+
+    Private Sub ChargerJournalActions()
+        Try
+            ' Utilise la vue V_JournalRecent (index optimise sur DateHeure DESC)
+            Dim dt As DataTable = ModuleDb.Lire(
+            "SELECT TOP 50 " &
+            "  SUBSTRING(DateHeure,12,8)          AS Heure," &
+            "  ISNULL(Operateur,'-')               AS Operateur," &
+            "  ISNULL(Module,'-')                  AS Module," &
+            "  ISNULL(Action,'-')                  AS Action," &
+            "  ISNULL(Detail,'')                   AS Detail," &
+            "  ISNULL(Adresse_PLC,'')              AS Adresse_PLC," &
+            "  ISNULL(Valeur_PLC,'')               AS Valeur_PLC," &
+            "  ISNULL(TypeAction,'')               AS TypeAction" &
+            " FROM dbo.V_JournalRecent")
+            If dt Is Nothing Then Exit Sub
+            If dt.Rows.Count = 0 Then Exit Sub
+
+            ' Ne recharger que si la premiere ligne a change
+            Dim cle As String = dt.Rows(0)("Heure").ToString() & dt.Rows(0)("Action").ToString()
+            If cle = _dernierHeureJournal Then Exit Sub
+            _dernierHeureJournal = cle
+
+            ' Deja sur UI thread (appele depuis Timer) — pas besoin de Invoke
+            DataGridViewJournal.SuspendLayout()
+            DataGridViewJournal.Rows.Clear()
+            Dim rowJ As DataRow
+            For Each rowJ In dt.Rows
+                Dim idx As Integer = DataGridViewJournal.Rows.Add(
+                    rowJ("Heure").ToString(), rowJ("Operateur").ToString(),
+                    rowJ("Module").ToString(), rowJ("Action").ToString(),
+                    rowJ("Detail").ToString(), rowJ("Adresse_PLC").ToString(),
+                    rowJ("Valeur_PLC").ToString(), rowJ("TypeAction").ToString())
+                ' Couleur selon TypeAction
+                Dim typeAct As String = rowJ("TypeAction").ToString().ToUpper()
+                Select Case typeAct
+                    Case "PLC_WRITE" : DataGridViewJournal.Rows(idx).DefaultCellStyle.ForeColor = Color.FromArgb(255, 200, 100)
+                    Case "FORCAGE" : DataGridViewJournal.Rows(idx).DefaultCellStyle.ForeColor = Color.FromArgb(255, 150, 50)
+                    Case "ALARME" : DataGridViewJournal.Rows(idx).DefaultCellStyle.ForeColor = Color.FromArgb(255, 80, 80)
+                    Case "CONNEXION" : DataGridViewJournal.Rows(idx).DefaultCellStyle.ForeColor = Color.FromArgb(100, 255, 100)
+                End Select
+            Next
+            DataGridViewJournal.ResumeLayout()
+        Catch ex As Exception
+            Debug.WriteLine("Erreur chargement journal : " & ex.Message)
+        End Try
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  HISTORIQUE GACHEES
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub InitHistoriqueGachees()
+        DataGridViewHistorique.Font = New Font("Segoe UI", 8)
+        DataGridViewHistorique.RowHeadersVisible = False
+        DataGridViewHistorique.AllowUserToAddRows = False
+        DataGridViewHistorique.AllowUserToDeleteRows = False
+        DataGridViewHistorique.ReadOnly = True
+        DataGridViewHistorique.SelectionMode = DataGridViewSelectionMode.FullRowSelect
+        DataGridViewHistorique.BackgroundColor = Color.White
+        DataGridViewHistorique.GridColor = Color.LightGray
+        DataGridViewHistorique.BorderStyle = BorderStyle.Fixed3D
+        DataGridViewHistorique.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize
+        DataGridViewHistorique.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(11, 61, 92)
+        DataGridViewHistorique.ColumnHeadersDefaultCellStyle.ForeColor = Color.White
+        DataGridViewHistorique.ColumnHeadersDefaultCellStyle.Font = New Font("Segoe UI", 8, FontStyle.Bold)
+        DataGridViewHistorique.EnableHeadersVisualStyles = False
+        DataGridViewHistorique.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(245, 248, 252)
+
+        Dim colonnesH() As (String, Integer, String) = {
+            ("Heure", 68, "DateHeure"),
+            ("N BL", 95, "NumeroBL"),
+            ("Client", 130, "NomClient"),
+            ("Chantier", 120, "NomChantier"),
+            ("Formule", 95, "NomFormule"),
+            ("Camion", 65, "CodeCamion"),
+            ("m3", 40, "VolumeM3"),
+            ("Statut", 75, "Statut")}
+
+        Dim ch As (String, Integer, String)
+        For Each ch In colonnesH
+            Dim c As New DataGridViewTextBoxColumn()
+            c.HeaderText = ch.Item1
+            c.Width = ch.Item2
+            c.Name = ch.Item3
+            c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+            DataGridViewHistorique.Columns.Add(c)
+        Next
+
+        timerHistorique.Interval = 5000
+        AddHandler timerHistorique.Tick, AddressOf timerHistorique_Tick
+        timerHistorique.Start()
+        ChargerHistoriqueGachees()
+    End Sub
+
+    Private Sub timerHistorique_Tick(sender As Object, e As EventArgs)
+        ChargerHistoriqueGachees()
+    End Sub
+
+    ' Memorise le dernier BL pour eviter rechargement inutile
+    Private _dernierNumeroBL As String = ""
+
+    Private Sub ChargerHistoriqueGachees()
+        Try
+            Dim dt As DataTable = ModuleDb.Lire(
+            "SELECT TOP 20 " &
+            "  CONVERT(VARCHAR(8),DateHeure,108)    AS DateHeure," &
+            "  ISNULL(NumeroBL,'---')               AS NumeroBL," &
+            "  ISNULL(NomClient,'---')              AS NomClient," &
+            "  ISNULL(NomChantier,'---')            AS NomChantier," &
+            "  ISNULL(NomFormule,'---')             AS NomFormule," &
+            "  ISNULL(CodeCamion,'---')             AS CodeCamion," &
+            "  ISNULL(CAST(VolumeM3 AS VARCHAR),'0') AS VolumeM3," &
+            "  Statut " &
+            "FROM dbo.BonsLivraison ORDER BY DateCreation DESC")
+            If dt Is Nothing Then Exit Sub
+            If dt.Rows.Count = 0 Then Exit Sub
+
+            ' Ne recharger que si le premier BL a change
+            Dim premierBL As String = dt.Rows(0)("NumeroBL").ToString()
+            If premierBL = _dernierNumeroBL Then Exit Sub
+            _dernierNumeroBL = premierBL
+
+            Dim dtH As DataTable = dt
+            If Me.IsHandleCreated Then
+                Me.Invoke(Sub()
+                              DataGridViewHistorique.SuspendLayout()
+                              DataGridViewHistorique.Rows.Clear()
+                              Dim rowH As DataRow
+                              For Each rowH In dtH.Rows
+                                  Dim idx As Integer = DataGridViewHistorique.Rows.Add(
+                                      rowH("DateHeure").ToString(),
+                                      rowH("NumeroBL").ToString(),
+                                      rowH("NomClient").ToString(),
+                                      rowH("NomChantier").ToString(),
+                                      rowH("NomFormule").ToString(),
+                                      rowH("CodeCamion").ToString(),
+                                      rowH("VolumeM3").ToString(),
+                                      rowH("Statut").ToString())
+                                  Dim statut As String = rowH("Statut").ToString()
+                                  Select Case statut.ToUpper()
+                                      Case "LIVRE"
+                                          DataGridViewHistorique.Rows(idx).DefaultCellStyle.ForeColor = Color.DarkGreen
+                                      Case "EN_COURS"
+                                          DataGridViewHistorique.Rows(idx).DefaultCellStyle.BackColor = Color.FromArgb(255, 255, 200)
+                                          DataGridViewHistorique.Rows(idx).DefaultCellStyle.ForeColor = Color.DarkOrange
+                                      Case "ANNULE"
+                                          DataGridViewHistorique.Rows(idx).DefaultCellStyle.ForeColor = Color.Red
+                                          DataGridViewHistorique.Rows(idx).DefaultCellStyle.Font = New Font("Segoe UI", 8, FontStyle.Strikeout)
+                                  End Select
+                              Next
+                              If DataGridViewHistorique.Rows.Count > 0 Then
+                                  DataGridViewHistorique.Rows(0).DefaultCellStyle.BackColor = Color.FromArgb(220, 255, 220)
+                                  DataGridViewHistorique.Rows(0).DefaultCellStyle.Font = New Font("Segoe UI", 8, FontStyle.Bold)
+                              End If
+                              DataGridViewHistorique.ResumeLayout()
+                          End Sub)
+            End If
+        Catch ex As Exception
+            Debug.WriteLine("Erreur chargement historique : " & ex.Message)
+        End Try
+    End Sub
+
+    Private Sub DataGridViewHistorique_CellDoubleClick(sender As Object, e As DataGridViewCellEventArgs)
+        If e.RowIndex < 0 Then Exit Sub
+        Dim row As DataGridViewRow = DataGridViewHistorique.Rows(e.RowIndex)
+        Dim msg As String =
+            "BL      : " & row.Cells("NumeroBL").Value.ToString() & vbCrLf &
+            "Client  : " & row.Cells("NomClient").Value.ToString() & vbCrLf &
+            "Chantier: " & row.Cells("NomChantier").Value.ToString() & vbCrLf &
+            "Formule : " & row.Cells("NomFormule").Value.ToString() & vbCrLf &
+            "Camion  : " & row.Cells("CodeCamion").Value.ToString() & vbCrLf &
+            "Volume  : " & row.Cells("VolumeM3").Value.ToString() & " m3" & vbCrLf &
+            "Statut  : " & row.Cells("Statut").Value.ToString()
+        MessageBox.Show(msg, "Détails Gachée", MessageBoxButtons.OK, MessageBoxIcon.Information)
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  TABLEAU POIDS TEMPS REEL
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub InitTableauPoids()
+        ' ── 11 colonnes — mapping exact CPU ──────────────────────
+        '  0=G1  1=SC  2=SL  3=D2  4=CIM_S1  5=CIM_S2
+        '  6=EAU  7=ADJ1  8=ADJ2  9=ADJ3  10=ADJ4
+        Dim cols() As String = {"G1", "SC", "SL", "D2",
+                                "CIM S1", "CIM S2",
+                                "EAU",
+                                "ADJ1", "ADJ2", "ADJ3", "ADJ4"}
+        Dim colW As Integer = 60
+
+        ' AllowUserToAddRows=False AVANT RowCount — sinon ligne vide ajoutee
+        DataGridViewdomend.AllowUserToAddRows = False
+        DataGridViewdomend.AllowUserToDeleteRows = False
+        DataGridViewdomend.ReadOnly = True
+
+        DataGridViewdomend.ColumnCount = cols.Length   ' 11
+        DataGridViewdomend.RowCount = 6                ' 6 lignes
+
+        For i As Integer = 0 To cols.Length - 1
+            DataGridViewdomend.Columns(i).HeaderText = cols(i)
+            DataGridViewdomend.Columns(i).Width = colW
+            DataGridViewdomend.Columns(i).SortMode = DataGridViewColumnSortMode.NotSortable
+            DataGridViewdomend.Columns(i).DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+            DataGridViewdomend.Columns(i).DefaultCellStyle.Font = New Font("Consolas", 9.0F, FontStyle.Bold)
+        Next
+
+        DataGridViewdomend.RowHeadersWidth = 120
+        DataGridViewdomend.Rows(0).HeaderCell.Value = "Consigne"
+        DataGridViewdomend.Rows(1).HeaderCell.Value = "Pose"
+        DataGridViewdomend.Rows(2).HeaderCell.Value = "Ecart"
+        DataGridViewdomend.Rows(3).HeaderCell.Value = "Th.Cam kg"
+        DataGridViewdomend.Rows(4).HeaderCell.Value = "Reel Cam kg"
+        DataGridViewdomend.Rows(5).HeaderCell.Value = "Ecar% Cam"
+
+        DataGridViewdomend.MultiSelect = False
+        DataGridViewdomend.SelectionMode = DataGridViewSelectionMode.CellSelect
+        DataGridViewdomend.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None
+        DataGridViewdomend.ColumnHeadersHeight = 26
+        DataGridViewdomend.RowTemplate.Height = 24
+        DataGridViewdomend.ScrollBars = ScrollBars.None
+        DataGridViewdomend.EnableHeadersVisualStyles = False
+
+        DataGridViewdomend.BackgroundColor = Color.FromArgb(25, 25, 25)
+        DataGridViewdomend.GridColor = Color.FromArgb(70, 70, 70)
+        DataGridViewdomend.DefaultCellStyle.BackColor = Color.FromArgb(40, 40, 40)
+        DataGridViewdomend.DefaultCellStyle.ForeColor = Color.White
+        DataGridViewdomend.DefaultCellStyle.SelectionBackColor = Color.FromArgb(60, 60, 80)
+        DataGridViewdomend.DefaultCellStyle.SelectionForeColor = Color.White
+        DataGridViewdomend.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(45, 45, 45)
+        DataGridViewdomend.ColumnHeadersDefaultCellStyle.ForeColor = Color.Yellow
+        DataGridViewdomend.ColumnHeadersDefaultCellStyle.Font = New Font("Consolas", 9.0F, FontStyle.Bold)
+        DataGridViewdomend.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+        DataGridViewdomend.RowHeadersDefaultCellStyle.BackColor = Color.FromArgb(45, 45, 45)
+        DataGridViewdomend.RowHeadersDefaultCellStyle.ForeColor = Color.White
+        DataGridViewdomend.RowHeadersDefaultCellStyle.Font = New Font("Consolas", 8.5F, FontStyle.Bold)
+
+        ' Taille exacte : 90 + 11x68 + 4 = 842px | 26 + 6x24 + 2 = 172px
+        DataGridViewdomend.Width = 120 + cols.Length * colW + 4
+        DataGridViewdomend.Height = 26 + 6 * 24 + 2
+
+        Dim menuSilo As New ContextMenuStrip()
+        menuSilo.Items.Add("Silo 1 actif", Nothing, Sub(s, ev) ChoisirSiloCiment(1))
+        menuSilo.Items.Add("Silo 2 actif", Nothing, Sub(s, ev) ChoisirSiloCiment(2))
+        AddHandler DataGridViewdomend.ColumnHeaderMouseClick,
+            Sub(s, ev)
+                If ev.ColumnIndex = 4 OrElse ev.ColumnIndex = 5 Then
+                    menuSilo.Show(DataGridViewdomend, DataGridViewdomend.PointToClient(Cursor.Position))
+                End If
+            End Sub
+
+        MettreAJourTableauPoids()
+    End Sub
+
+    ' ── Choisir silo ciment actif (clic droit en-tete CIM S1/S2) ──
+    Public Sub ChoisirSiloCiment(numSilo As Integer)
+        If numSilo <> 1 AndAlso numSilo <> 2 Then Exit Sub
+        _siloCimentActif = numSilo
+        AfficherInfoForcage("Silo CIM " & numSilo & " ACTIF")
+        EnregistrerAction("CIMENT", "Silo actif", "Silo " & numSilo, "", "", "CLIC")
+    End Sub
+
+    ' ── Charger Phase/Decalage/PctConsigne depuis FormuleComposition ──
+    Public Sub ChargerPhasesFormule(idFormule As Integer)
+        Try
+            Dim dt As DataTable = ModuleDb.Lire(
+                "SELECT CodeMateriau, Phase, DecalageSecondes, PourcentageConsigne " &
+                "FROM dbo.FormuleComposition WHERE IdFormule=@id",
+                Sub(cmd) cmd.Parameters.AddWithValue("@id", idFormule))
+            If dt Is Nothing Then Exit Sub
+            Dim row As DataRow
+            For Each row In dt.Rows
+                Dim code As String = row("CodeMateriau").ToString().Trim().ToUpper()
+                Dim ph As Integer = If(IsDBNull(row("Phase")), 1, CInt(row("Phase")))
+                Dim dec As Single = If(IsDBNull(row("DecalageSecondes")), 0.0F, CSng(row("DecalageSecondes")))
+                Dim pct As Single = If(IsDBNull(row("PourcentageConsigne")), 100.0F, CSng(row("PourcentageConsigne")))
+                Select Case code
+                    Case "G1" : _phase_G1 = ph : _decal_G1 = dec : _pct_G1 = pct
+                    Case "SC" : _phase_SC = ph : _decal_SC = dec : _pct_SC = pct
+                    Case "SL" : _phase_SL = ph : _decal_SL = dec : _pct_SL = pct
+                    Case "D2" : _phase_D2 = ph : _decal_D2 = dec : _pct_D2 = pct
+                    Case "CIM1", "CILOS1", "CIM2", "CILOS2"
+                        _phase_CIM = ph : _decal_CIM = dec : _pct_CIM = pct
+                    Case "EAU" : _phase_EAU2 = ph : _decal_EAU2 = dec : _pct_EAU2 = pct
+                    Case "ADJ1" : _phase_ADJ1 = ph : _decal_ADJ1 = dec : _pct_ADJ1 = pct
+                    Case "ADJ2" : _phase_ADJ2 = ph : _decal_ADJ2 = dec : _pct_ADJ2 = pct
+                    Case "ADJ3" : _phase_ADJ3 = ph : _decal_ADJ3 = dec : _pct_ADJ3 = pct
+                    Case "ADJ4" : _phase_ADJ4 = ph : _decal_ADJ4 = dec : _pct_ADJ4 = pct
+                End Select
+            Next
+        Catch ex As Exception
+            Debug.WriteLine("Erreur ChargerPhasesFormule : " & ex.Message)
+        End Try
+    End Sub
+
+    Private Sub MettreAJourTableauPoids()
+        If DataGridViewdomend Is Nothing Then Exit Sub
+        If DataGridViewdomend.ColumnCount < 11 Then Exit Sub
+        If DataGridViewdomend.RowCount < 6 Then Exit Sub
+
+        Try
+            DataGridViewdomend.SuspendLayout()
+
+            ' ════════════════════════════════════════════════════
+            '  MAPPING EXACT CPU — 11 colonnes
+            '  0=G1  1=SC  2=SL  3=D2  4=CIM_S1  5=CIM_S2
+            '  6=EAU  7=ADJ1  8=ADJ2  9=ADJ3  10=ADJ4
+            ' ════════════════════════════════════════════════════
+
+            ' LIGNE 0 : CONSIGNE
+            ' DB8 DBD0/4/8/12/16/16 | DB18 DBD20 | DB8 DBD216/228 | DB78 DBD0/4
+            Dim arrCons() As Single = {
+                _cons_G1, _cons_SC, _cons_SL, _cons_D2,
+                _cons_CIM, _cons_CIM,
+                _cons_EAU2,
+                _cons_ADJ1, _cons_ADJ2, _cons_ADJ3, _cons_ADJ4}
+
+            ' LIGNE 1 : POSE
+            ' DB18 DBD2/6/10/14/18/58/22/62/66/70/74
+            Dim arrPose() As Single = {
+                _pose_G1, _pose_SC, _pose_SL, _pose_D2,
+                _pose_CIM_S1, _pose_CIM_S2,
+                _pose_EAU2,
+                _pose_ADJ1, _pose_ADJ2, _pose_ADJ3, _pose_ADJ4}
+
+            ' LIGNE 2 : ECART
+            ' DB18 DBD26/30/34/38/42/42 | DB18 DBD46 | DB4 DBD98/102/114/118
+            Dim arrEcar() As Single = {
+                _ecar_G1, _ecar_SC, _ecar_SL, _ecar_D2,
+                _ecar_CIM, _ecar_CIM,
+                _ecar_EAU2,
+                _ecar_ADJ1, _ecar_ADJ2, _ecar_ADJ3, _ecar_ADJ4}
+
+            ' LIGNE 3 : DOSAGE THEORIQUE CAMION
+            ' DB101 DBD80/84/88/92/96/100/104/108/112/116
+            ' CIM_S2 (col5) = "---" car pas de valeur separee
+            Dim arrTh() As Single = {
+                _th_G1, _th_SC, _th_SL, _th_D2,
+                _th_CIM, 0,
+                _th_EAU,
+                _th_ADJ1, _th_ADJ2, _th_ADJ3, _th_ADJ4}
+
+            ' LIGNE 4 : DOSAGE REEL CAMION
+            ' DB65 DBD0/8/16/24/32/48/56/64/80/88
+            Dim arrReel() As Single = {
+                _reel_G1, _reel_SC, _reel_SL, _reel_D2,
+                _reel_CIM, 0,
+                _reel_EAU,
+                _reel_ADJ1, _reel_ADJ2, _reel_ADJ3, _reel_ADJ4}
+
+            ' LIGNE 5 : ECART % CAMION
+            ' DB114 DBD0/4/8/12/16/20/24/28/32/36
+            Dim arrPct() As Single = {
+                _pctEcar_G1, _pctEcar_SC, _pctEcar_SL, _pctEcar_D2,
+                _pctEcar_CIM, 0,
+                _pctEcar_EAU,
+                _pctEcar_ADJ1, _pctEcar_ADJ2, _pctEcar_ADJ3, _pctEcar_ADJ4}
+
+            Dim arrTol() As Single = {
+                TOL_KG, TOL_KG, TOL_KG, TOL_KG,
+                TOL_KG, TOL_KG,
+                TOL_L,
+                TOL_ADJ, TOL_ADJ, TOL_ADJ, TOL_ADJ}
+
+            Dim arrFmt() As String = {
+                "0.0", "0.0", "0.0", "0.0",
+                "0.0", "0.0",
+                "0.0",
+                "0.000", "0.000", "0.000", "0.000"}
+
+            For col As Integer = 0 To 10
+
+                ' Silo inactif : griser toute la colonne
+                Dim siloInactif As Boolean =
+                    (col = 4 AndAlso _siloCimentActif = 2) OrElse
+                    (col = 5 AndAlso _siloCimentActif = 1)
+
+                ' Col 5 CIM_S2 : pas de donnee Th/Reel/Pct
+                Dim pasDeDonnCamion As Boolean = (col = 5)
+
+                ' En-tete silo actif/inactif
+                If col = 4 OrElse col = 5 Then
+                    If siloInactif Then
+                        DataGridViewdomend.Columns(col).HeaderCell.Style.ForeColor = Color.FromArgb(70, 70, 70)
+                        DataGridViewdomend.Columns(col).HeaderCell.Style.BackColor = Color.FromArgb(35, 35, 35)
+                    Else
+                        DataGridViewdomend.Columns(col).HeaderCell.Style.ForeColor = Color.Yellow
+                        DataGridViewdomend.Columns(col).HeaderCell.Style.BackColor = Color.FromArgb(80, 50, 0)
+                    End If
+                End If
+
+                Dim cons As Single = arrCons(col)
+                Dim pose As Single = arrPose(col)
+                Dim ecar As Single = arrEcar(col)
+                Dim tol As Single = arrTol(col)
+                Dim fmt As String = arrFmt(col)
+
+                ' ── LIGNE 0 : Consigne ───────────────────────────
+                DataGridViewdomend(col, 0).Value = If(siloInactif, "---", cons.ToString(fmt))
+                DataGridViewdomend(col, 0).Style.BackColor = Color.FromArgb(40, 40, 40)
+                DataGridViewdomend(col, 0).Style.ForeColor = If(siloInactif, Color.FromArgb(65, 65, 65), Color.Yellow)
+
+                ' ── LIGNE 1 : Pose ───────────────────────────────
+                DataGridViewdomend(col, 1).Value = If(siloInactif, "---", pose.ToString(fmt))
+                If siloInactif Then
+                    DataGridViewdomend(col, 1).Style.BackColor = Color.FromArgb(35, 35, 35)
+                    DataGridViewdomend(col, 1).Style.ForeColor = Color.FromArgb(65, 65, 65)
+                ElseIf cons <= 0 AndAlso pose <= 0 Then
+                    DataGridViewdomend(col, 1).Style.BackColor = Color.FromArgb(40, 40, 40)
+                    DataGridViewdomend(col, 1).Style.ForeColor = Color.FromArgb(80, 80, 80)
+                ElseIf pose >= cons AndAlso Math.Abs(ecar) <= tol Then
+                    DataGridViewdomend(col, 1).Style.BackColor = Color.FromArgb(0, 110, 0)
+                    DataGridViewdomend(col, 1).Style.ForeColor = Color.White
+                ElseIf pose < cons Then
+                    DataGridViewdomend(col, 1).Style.BackColor = Color.FromArgb(0, 55, 120)
+                    DataGridViewdomend(col, 1).Style.ForeColor = Color.White
+                Else
+                    DataGridViewdomend(col, 1).Style.BackColor = Color.FromArgb(170, 0, 0)
+                    DataGridViewdomend(col, 1).Style.ForeColor = Color.White
+                End If
+
+                ' ── LIGNE 2 : Ecart ──────────────────────────────
+                Dim signe As String = If(ecar >= 0, "+", "")
+                DataGridViewdomend(col, 2).Value = If(siloInactif, "---", signe & ecar.ToString(fmt))
+                DataGridViewdomend(col, 2).Style.BackColor = Color.FromArgb(28, 28, 28)
+                If siloInactif Then
+                    DataGridViewdomend(col, 2).Style.ForeColor = Color.FromArgb(65, 65, 65)
+                ElseIf cons <= 0 AndAlso pose <= 0 Then
+                    DataGridViewdomend(col, 2).Style.ForeColor = Color.FromArgb(70, 70, 70)
+                ElseIf Math.Abs(ecar) <= tol Then
+                    DataGridViewdomend(col, 2).Style.ForeColor = Color.FromArgb(80, 200, 80)
+                ElseIf ecar < 0 Then
+                    DataGridViewdomend(col, 2).Style.ForeColor = Color.Orange
+                Else
+                    DataGridViewdomend(col, 2).Style.ForeColor = Color.Tomato
+                End If
+
+                ' ── LIGNE 3 : Dosage theorique camion ────────────
+                Dim thV As Single = arrTh(col)
+                DataGridViewdomend(col, 3).Value = If(pasDeDonnCamion, "---", thV.ToString(fmt))
+                DataGridViewdomend(col, 3).Style.BackColor = Color.FromArgb(35, 35, 35)
+                DataGridViewdomend(col, 3).Style.ForeColor = If(pasDeDonnCamion, Color.FromArgb(65, 65, 65), Color.White)
+
+                ' ── LIGNE 4 : Dosage reel camion ─────────────────
+                Dim reelV As Single = arrReel(col)
+                DataGridViewdomend(col, 4).Value = If(pasDeDonnCamion, "---", reelV.ToString(fmt))
+                DataGridViewdomend(col, 4).Style.BackColor = Color.FromArgb(35, 35, 35)
+                If pasDeDonnCamion Then
+                    DataGridViewdomend(col, 4).Style.ForeColor = Color.FromArgb(65, 65, 65)
+                ElseIf thV <= 0 AndAlso reelV <= 0 Then
+                    DataGridViewdomend(col, 4).Style.ForeColor = Color.FromArgb(80, 80, 80)
+                ElseIf Math.Abs(reelV - thV) <= tol Then
+                    DataGridViewdomend(col, 4).Style.ForeColor = Color.FromArgb(80, 200, 80)
+                Else
+                    DataGridViewdomend(col, 4).Style.ForeColor = Color.Orange
+                End If
+
+                ' ── LIGNE 5 : Ecart % camion ─────────────────────
+                Dim pctV As Single = arrPct(col)
+                DataGridViewdomend(col, 5).Style.BackColor = Color.FromArgb(30, 30, 30)
+                DataGridViewdomend(col, 5).Style.Font = New Font("Consolas", 9.0F, FontStyle.Bold)
+                If pasDeDonnCamion Then
+                    DataGridViewdomend(col, 5).Value = "---"
+                    DataGridViewdomend(col, 5).Style.ForeColor = Color.FromArgb(65, 65, 65)
+                ElseIf Math.Abs(pctV) < 0.05F Then
+                    DataGridViewdomend(col, 5).Value = "0.0 %"
+                    DataGridViewdomend(col, 5).Style.ForeColor = Color.FromArgb(80, 80, 80)
+                ElseIf Math.Abs(pctV) <= 2.0F Then
+                    DataGridViewdomend(col, 5).Value = pctV.ToString("+0.0;-0.0") & " %"
+                    DataGridViewdomend(col, 5).Style.ForeColor = Color.FromArgb(80, 200, 80)
+                ElseIf Math.Abs(pctV) <= 5.0F Then
+                    DataGridViewdomend(col, 5).Value = pctV.ToString("+0.0;-0.0") & " %"
+                    DataGridViewdomend(col, 5).Style.ForeColor = Color.Orange
+                Else
+                    DataGridViewdomend(col, 5).Value = pctV.ToString("+0.0;-0.0") & " %"
+                    DataGridViewdomend(col, 5).Style.ForeColor = Color.Tomato
+                End If
+
+            Next col
+
+            DataGridViewdomend.ResumeLayout()
+
+        Catch ex As Exception
+            Debug.WriteLine("Erreur MettreAJourTableauPoids : " & ex.Message)
+            DataGridViewdomend.ResumeLayout()
+        End Try
+    End Sub
+
+    Private Sub InitClicsGaucheForcage()
+        AddHandler PictureBox1.Click, Sub(s, e) ClicEquipement("TREMIE", 1)
+        AddHandler PictureBox2.Click, Sub(s, e) ClicEquipement("TREMIE", 2)
+        AddHandler PictureBox3.Click, Sub(s, e) ClicEquipement("TREMIE", 3)
+        AddHandler PictureBox4.Click, Sub(s, e) ClicEquipement("TREMIE", 4)
+        AddHandler PictureBox9.Click, Sub(s, e) ClicEquipement("TAPIS", 0)
+        AddHandler PictureBox10.Click, Sub(s, e) ClicEquipement("SKIP", 0)
+        AddHandler PictureBox11.Click, Sub(s, e) ClicEquipement("MALAXEUR", 0)
+        AddHandler PictureBox12.Click, Sub(s, e) ClicEquipement("SILO", 1)
+        AddHandler PictureBox13.Click, Sub(s, e) ClicEquipement("SILO", 2)
+        AddHandler PictureBox16.Click, Sub(s, e) ClicEquipement("BASC_CIM", 0)
+        AddHandler PictureBox17.Click, Sub(s, e) ClicEquipement("POMPE", 1)
+        AddHandler PictureBox18.Click, Sub(s, e) ClicEquipement("POMPE", 2)
+        AddHandler PictureBox19.Click, Sub(s, e) ClicEquipement("BASC_EAU", 0)
+        AddHandler PictureBox20.Click, Sub(s, e) ClicEquipement("ADJ", 1)
+        AddHandler PictureBox21.Click, Sub(s, e) ClicEquipement("ADJ", 2)
+        AddHandler PictureBox22.Click, Sub(s, e) ClicEquipement("ADJ", 3)
+        AddHandler PictureBox23.Click, Sub(s, e) ClicEquipement("ADJ", 4)
+        AddHandler PictureBox24.Click, Sub(s, e) ClicEquipement("BASC_ADJ", 0)
+    End Sub
+
+    Private Sub ClicEquipement(typeEquip As String, num As Integer)
+        Select Case typeEquip.ToUpper()
+            Case "TREMIE"
+                If Dosage_manuel.ModeForceGranulats Then
+                    Dosage_manuel.CommanderTremie(num, True)
+                    Threading.Thread.Sleep(500)
+                    Dosage_manuel.CommanderTremie(num, False)
+                    AfficherInfoForcage("Tremie " & num & " impulsion ouverture")
+                End If
+            Case "TAPIS"
+                If Dosage_manuel.ModeForceGranulats Then
+                    Dim etatActuel As Boolean = CBool(_plc?.Read("M30.4"))
+                    Dosage_manuel.CommanderTapisPeseur(Not etatActuel)
+                    AfficherInfoForcage("Tapis peseur " & If(Not etatActuel, "MARCHE", "ARRET"))
+                End If
+            Case "SKIP"
+                If Dosage_manuel.ModeForceGranulats Then
+                    Dim choix As DialogResult = MessageBox.Show(
+                        "SKIP : [Oui]=MONTER  [Non]=DESCENDRE",
+                        "Skip Forcage", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+                    Dosage_manuel.CommanderSkip(choix = DialogResult.Yes)
+                    AfficherInfoForcage("Skip " & If(choix = DialogResult.Yes, "MONTEE", "DESCENTE"))
+                End If
+            Case "SILO"
+                If Dosage_manuel.ModeForceCiments Then
+                    Dim adresse As String = If(num = 1, "M30.7", "M31.0")
+                    Dim etatVis As Boolean = CBool(_plc?.Read(adresse))
+                    Dosage_manuel.CommanderVisCiment(num, Not etatVis)
+                    AfficherInfoForcage("Vis Ciment " & num & " " & If(Not etatVis, "MARCHE", "ARRET"))
+                End If
+            Case "BASC_CIM"
+                If Dosage_manuel.ModeForceCiments Then
+                    Dosage_manuel.CommanderBasculeCiment(True)
+                    AfficherInfoForcage("Bascule CIM OUVERTURE")
+                End If
+            Case "BASC_EAU"
+                If Dosage_manuel.ModeForceEaux Then
+                    Dim choix As DialogResult = MessageBox.Show(
+                        "[Oui]=Vanne eau  [Non]=Trappe bascule",
+                        "Eau Forcage", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+                    If choix = DialogResult.Yes Then
+                        Dosage_manuel.CommanderVanneEau(True)
+                        AfficherInfoForcage("Vanne Eau OUVRIR")
+                    Else
+                        Dosage_manuel.CommanderBasculeEau(True)
+                        AfficherInfoForcage("Bascule EAU OUVERTURE")
+                    End If
+                End If
+            Case "ADJ"
+                If Dosage_manuel.ModeForceAdjuvants Then
+                    Dosage_manuel.CommanderAdjuvant(num, True)
+                    Threading.Thread.Sleep(300)
+                    Dosage_manuel.CommanderAdjuvant(num, False)
+                    AfficherInfoForcage("ADJ " & num & " impulsion")
+                End If
+            Case "BASC_ADJ"
+                If Dosage_manuel.ModeForceAdjuvants Then
+                    EcrirePLCSyno("M32.0", True)
+                    AfficherInfoForcage("Bascule ADJ OUVERTURE")
+                End If
+            Case "MALAXEUR"
+                If Dosage_manuel.ModeForceMalaxeurs Then
+                    Dim etatMlx As Boolean = CBool(_plc?.Read("M7.1"))
+                    If Not etatMlx Then
+                        If MessageBox.Show("Demarrer le malaxeur ?", "Forcage Malaxeur",
+                            MessageBoxButtons.YesNo, MessageBoxIcon.Warning) = DialogResult.Yes Then
+                            Dosage_manuel.CommanderMalaxeur(True)
+                            AfficherInfoForcage("Malaxeur DEMARRAGE")
+                        End If
+                    Else
+                        Dosage_manuel.CommanderMalaxeur(False)
+                        AfficherInfoForcage("Malaxeur ARRET")
+                    End If
+                End If
+            Case "POMPE"
+                If Dosage_manuel.ModeForceEaux Then
+                    AfficherInfoForcage("Pompe " & num & " commande")
+                End If
+        End Select
+    End Sub
+
+    Private Sub AfficherInfoForcage(msg As String)
+        lblEtatPLC.Text = "FORCAGE : " & msg & " " & DateTime.Now.ToString("HH:mm:ss")
+        lblEtatPLC.ForeColor = Color.DarkOrange
+        lblEtatPLC.BackColor = Color.FromArgb(255, 240, 200)
+        Dim t As New System.Windows.Forms.Timer()
+        t.Interval = 1000
+        AddHandler t.Tick, Sub(s, e)
+                               lblEtatPLC.Text = "PLC : OK " & DateTime.Now.ToString("HH:mm:ss")
+                               lblEtatPLC.ForeColor = Color.Green
+                               lblEtatPLC.BackColor = Color.FromArgb(220, 255, 220)
+                               t.Stop()
+                           End Sub
+        t.Start()
+    End Sub
+
+    Private Sub EcrirePLCSyno(adresse As String, valeur As Boolean)
+        Try
+            If _plc IsNot Nothing AndAlso _plc.IsConnected Then
+                _plc.Write(adresse, If(valeur, 1, 0))
+            End If
+        Catch ex As Exception
+            Debug.WriteLine("Erreur PLC Syno : " & ex.Message)
+        End Try
+    End Sub
+
+    Public Sub MettreAJourVisibiliteBoutons()
+        If Dosage_manuel.ModeForceGranulats Then AfficherBoutonsGroupe("GRANULATS") Else CacherBoutonsGroupe("GRANULATS")
+        If Dosage_manuel.ModeForceCiments Then AfficherBoutonsGroupe("CIMENTS") Else CacherBoutonsGroupe("CIMENTS")
+        If Dosage_manuel.ModeForceEaux Then AfficherBoutonsGroupe("EAUX") Else CacherBoutonsGroupe("EAUX")
+        If Dosage_manuel.ModeForceAdjuvants Then AfficherBoutonsGroupe("ADJUVANTS") Else CacherBoutonsGroupe("ADJUVANTS")
+        If Dosage_manuel.ModeForceMalaxeurs Then AfficherBoutonsGroupe("MALAXEURS") Else CacherBoutonsGroupe("MALAXEURS")
+    End Sub
+
+    Private Sub CacherBoutonsGroupe(groupe As String)
+        Dim btn As Button
+        For Each btn In GetBoutonsGroupe(groupe)
+            btn.Visible = False
+        Next
+    End Sub
+
+    Private Sub AfficherBoutonsGroupe(groupe As String)
+        Dim btn As Button
+        For Each btn In GetBoutonsGroupe(groupe)
+            btn.Visible = True
+        Next
+    End Sub
+
+    Private Function GetBoutonsGroupe(groupe As String) As List(Of Button)
+        Dim liste As New List(Of Button)
+        Select Case groupe.ToUpper()
+            Case "GRANULATS" : liste.AddRange({Buttontr1, Buttontr2, Buttontr3, Buttontr4, Buttontpa, Buttontpm, Buttonskh, Buttonska, Buttonskb})
+            Case "CIMENTS" : liste.AddRange({Buttonsl1, Buttonsl2, Buttonsltr})
+            Case "EAUX" : liste.AddRange({Buttoneau1, Buttoneau2, Buttoneautr})
+            Case "ADJUVANTS" : liste.AddRange({Buttonadj1, Buttonadj2, Buttonadj3, Buttonadj4, Buttonadjtr})
+            Case "MALAXEURS" : liste.AddRange({Buttonmxm, Buttonmxa, Buttonmxov, Buttonmxfr})
+        End Select
+        Return liste
+    End Function
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  CONNEXION PLC
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub ConnecterPLC()
+        Try
+            ' Utiliser PLCInstance de Module1 au lieu de créer une nouvelle connexion
+            If Module1.PLCInstance Is Nothing OrElse Not Module1.PLCInstance.IsConnected Then
+                ConnecterPLCGlobal()   ' ← Module1 crée la connexion
+            End If
+
+            ' Synoptique utilise la même connexion
+            _plc = Module1.PLCInstance
+            _plcConnecte = (_plc IsNot Nothing AndAlso _plc.IsConnected)
+
+            If _plcConnecte Then
+                'lblEtatPLC.Text = "PLC : Connecté " & PLC_IP
+                ' lblEtatPLC.ForeColor = Color.Green
+                ' lblEtatPLC.BackColor = Color.FromArgb(220, 255, 220)
+                EnregistrerAction("SYNOPTIQUE", "PLC connecte", "IP " & PLC_IP, "", "", "CONNEXION")
+            Else
+                'lblEtatPLC.Text = "PLC : Déconnecté"
+                '  lblEtatPLC.ForeColor = Color.Red
+                '  lblEtatPLC.BackColor = Color.FromArgb(255, 220, 220)
+            End If
+
+        Catch ex As Exception
+            _plcConnecte = False
+            lblEtatPLC.Text = "PLC : Erreur"
+            lblEtatPLC.ForeColor = Color.Red
+            Debug.WriteLine("Synoptique ConnecterPLC : " & ex.Message)
+        End Try
+    End Sub
+
+    ' Exposer le PLC pour que Planification_Demands puisse ecrire
+    Public Function GetPLC() As S7.Net.Plc
+        Return _plc
+    End Function
+
+    Private Function LireIPPLC() As String
+        Try
+            Dim val = ModuleDb.LireValeur(Of String)(
+                "SELECT TOP 1 CONF_IP_PLC FROM dbo.ConfigurationSociete")
+            If val IsNot Nothing Then Return val.ToString()
+        Catch
+        End Try
+        Return "192.168.0.1"
+    End Function
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  TIMER
+    ' ═══════════════════════════════════════════════════════════════
+    ' Timer1 1000ms — lecture PLC + mise a jour affichage
+    Private _lectureEnCours As Boolean = False
+
+    Private Sub Timer1_Tick(sender As Object, e As EventArgs) Handles Timer1.Tick
+        If _lectureEnCours Then Exit Sub
+        _lectureEnCours = True
+        Try
+            _plc = Module1.PLCInstance
+            MettreAJourSynoptique()        ' images (1s suffit)
+            MettreAJourBoutonsOperateur()  ' boutons (1s suffit)
+            AfficherLabelsContinu()        ' labels config (1s suffit)
+            _tickCount += 1
+            If _tickCount Mod 10 = 0 AndAlso _plcConnecte Then ArchiverTagsSQL()
+        Finally
+            _lectureEnCours = False
+        End Try
+    End Sub
+
+
+    ' Timer2 2000ms — lecture SQL + lectures PLC lentes
+    Private Sub Timer2_Tick(sender As Object, e As EventArgs) Handles Timer2.Tick
+        ChargerEtatsBDD()
+        ChargerJournalActions()
+        ChargerConfigElements()
+
+        ' Revalider la connexion reelle a chaque tick (pas confiance au flag seul)
+        _plcConnecte = (_plc IsNot Nothing AndAlso _plc.IsConnected)
+
+        If _plcConnecte Then
+            ModuleArchivageGachees.Instance.SurveillanceCycleUI(_plc)
+        End If
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  LECTURE TAGS PLC — MAPPING CPU REEL S7-1200
+    ' ═══════════════════════════════════════════════════════════════
+    ' ═══════════════════════════════════════════════════════════════
+    '  LECTURE TAGS PLC — ReadBytes par bloc (1 appel reseau par DB)
+    '  Avant : 56 appels reseau. Maintenant : 5 appels au total.
+    ' ═══════════════════════════════════════════════════════════════
+    ' ═══════════════════════════════════════════════════════════════
+    '  LECTURE TAGS PLC — lectures individuelles S7.Net
+    ' ═══════════════════════════════════════════════════════════════
+
+    Private Function ToFloat(data() As Byte, offset As Integer) As Single
+        If data Is Nothing OrElse offset + 3 >= data.Length Then Return 0
+        ' S7 = Big Endian → inverser les bytes
+        Dim b() As Byte = {data(offset + 3), data(offset + 2), data(offset + 1), data(offset)}
+        Return BitConverter.ToSingle(b, 0)
+    End Function
+
+    Private Function ToInt16(data() As Byte, offset As Integer) As Integer
+        If data Is Nothing OrElse offset + 1 >= data.Length Then Return 0
+        Return CInt(data(offset)) * 256 + CInt(data(offset + 1))
+    End Function
+
+    Private Function ToBit(data() As Byte, byteOff As Integer, bitOff As Integer) As Boolean
+        If data Is Nothing OrElse byteOff >= data.Length Then Return False
+        Return (data(byteOff) And (1 << bitOff)) <> 0
+    End Function
+    ' Lecture lente toutes les 10s
+
+
+
+
+
+
+    Private Function LireDBD(db As Integer, dbd As Integer) As Single
+        Try
+            Dim result As Object = _plc.Read(DataType.DataBlock, db, dbd, VarType.Real, 1)
+            If result IsNot Nothing Then Return CSng(result)
+        Catch
+        End Try
+        Return 0.0F
+    End Function
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  MISE A JOUR LABELS
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub MettreAJourLabels()
+        AfficherPoids(lblPoidsAGR, _poids_AGR, "kg", 900)
+        AfficherPoids(lblPoidsCIM, _poids_CIM, "kg", 131)
+        AfficherPoids(lblPoidsEAU, _poids_EAU, "L", 74)
+        AfficherPoids(lblPoidsADJ, _poids_ADJ, "kg", 10)
+
+        Label1.Text = _cons_G1.ToString("0.0")   ' DB8 DBD0
+        Label2.Text = _cons_SC.ToString("0.0")   ' DB8 DBD4
+        Label3.Text = _cons_SL.ToString("0.0")   ' DB8 DBD8
+        Label4.Text = _cons_D2.ToString("0.0")   ' DB8 DBD12
+        lblNGachee.Text = "Gachee : " & _nGachee.ToString() &
+                            " / Total: " & _nGacheeTotal.ToString() &
+                            " | Reste: " & _nGacheeReste.ToString()
+        ' Capacite malaxeur et camion
+        lblCapMalaxeur.Text = "Malaxeur : " & _capMalaxeur.ToString("0.00") & " m3"
+        lblCapCamion.Text = "Camion : " & _capCamion.ToString("0.00") & " m3"
+        lblMalaxeur.Text = If(_malaxeurON, "MALAXEUR : MARCHE", "MALAXEUR : ARRET")
+        lblMalaxeur.ForeColor = If(_malaxeurON, Color.Green, Color.Gray)
+        lblCycle.Text = If(_cycleEnCours, "CYCLE EN COURS", "EN ATTENTE")
+        lblCycle.ForeColor = If(_cycleEnCours, Color.Blue, Color.Gray)
+        ' ══ Voyants capteurs densité ══
+        AppliquerVoyant(Picture1, _bitDens1)
+        AppliquerVoyant(Picture2, _bitDens2)
+        AppliquerVoyant(Picture3, _bitDens3)
+        AppliquerVoyant(Picture4, _bitDens4)
+        AppliquerVoyant(Picture5, _bitDens5)
+        AppliquerVoyant(Picture6, _bitDens6)
+        AppliquerVoyant(Picture7, _bitDens7)
+        AppliquerVoyant(Picture8, _bitDens8)
+        AppliquerVoyant(Picture9, _bitDens9)
+        AppliquerVoyant(Picture10, _bitDens10)
+        AppliquerVoyant(Picture11, _bitDens11)
+        AppliquerVoyant(Picture12, _bitDens12)
+        ' Afficher etat BL en cours et volume livre
+        Dim arch = ModuleArchivageGachees.Instance
+        Dim infoLivre As String = ""
+        If arch.NumeroBL <> "" Then
+            infoLivre = "BL: " & arch.NumeroBL & " | Gachees: " & arch.NombreGachees &
+                " | Vol livre: " & arch.VolumeLivre.ToString("0.00") & " m3"
+            If Not _plcConnecte Then
+                infoLivre &= "   ⚠ EN ATTENTE DE COMMUNICATION PLC"
+            End If
+        End If
+        lblInfoLivraison.Text = infoLivre
+        lblInfoLivraison.ForeColor = If(_plcConnecte, Color.Black, Color.OrangeRed)
+
+        If _arretUrg Then
+            lblAlarme.Text = "ARRET URGENCE !"
+            lblAlarme.ForeColor = Color.White
+            lblAlarme.BackColor = Color.Red
+        Else
+            lblAlarme.Text = ""
+            lblAlarme.BackColor = Color.Transparent
+        End If
+    End Sub
+    ' ═══════════════════════════════════════════════════════════════
+    '  VOYANT CAPTEUR DENSITÉ — VERT si bit=1, ROUGE si bit=0
+    '  Utilise image disque si disponible, sinon couleur BackColor
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub AppliquerVoyant(pb As PictureBox, bitActif As Boolean)
+        ' Éviter redessinage inutile
+        Dim cleTag As String = If(bitActif, "vert", "rouge")
+        If pb.Tag IsNot Nothing AndAlso pb.Tag.ToString() = cleTag Then Exit Sub
+        pb.Tag = cleTag
+
+        ' Essayer image disque : voyant_vert.png / voyant_rouge.png
+        Dim fichier As String = DossierImages & If(bitActif, "voyant_vert.png", "voyant_rouge.png")
+        Dim img As Image = ChargerImageCachee(fichier)
+
+        If img IsNot Nothing Then
+            pb.Image = img
+            pb.SizeMode = PictureBoxSizeMode.StretchImage
+            pb.BackColor = Color.Transparent
+        Else
+            ' Pas d'image → fond coloré pur
+            pb.Image = Nothing
+            pb.BackColor = If(bitActif,
+            Color.FromArgb(80, 200, 80),    ' VERT
+            Color.FromArgb(220, 50, 50))    ' ROUGE
+        End If
+    End Sub
+    Private Sub AfficherPoids(lbl As Label, valeur As Single, unite As String, consigne As Single)
+        lbl.Text = valeur.ToString("0.0") & " " & unite
+        Dim ecart As Single = consigne - valeur
+        If valeur <= 0 Then
+            lbl.ForeColor = Color.Gray
+            lbl.BackColor = Color.Transparent
+        ElseIf Math.Abs(ecart) <= 2 Then
+            lbl.ForeColor = Color.Green
+            lbl.BackColor = Color.FromArgb(220, 255, 220)
+        ElseIf valeur < consigne Then
+            lbl.ForeColor = Color.Blue
+            lbl.BackColor = Color.FromArgb(220, 230, 255)
+        Else
+            lbl.ForeColor = Color.Red
+            lbl.BackColor = Color.FromArgb(255, 220, 220)
+        End If
+        ToolTip1.SetToolTip(lbl, "Consigne : " & consigne.ToString("0") & " " & unite &
+                    " | Ecart : " & ecart.ToString("+0.0;-0.0") & " " & unite)
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  ARCHIVAGE SQL
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub ArchiverTagsSQL()
+        Try
+            Dim tags() As (String, Single) = {
+                ("OUT SCAL AGR", _poids_AGR),
+                ("OUT SCAL CIM", _poids_CIM),
+                ("OUT SCAL EAU", _poids_EAU),
+                ("BASCULE ADJ", _poids_ADJ)}
+            Dim item As (String, Single)
+            For Each item In tags
+                ModuleDb.Executer(
+                    "UPDATE dbo.T_PLC_TAGS SET TAG_VALEUR_REAL=@v,TAG_DATEUPDATE=GETDATE() WHERE TAG_NOM=@n AND TAG_ACTIF=1",
+                    Sub(cmd)
+                        cmd.Parameters.AddWithValue("@v", item.Item2)
+                        cmd.Parameters.AddWithValue("@n", item.Item1)
+                    End Sub)
+            Next
+            ModuleDb.Executer(
+                "UPDATE dbo.T_PLC_TAGS SET TAG_VALEUR_BOOL=@v,TAG_DATEUPDATE=GETDATE() WHERE TAG_NOM=@n AND TAG_ACTIF=1",
+                Sub(cmd)
+                    cmd.Parameters.AddWithValue("@v", _malaxeurON)
+                    cmd.Parameters.AddWithValue("@n", "def malaxeur")
+                End Sub)
+            ModuleDb.Executer(
+                "UPDATE dbo.Synoptique_Etats SET SYN_Etat=@v, SYN_DateMAJ=GETDATE() WHERE SYN_Code='N_GACHEE'",
+                Sub(cmd) cmd.Parameters.AddWithValue("@v", _nGachee))
+        Catch
+        End Try
+    End Sub
+
+    Public Sub MettreAJourBascules(valAGR As Single, etatAGR As Integer,
+                                   valCIM As Single, etatCIM As Integer,
+                                   valEAU As Single, etatEAU As Integer)
+
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  CHARGER ETATS BDD
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub ChargerEtatsBDD()
+        Try
+            Dim dt As DataTable = ModuleDb.Lire(
+                "SELECT SYN_Code, SYN_Etat FROM dbo.Synoptique_Etats")
+            If dt Is Nothing Then Exit Sub
+            Dim row As DataRow
+            For Each row In dt.Rows
+                Dim code As String = row("SYN_Code").ToString().ToUpper()
+                Dim etat As Integer = Convert.ToInt32(row("SYN_Etat"))
+                Select Case code
+
+                    ' ══ Éléments pilotés par le CPU ══════════════════
+                    '  BDD utilisée SEULEMENT si PLC déconnecté (secours)
+                    Case "TREMIE_1" : If Not _plcConnecte Then _etatTremie(1) = etat
+                    Case "TREMIE_2" : If Not _plcConnecte Then _etatTremie(2) = etat
+                    Case "TREMIE_3" : If Not _plcConnecte Then _etatTremie(3) = etat
+                    Case "TREMIE_4" : If Not _plcConnecte Then _etatTremie(4) = etat
+                    Case "TAPIS" : If Not _plcConnecte Then _etatTapis = etat
+                    Case "SKIP" : If Not _plcConnecte Then _etatSkip = etat
+                    Case "MALAXEUR" : If Not _plcConnecte Then _etatMalaxeur = etat
+                    Case "SILO_1" : If Not _plcConnecte Then _etatSilo(1) = etat
+                    Case "SILO_2" : If Not _plcConnecte Then _etatSilo(2) = etat
+                    Case "BASC_CIM" : If Not _plcConnecte Then _etatBasculeCim = etat
+                    Case "BASC_EAU" : If Not _plcConnecte Then _etatBasculeEau = etat
+                    Case "BASC_ADJ" : If Not _plcConnecte Then _etatBasculeAdj = etat
+                    Case "ADJ_1" : If Not _plcConnecte Then _etatAdj(1) = etat
+                    Case "ADJ_2" : If Not _plcConnecte Then _etatAdj(2) = etat
+                    Case "ADJ_3" : If Not _plcConnecte Then _etatAdj(3) = etat
+                    Case "ADJ_4" : If Not _plcConnecte Then _etatAdj(4) = etat
+
+                    ' ══ Éléments SANS pilotage CPU ═══════════════════
+                    '  BDD = seule source, toujours appliquée
+                    Case "TREMIE_5" : _etatTremie(5) = etat
+                    Case "TREMIE_6" : _etatTremie(6) = etat
+                    Case "TREMIE_7" : _etatTremie(7) = etat
+                    Case "TREMIE_8" : _etatTremie(8) = etat
+                    Case "SILO_3" : _etatSilo(3) = etat
+                    Case "SILO_4" : _etatSilo(4) = etat
+                    Case "POMPE_1" : _etatPompe(1) = etat
+                    Case "POMPE_2" : _etatPompe(2) = etat
+                End Select
+            Next
+        Catch ex As Exception
+            Debug.WriteLine("Erreur BDD Synoptique : " & ex.Message)
+        End Try
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  MENUS CLIC DROIT
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub InitMenusClicDroit()
+        Dim tremies() As PictureBox = {PictureBox1, PictureBox2, PictureBox3, PictureBox4}
+        Dim i As Integer
+        For i = 0 To tremies.Length - 1
+            Dim num As Integer = i + 1
+            Dim pb As PictureBox = tremies(i)
+            Dim menu As New ContextMenuStrip()
+            menu.Items.Add("Tremie " & num, Nothing, Nothing)
+            menu.Items.Add(New ToolStripSeparator())
+            menu.Items.Add("Configuration", Nothing,
+                Sub(s, ev)
+                    Dim f As New Frm_Config_Case(num, "TREMIE")
+                    f.ShowDialog(Me)
+                End Sub)
+            menu.Items.Add("Voir stock", Nothing, Sub(s, ev) VoirStock("TREMIE_" & num))
+            menu.Items.Add("Mettre en marche", Nothing, Sub(s, ev) ChangerEtat("TREMIE_" & num, 1, pb, "tremie"))
+            menu.Items.Add("Mettre a l arret", Nothing, Sub(s, ev) ChangerEtat("TREMIE_" & num, 0, pb, "tremie"))
+            menu.Items.Add("Signaler alarme", Nothing, Sub(s, ev) ChangerEtat("TREMIE_" & num, 2, pb, "tremie"))
+            pb.ContextMenuStrip = menu
+        Next i
+
+        Dim silos() As PictureBox = {PictureBox12, PictureBox13}
+        For i = 0 To silos.Length - 1
+            Dim num As Integer = i + 1
+            Dim pb As PictureBox = silos(i)
+            Dim menu As New ContextMenuStrip()
+            menu.Items.Add("Silo Ciment " & num, Nothing, Nothing)
+            menu.Items.Add(New ToolStripSeparator())
+            menu.Items.Add("Activer ce silo", Nothing, Sub(s, ev) ChoisirSiloCiment(num))
+            menu.Items.Add("Voir niveau", Nothing, Sub(s, ev) VoirNiveauSilo(num))
+            menu.Items.Add("Demarrer remplissage", Nothing, Sub(s, ev) DemarrerRemplissage(num))
+            menu.Items.Add("En service", Nothing, Sub(s, ev) ChangerEtat("SILO_" & num, 1, pb, "silo"))
+            menu.Items.Add("Hors service", Nothing, Sub(s, ev) ChangerEtat("SILO_" & num, 0, pb, "silo"))
+            pb.ContextMenuStrip = menu
+        Next i
+    End Sub
+
+    Private Sub ChangerEtat(code As String, etat As Integer, pb As PictureBox, typeEquip As String)
+        Try
+            ModuleDb.Executer(
+                "UPDATE dbo.Synoptique_Etats SET SYN_Etat=@etat, SYN_DateMAJ=GETDATE() WHERE SYN_Code=@code",
+                Sub(cmd)
+                    cmd.Parameters.Add("@etat", SqlDbType.Int).Value = etat
+                    cmd.Parameters.Add("@code", SqlDbType.NVarChar, 50).Value = code
+                End Sub)
+            AppliquerImage(pb, typeEquip, etat)
+        Catch ex As Exception
+            MessageBox.Show("Erreur : " & ex.Message)
+        End Try
+    End Sub
+
+    Private Sub VoirStock(code As String)
+        MessageBox.Show("Stock de " & code, "Stock", MessageBoxButtons.OK, MessageBoxIcon.Information)
+    End Sub
+
+    Private Sub VoirNiveauSilo(num As Integer)
+        Dim niveau = ModuleDb.LireValeur(Of Single)(
+            "SELECT TOP 1 TAG_VALEUR_REAL FROM dbo.T_PLC_TAGS WHERE TAG_NOM LIKE '%SILO%" & num & "%'")
+        MessageBox.Show("Niveau Silo " & num & " : " & If(niveau > 0, niveau.ToString("0.0") & " %", "N/A"),
+                        "Niveau Silo", MessageBoxButtons.OK, MessageBoxIcon.Information)
+    End Sub
+
+    Private Sub DemarrerRemplissage(num As Integer)
+        If MessageBox.Show("Demarrer remplissage Silo " & num & " ?", "Confirmation",
+                           MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
+            MessageBox.Show("Ordre remplissage envoye.")
+        End If
+    End Sub
+
+    Private Sub VoirPesee(type As String)
+        Dim val As Single = 0
+        Select Case type.ToUpper
+            Case "AGR" : val = _poids_AGR
+            Case "CIM" : val = _poids_CIM
+            Case "EAU" : val = _poids_EAU
+            Case "ADJ" : val = _poids_ADJ
+        End Select
+        MessageBox.Show("Bascule " & type & " : " & val.ToString("0.0") & " kg",
+                        "Pesee en cours", MessageBoxButtons.OK, MessageBoxIcon.Information)
+    End Sub
+
+    Private Sub TarerBascule(type As String)
+        If Not _plcConnecte Then MessageBox.Show("PLC non connecte.") : Exit Sub
+        If MessageBox.Show("Tarer la bascule " & type & " ?", "Confirmation",
+                           MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
+            Try
+                _plc.Write("M1.1", True)
+                Threading.Thread.Sleep(200)
+                _plc.Write("M1.1", False)
+                MessageBox.Show("Tare envoyee au PLC.")
+            Catch ex As Exception
+                MessageBox.Show("Erreur tare : " & ex.Message)
+            End Try
+        End If
+    End Sub
+
+    Private Sub VoirVolumeAdj(num As Integer)
+        MessageBox.Show("Adjuvant " & num & " : " & _poids_ADJ.ToString("0.00") & " kg",
+                        "Volume Adjuvant", MessageBoxButtons.OK, MessageBoxIcon.Information)
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  SYNOPTIQUE PICTUREBOX
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub MettreAJourSynoptique()
+        AppliquerImage(PictureBox1, "tremie", _etatTremie(1))
+        AppliquerImage(PictureBox2, "tremie", _etatTremie(2))
+        AppliquerImage(PictureBox3, "tremie", _etatTremie(3))
+        AppliquerImage(PictureBox4, "tremie", _etatTremie(4))
+        AppliquerImage(PictureBox9, "tapis", _etatTapis)
+        AppliquerImage(PictureBox10, "skip", _etatSkip)
+        AppliquerImage(PictureBox11, "malaxeur", _etatMalaxeur)
+        AppliquerImage(PictureBox12, "silo", _etatSilo(1))
+        AppliquerImage(PictureBox13, "silo", _etatSilo(2))
+        AppliquerImage(PictureBox16, "bascule", _etatBasculeCim)
+        AppliquerImage(PictureBox17, "pompe", _etatPompe(1))
+        AppliquerImage(PictureBox18, "pompe", _etatPompe(2))
+        AppliquerImage(PictureBox19, "bascule", _etatBasculeEau)
+        AppliquerImage(PictureBox20, "adjuvant", _etatAdj(1))
+        AppliquerImage(PictureBox21, "adjuvant", _etatAdj(2))
+        AppliquerImage(PictureBox22, "adjuvant", _etatAdj(3))
+        AppliquerImage(PictureBox23, "adjuvant", _etatAdj(4))
+        AppliquerImage(PictureBox24, "bascule", _etatBasculeAdj)
+
+        ' ── Fleche clignotante selon bit PLC ─────────────────────
+        AppliquerFleche(PictureBoxtr1, _bitTr1)
+        AppliquerFleche(PictureBoxtr2, _bitTr2)
+        AppliquerFleche(PictureBoxtr3, _bitTr3)
+        AppliquerFleche(PictureBoxtr4, _bitTr4)
+        AppliquerFleche(PictureBoxmx, _bitMx)
+        AppliquerFleche(PictureBoxs1, _bitS1)
+        AppliquerFleche(PictureBoxs2, _bitS2)
+        AppliquerFleche(PictureBoxsl, _bitSl)
+        AppliquerFleche(PictureBoxea1, _bitEa1)
+        AppliquerFleche(PictureBoxeau, _bitEau)
+        AppliquerFleche(PictureBoxadj1, _bitAdj1)
+        AppliquerFleche(PictureBoxadj2, _bitAdj2)
+        AppliquerFleche(PictureBoxadj3, _bitAdj3)
+        AppliquerFleche(PictureBoxadj4, _bitAdj4)
+        AppliquerFleche(PictureBoxeaadjj, _bitEaadjj)
+
+
+    End Sub
+
+    ' Tag = dernier etat affiche pour eviter rechargement inutile
+    Private Sub AppliquerImage(pb As PictureBox, typeEquip As String, etat As Integer)
+        ' Ne recharger que si l etat a change
+        Dim cleEtat As String = typeEquip & "_" & etat.ToString()
+        If pb.Tag IsNot Nothing AndAlso pb.Tag.ToString() = cleEtat Then Exit Sub
+        pb.Tag = cleEtat
+
+        Dim chemin As String = GetImagePath(typeEquip, etat)
+        pb.SizeMode = PictureBoxSizeMode.StretchImage
+
+        ' Essayer .png d abord puis .gif si pas trouve
+        Dim img As Image = ChargerImageCachee(chemin)
+        If img Is Nothing Then
+            Dim cheminGif As String = chemin.Replace(".png", ".gif")
+            img = ChargerImageCachee(cheminGif)
+        End If
+
+        If img IsNot Nothing Then
+            pb.Image = img
+            pb.BackColor = Color.Transparent
+        Else
+            pb.Image = Nothing
+            pb.BackColor = CouleurSecours(etat)
+            Debug.WriteLine("Image non trouvee : " & chemin)
+        End If
+        ToolTip1.SetToolTip(pb, typeEquip.ToUpper & " - " & NomEtat(typeEquip, etat))
+    End Sub
+
+    Private Function GetImagePath(typeEquip As String, etat As Integer) As String
+        Dim fichier As String = ""
+        Dim lst() As String
+        Select Case typeEquip.ToLower()
+            Case "tremie"
+                lst = New String() {"tremie_arret", "tremie_marche", "tremie_alarme", "tremie_defaut"}
+                fichier = lst(Math.Min(etat, 3)) & ".png"
+            Case "tapis"
+                lst = New String() {"tapis_arret", "tapis_arret_sable",
+                        "tapis_marche_sable", "tapis_marche_vide"}
+                fichier = lst(Math.Min(etat, 3)) & ".gif"
+            Case "skip"
+                lst = New String() {"skip_vide_bas", "skip_vide_attente", "skip_vide_haut",
+                        "skip_plein_bas", "skip_plein_attente", "skip_plein_haut",
+                        "skip_monte", "skip_descend"}
+                fichier = lst(Math.Min(etat, 7)) & ".gif"
+            Case "malaxeur"
+                lst = New String() {"malaxeur_arret", "malaxeur_marche", "malaxeur_vide"}
+                fichier = lst(Math.Min(etat, 2)) & ".gif"
+            Case "silo"
+                lst = New String() {"silo_arret", "silo_marche", "silo_alarme", "silo_defaut"}
+                fichier = lst(Math.Min(etat, 3)) & ".png"
+            Case "bascule"
+                lst = New String() {"bascule_arret", "bascule_marche", "bascule_alarme", "bascule_defaut"}
+                fichier = lst(Math.Min(etat, 3)) & ".png"
+            Case "pompe"
+                lst = New String() {"pompe_arret", "pompe_marche", "pompe_alarme", "pompe_defaut"}
+                fichier = lst(Math.Min(etat, 3)) & ".png"
+            Case "adjuvant"
+                lst = New String() {"adjuvant_arret", "adjuvant_marche", "adjuvant_alarme", "adjuvant_defaut"}
+                fichier = lst(Math.Min(etat, 3)) & ".png"
+        End Select
+        Return DossierImages & fichier
+    End Function
+
+    Private Function CouleurSecours(etat As Integer) As Color
+        Select Case etat
+            Case 1 : Return Color.FromArgb(180, 255, 180)
+            Case 2 : Return Color.FromArgb(255, 255, 140)
+            Case 3 : Return Color.FromArgb(255, 160, 160)
+            Case Else : Return Color.FromArgb(210, 210, 210)
+        End Select
+    End Function
+
+    Private Function NomEtat(typeEquip As String, etat As Integer) As String
+        Select Case typeEquip.ToLower()
+            Case "tapis"
+                Dim lst() As String = {"Arret", "Arret sable", "Marche sable", "Marche vide"}
+                Return lst(Math.Min(etat, 3))
+            Case "skip"
+                Dim lst() As String = {"Vide bas", "Vide attente", "Vide haut",
+                                       "Plein bas", "Plein attente", "Plein haut", "Monte", "Descend"}
+                Return lst(Math.Min(etat, 7))
+            Case "malaxeur"
+                Dim lst() As String = {"Arret", "Marche", "Vide"}
+                Return lst(Math.Min(etat, 2))
+            Case Else
+                Dim lst() As String = {"Arret", "Marche", "Alarme", "Defaut"}
+                Return lst(Math.Min(etat, 3))
+        End Select
+    End Function
+
+    Public Sub AppliquerEtatsTest(etats As Dictionary(Of String, Integer))
+        If etats.ContainsKey("TREMIE_1") Then _etatTremie(1) = etats("TREMIE_1")
+        If etats.ContainsKey("TREMIE_2") Then _etatTremie(2) = etats("TREMIE_2")
+        If etats.ContainsKey("TREMIE_3") Then _etatTremie(3) = etats("TREMIE_3")
+        If etats.ContainsKey("TREMIE_4") Then _etatTremie(4) = etats("TREMIE_4")
+        If etats.ContainsKey("TAPIS") Then _etatTapis = etats("TAPIS")
+        If etats.ContainsKey("SKIP") Then _etatSkip = etats("SKIP")
+        If etats.ContainsKey("MALAXEUR") Then _etatMalaxeur = etats("MALAXEUR")
+        If etats.ContainsKey("SILO_1") Then _etatSilo(1) = etats("SILO_1")
+        If etats.ContainsKey("SILO_2") Then _etatSilo(2) = etats("SILO_2")
+        If etats.ContainsKey("BASC_CIM") Then _etatBasculeCim = etats("BASC_CIM")
+        If etats.ContainsKey("POMPE_1") Then _etatPompe(1) = etats("POMPE_1")
+        If etats.ContainsKey("POMPE_2") Then _etatPompe(2) = etats("POMPE_2")
+        If etats.ContainsKey("BASC_EAU") Then _etatBasculeEau = etats("BASC_EAU")
+        If etats.ContainsKey("ADJ_1") Then _etatAdj(1) = etats("ADJ_1")
+        If etats.ContainsKey("ADJ_2") Then _etatAdj(2) = etats("ADJ_2")
+        If etats.ContainsKey("ADJ_3") Then _etatAdj(3) = etats("ADJ_3")
+        If etats.ContainsKey("ADJ_4") Then _etatAdj(4) = etats("ADJ_4")
+        If etats.ContainsKey("BASC_ADJ") Then _etatBasculeAdj = etats("BASC_ADJ")
+        MettreAJourSynoptique()
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  BOUTONS
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub btnReconnecterPLC_Click(sender As Object, e As EventArgs)
+        'If _plc IsNot Nothing AndAlso _plc.IsConnected Then _plc.Close()
+        _plcConnecte = False
+        ConnecterPLC()
+    End Sub
+
+    Private Sub Form_Synoptique_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+        Timer1.Stop()
+        Timer2.Stop()
+        RemoveHandler ModulePLCDuplex.NouvellesValeurs, AddressOf SurNouvellesValeursPLC
+        ' Arreter thread journal et vider la file avant fermeture
+        _stopJournal = True
+        If _threadJournal IsNot Nothing AndAlso _threadJournal.IsAlive Then
+            _threadJournal.Join(1000)
+        End If
+        ' NE PAS fermer _plc — c'est la connexion partagée Module1.PLCInstance
+    End Sub
+
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
+        For Each frm As Form In Application.OpenForms
+            If TypeOf frm Is Dosage_manuel Then frm.Close() : Exit For
+        Next
+        Dim f As New Dosage_manuel
+        Dosage_manuel.RefSynoptique = Me
+        f.Owner = Me
+        f.TopMost = True
+        f.Show()
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  BOUTONS FORCAGE
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub InitBoutonsForcage()
+        AjouterPoussoir(Buttontr1, "M30.0", "GRANULATS", "Tremie 1")
+        AjouterPoussoir(Buttontr2, "M30.1", "GRANULATS", "Tremie 2")
+        AjouterPoussoir(Buttontr3, "M30.2", "GRANULATS", "Tremie 3")
+        AjouterPoussoir(Buttontr4, "M30.3", "GRANULATS", "Tremie 4")
+        StyleBoutonMarche(Buttontpa) : StyleBoutonArret(Buttontpm)
+        AddHandler Buttontpa.Click, Sub(s, e)
+                                        If Not Dosage_manuel.ModeForceGranulats Then MessageBox.Show("Activez FORCAGE GRANULATS !") : Exit Sub
+                                        _plc.Write("M30.4", 1) : MAJBoutonActif(Buttontpa, True) : MAJBoutonActif(Buttontpm, False)
+                                        AfficherForcage("Tapis MARCHE") : EnregistrerAction("FORCAGE", "Tapis marche", DetailBascules("GRANULATS"), "M30.4", "1", "FORCAGE")
+                                    End Sub
+        AddHandler Buttontpm.Click, Sub(s, e)
+                                        If Not Dosage_manuel.ModeForceGranulats Then MessageBox.Show("Activez FORCAGE GRANULATS !") : Exit Sub
+                                        _plc.Write("M30.4", 0) : MAJBoutonActif(Buttontpm, True) : MAJBoutonActif(Buttontpa, False)
+                                        AfficherForcage("Tapis ARRET") : EnregistrerAction("FORCAGE", "Tapis arret", DetailBascules("GRANULATS"), "M30.4", "0", "FORCAGE")
+                                    End Sub
+        StyleBoutonMarche(Buttonskh) : StyleBoutonMarche(Buttonskb) : StyleBoutonArret(Buttonska)
+        AddHandler Buttonskh.Click, Sub(s, e)
+                                        If Not Dosage_manuel.ModeForceGranulats Then MessageBox.Show("Activez FORCAGE GRANULATS !") : Exit Sub
+                                        _plc.Write("M30.5", 1) : _plc.Write("M30.6", 0)
+                                        MAJBoutonActif(Buttonskh, True) : MAJBoutonActif(Buttonskb, False) : MAJBoutonActif(Buttonska, False)
+                                        AfficherForcage("Skip MONTEE") : EnregistrerAction("FORCAGE", "Skip montee", DetailBascules("GRANULATS"), "M30.5", "1", "FORCAGE")
+                                    End Sub
+        AddHandler Buttonskb.Click, Sub(s, e)
+                                        If Not Dosage_manuel.ModeForceGranulats Then MessageBox.Show("Activez FORCAGE GRANULATS !") : Exit Sub
+                                        _plc.Write("M30.6", 1) : _plc.Write("M30.5", 0)
+                                        MAJBoutonActif(Buttonskb, True) : MAJBoutonActif(Buttonskh, False) : MAJBoutonActif(Buttonska, False)
+                                        AfficherForcage("Skip DESCENTE") : EnregistrerAction("FORCAGE", "Skip descente", DetailBascules("GRANULATS"), "M30.6", "1", "FORCAGE")
+                                    End Sub
+        AddHandler Buttonska.Click, Sub(s, e)
+                                        If Not Dosage_manuel.ModeForceGranulats Then MessageBox.Show("Activez FORCAGE GRANULATS !") : Exit Sub
+                                        _plc.Write("M30.5", 0) : _plc.Write("M30.6", 0)
+                                        MAJBoutonActif(Buttonska, True) : MAJBoutonActif(Buttonskh, False) : MAJBoutonActif(Buttonskb, False)
+                                        AfficherForcage("Skip ARRET") : EnregistrerAction("FORCAGE", "Skip arret", DetailBascules("GRANULATS"), "M30.5+M30.6", "0", "FORCAGE")
+                                    End Sub
+        AjouterPoussoir(Buttonsl1, "M30.7", "CIMENTS", "Vis CIM 1")
+        AjouterPoussoir(Buttonsl2, "M31.0", "CIMENTS", "Vis CIM 2")
+        AjouterPoussoir(Buttonsltr, "M31.1", "CIMENTS", "Trappe CIM")
+        AjouterPoussoir(Buttoneau1, "M31.2", "EAUX", "Vanne EAU Ouvrir")
+        AddHandler Buttoneau2.MouseDown, Sub(s, e)
+                                             If Not Dosage_manuel.ModeForceEaux Then MessageBox.Show("Activez FORCAGE EAUX !") : Exit Sub
+                                             EcrirePLC("M31.2", False) : MAJBoutonActif(Buttoneau2, True)
+                                             AfficherForcage("Vanne EAU FERMER") : EnregistrerAction("FORCAGE", "Vanne EAU fermer", DetailBascules("EAUX"), "M31.2", "False", "FORCAGE")
+                                         End Sub
+        AddHandler Buttoneau2.MouseUp, Sub(s, e) MAJBoutonActif(Buttoneau2, False)
+        AjouterPoussoir(Buttoneautr, "M31.3", "EAUX", "Trappe EAU")
+        AjouterPoussoir(Buttonadj1, "M31.4", "ADJUVANTS", "ADJ 1")
+        AjouterPoussoir(Buttonadj2, "M31.5", "ADJUVANTS", "ADJ 2")
+        AjouterPoussoir(Buttonadj3, "M31.6", "ADJUVANTS", "ADJ 3")
+        AjouterPoussoir(Buttonadj4, "M31.7", "ADJUVANTS", "ADJ 4")
+        AjouterPoussoir(Buttonadjtr, "M32.0", "ADJUVANTS", "Trappe ADJ")
+        StyleBoutonMarche(Buttonmxm) : StyleBoutonArret(Buttonmxa)
+        AddHandler Buttonmxm.Click, Sub(s, e)
+                                        If Not Dosage_manuel.ModeForceMalaxeurs Then MessageBox.Show("Activez FORCAGE MALAXEURS !") : Exit Sub
+                                        If MessageBox.Show("Demarrer le malaxeur ?", "Confirmation",
+                                            MessageBoxButtons.YesNo, MessageBoxIcon.Warning) = DialogResult.No Then Exit Sub
+                                        _plc.Write("M14.2", 1) : MAJBoutonActif(Buttonmxm, True) : MAJBoutonActif(Buttonmxa, False)
+                                        AfficherForcage("Malaxeur MARCHE") : EnregistrerAction("FORCAGE", "Malaxeur marche", DetailBascules("MALAXEURS"), "M14.2", "1", "FORCAGE")
+                                    End Sub
+        AddHandler Buttonmxa.Click, Sub(s, e)
+                                        If Not Dosage_manuel.ModeForceMalaxeurs Then MessageBox.Show("Activez FORCAGE MALAXEURS !") : Exit Sub
+                                        _plc.Write("M14.2", 0) : MAJBoutonActif(Buttonmxa, True) : MAJBoutonActif(Buttonmxm, False)
+                                        AfficherForcage("Malaxeur ARRET") : EnregistrerAction("FORCAGE", "Malaxeur arret", DetailBascules("MALAXEURS"), "M14.2", "0", "FORCAGE")
+                                    End Sub
+        AjouterPoussoir(Buttonmxov, "M32.1", "MALAXEURS", "Trappe MLX Ouvrir")
+        AjouterPoussoir(Buttonmxfr, "M32.2", "MALAXEURS", "Trappe MLX Fermer")
+
+        ' Masquer tous les boutons au demarrage — visibles uniquement en mode forcage
+        CacherBoutonsGroupe("GRANULATS")
+        CacherBoutonsGroupe("CIMENTS")
+        CacherBoutonsGroupe("EAUX")
+        CacherBoutonsGroupe("ADJUVANTS")
+        CacherBoutonsGroupe("MALAXEURS")
+    End Sub
+
+    ' Genere le detail bascules selon le groupe actif
+    Private Function DetailBascules(groupe As String) As String
+        Select Case groupe.ToUpper()
+            Case "GRANULATS"
+                Return String.Format("AGR={0:0}kg | Cons={1:0}kg | Ecart={2:+0;-0}kg",
+                    _poids_AGR, _cons_G1 + _cons_SC + _cons_SL + _cons_D2,
+                    _ecar_G1 + _ecar_SC + _ecar_SL + _ecar_D2)
+            Case "CIMENTS"
+                Dim poseCIM As Single = If(_siloCimentActif = 1, _pose_CIM_S1, _pose_CIM_S2)
+                Return String.Format("CIM={0:0}kg | Cons={1:0}kg | Ecart={2:+0;-0}kg | Silo={3}",
+                    _poids_CIM, _cons_CIM, _ecar_CIM, _siloCimentActif)
+            Case "EAUX"
+                Return String.Format("EAU={0:0}L | Cons={1:0}L | Ecart={2:+0;-0}L",
+                    _poids_EAU, _cons_EAU2, _ecar_EAU2)
+            Case "ADJUVANTS"
+                Return String.Format("ADJ={0:0.000}kg | Cons={1:0.000}kg | A1={2:0.000} A2={3:0.000} A3={4:0.000} A4={5:0.000}",
+                    _poids_ADJ,
+                    _cons_ADJ1 + _cons_ADJ2 + _cons_ADJ3 + _cons_ADJ4,
+                    _pose_ADJ1, _pose_ADJ2, _pose_ADJ3, _pose_ADJ4)
+            Case "MALAXEURS"
+                Return String.Format("Malaxeur={0} | Cycle={1} | Gachee={2}",
+                    If(_malaxeurON, "MARCHE", "ARRET"),
+                    If(_cycleEnCours, "EN COURS", "ARRET"),
+                    _nGachee)
+            Case Else
+                Return ""
+        End Select
+    End Function
+
+    Private Sub AjouterPoussoir(btn As Button, adresse As String, groupe As String, nom As String)
+        AddHandler btn.MouseDown, Sub(s, e)
+                                      Dim ok As Boolean = False
+                                      Select Case groupe.ToUpper()
+                                          Case "GRANULATS" : ok = Dosage_manuel.ModeForceGranulats
+                                          Case "CIMENTS" : ok = Dosage_manuel.ModeForceCiments
+                                          Case "EAUX" : ok = Dosage_manuel.ModeForceEaux
+                                          Case "ADJUVANTS" : ok = Dosage_manuel.ModeForceAdjuvants
+                                          Case "MALAXEURS" : ok = Dosage_manuel.ModeForceMalaxeurs
+                                      End Select
+                                      If Not ok Then
+                                          MessageBox.Show("Activez d'abord FORCAGE " & groupe & " !",
+                                              "Forcage requis", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                          Exit Sub
+                                      End If
+                                      _plc.Write(adresse, 1)
+                                      MAJBoutonActif(CType(s, Button), True)
+                                      AfficherForcage(nom & " ACTIVE")
+                                      EnregistrerAction("FORCAGE", nom & " active",
+                                          DetailBascules(groupe), adresse, "1", "FORCAGE")
+                                  End Sub
+        AddHandler btn.MouseUp, Sub(s, e)
+                                    _plc.Write(adresse, 0)
+                                    MAJBoutonActif(CType(s, Button), False)
+                                    EnregistrerAction("FORCAGE", nom & " desactive",
+                                        DetailBascules(groupe), adresse, "0", "FORCAGE")
+                                End Sub
+    End Sub
+
+    Private Sub MAJBoutonActif(btn As Button, actif As Boolean)
+        If btn Is Nothing OrElse Not btn.Visible Then Exit Sub
+        btn.BackColor = If(actif, Color.FromArgb(100, 220, 100), Color.FromArgb(220, 220, 220))
+        btn.ForeColor = If(actif, Color.White, Color.Black)
+    End Sub
+
+    Private Sub StyleBoutonMarche(btn As Button)
+        If btn Is Nothing Then Exit Sub
+        btn.BackColor = Color.FromArgb(100, 220, 100)
+        btn.ForeColor = Color.White
+        btn.FlatAppearance.BorderColor = Color.DarkGreen
+    End Sub
+
+    Private Sub StyleBoutonArret(btn As Button)
+        If btn Is Nothing Then Exit Sub
+        btn.BackColor = Color.FromArgb(220, 60, 60)
+        btn.ForeColor = Color.White
+        btn.FlatAppearance.BorderColor = Color.DarkRed
+    End Sub
+
+    Private Sub MettreAJourBoutonsCPU()
+        If Not _plcConnecte Then Exit Sub
+        If Not (Dosage_manuel.ModeForceGranulats OrElse Dosage_manuel.ModeForceCiments OrElse
+                Dosage_manuel.ModeForceEaux OrElse Dosage_manuel.ModeForceAdjuvants OrElse
+                Dosage_manuel.ModeForceMalaxeurs) Then Exit Sub
+        Try
+            MAJBoutonActif(Buttontr1, _etatTremie(1) = 1)
+            MAJBoutonActif(Buttontr2, _etatTremie(2) = 1)
+            MAJBoutonActif(Buttontr3, _etatTremie(3) = 1)
+            MAJBoutonActif(Buttontr4, _etatTremie(4) = 1)
+            MAJBoutonActif(Buttontpa, _etatTapis = 1)
+            MAJBoutonActif(Buttontpm, _etatTapis = 0)
+            MAJBoutonActif(Buttonskh, _etatSkip = 6)
+            MAJBoutonActif(Buttonskb, _etatSkip = 7)
+            MAJBoutonActif(Buttonska, _etatSkip = 0)
+            MAJBoutonActif(Buttonsl1, _etatSilo(1) = 1)
+            MAJBoutonActif(Buttonsl2, _etatSilo(2) = 1)
+            MAJBoutonActif(Buttonsltr, _etatBasculeCim = 1)
+            MAJBoutonActif(Buttoneau1, _etatBasculeEau = 1)
+            MAJBoutonActif(Buttoneau2, _etatBasculeEau = 0)
+            MAJBoutonActif(Buttoneautr, _etatBasculeEau = 1)
+            MAJBoutonActif(Buttonadj1, _etatAdj(1) = 1)
+            MAJBoutonActif(Buttonadj2, _etatAdj(2) = 1)
+            MAJBoutonActif(Buttonadj3, _etatAdj(3) = 1)
+            MAJBoutonActif(Buttonadj4, _etatAdj(4) = 1)
+            MAJBoutonActif(Buttonadjtr, _etatBasculeAdj = 1)
+            MAJBoutonActif(Buttonmxm, _etatMalaxeur = 1)
+            MAJBoutonActif(Buttonmxa, _etatMalaxeur = 0)
+        Catch : End Try
+    End Sub
+
+    Private Sub EcrirePLC(adresse As String, valeur As Boolean)
+        Try
+            If _plc IsNot Nothing AndAlso _plc.IsConnected Then
+                _plc.Write(adresse, If(valeur, 1, 0))
+            End If
+        Catch ex As Exception
+            Debug.WriteLine("Erreur PLC " & adresse & " : " & ex.Message)
+        End Try
+    End Sub
+
+    Private Sub AfficherForcage(msg As String)
+        'lblEtatPLC.Text = "FORCAGE : " & msg & "  " & DateTime.Now.ToString("HH:mm:ss")
+        'lblEtatPLC.ForeColor = Color.DarkOrange
+        ' lblEtatPLC.BackColor = Color.FromArgb(255, 240, 200)
+        Dim t As New Timer() : t.Interval = 3000
+        AddHandler t.Tick, Sub(s, e)
+                               '  lblEtatPLC.Text = "PLC : OK " & DateTime.Now.ToString("HH:mm:ss")
+                               ' lblEtatPLC.ForeColor = Color.Green
+                               'lblEtatPLC.BackColor = Color.FromArgb(220, 255, 220)
+                               t.Stop()
+                           End Sub
+        t.Start()
+    End Sub
+
+    ' ── Impression BL detail apres livraison ─────────────────────
+    Public Sub ImprimerBLDetail(numeroBL As String)
+        Try
+            Dim f As New Form_ConfirmationBL()
+            f.ImprimerBLApresLivraison(numeroBL)
+        Catch ex As Exception
+            Debug.WriteLine("ImprimerBLDetail : " & ex.Message)
+        End Try
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════════
+    '  BOUTONS OPERATEUR — UN SEUL HANDLER PAR BOUTON (CORRIGE)
+    '  Appele UNE SEULE FOIS depuis Form_Synoptique_Load
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub InitBoutonsOperateur()
+
+        ' ── Style commun ─────────────────────────────────────────
+        For Each btn As Button In {btnModeAuto, btnDepartCycle, btnRAZ,
+                                   btnRAZDefaut, btnFinChargement, btnVidangeBeton}
+            btn.Size = New Size(140, 38)
+            btn.Font = New Font("Segoe UI", 9, FontStyle.Bold)
+            btn.FlatStyle = FlatStyle.Flat
+            btn.Cursor = Cursors.Hand
+        Next
+
+        ' ── Textes fixes ─────────────────────────────────────────
+        btnDepartCycle.Text = "▶  DEPART CYCLE"
+        btnRAZ.Text = "↺  RAZ"
+        btnRAZDefaut.Text = "⚠  REPRISE DEFAUT"
+        btnFinChargement.Text = "✔  FIN CHARGEMENT"
+
+        ' ════════════════════════════════════════════════════════
+        '  btnModeAuto — Bascule M9.1 (AUTO / MANUEL)
+        '  CORRIGE : un seul handler, lit CPU avant d ecrire
+        ' ════════════════════════════════════════════════════════
+        AddHandler btnModeAuto.Click, Sub(s, e)
+                                          If Not _plcConnecte Then
+                                              MessageBox.Show("PLC non connecte.", "Mode", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                              Exit Sub
+                                          End If
+                                          Try
+                                              Dim modeActuel As Boolean = CBool(_plc.Read("M9.1"))
+                                              Dim nouveauMode As Boolean = Not modeActuel
+                                              _plc.Write("M9.1", If(nouveauMode, 1, 0))
+                                              _modeAuto = nouveauMode
+                                              MettreAJourBoutonsOperateur()
+                                              AfficherForcage("Mode " & If(nouveauMode, "AUTOMATIQUE", "MANUEL"))
+                                              EnregistrerAction("COMMANDE", "Mode " & If(nouveauMode, "AUTO", "MANUEL"),
+                                                  "M9.1=" & If(nouveauMode, "1", "0"), "M9.1",
+                                                  If(nouveauMode, "1", "0"), "PLC_WRITE")
+                                          Catch ex As Exception
+                                              MessageBox.Show("Erreur Mode AUTO/MANU : " & ex.Message)
+                                          End Try
+                                      End Sub
+
+        ' ════════════════════════════════════════════════════════
+        '  btnDepartCycle — Impulsion M4.5
+        ' ════════════════════════════════════════════════════════
+        AddHandler btnDepartCycle.Click, Sub(s, e)
+                                             If Not _plcConnecte Then
+                                                 MessageBox.Show("PLC non connecte.", "Depart Cycle", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                                 Exit Sub
+                                             End If
+                                             Try
+                                                 ModulePLCDuplex.EcrireImpulsion("M4.5")
+                                                 AfficherForcage("Depart Cycle envoye")
+                                                 EnregistrerAction("COMMANDE", "Depart Cycle", "M4.5=1->0", "M4.5", "1->0", "PLC_WRITE")
+                                             Catch ex As Exception
+                                                 MessageBox.Show("Erreur Depart Cycle : " & ex.Message)
+                                             End Try
+                                         End Sub
+
+        ' ════════════════════════════════════════════════════════
+        '  btnRAZ — Impulsion M8.2
+        ' ════════════════════════════════════════════════════════
+        AddHandler btnRAZ.Click, Sub(s, e)
+                                     If Not _plcConnecte Then
+                                         MessageBox.Show("PLC non connecte.", "RAZ", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                         Exit Sub
+                                     End If
+                                     Try
+                                         _plc.Write("M8.2", 1)
+                                         System.Threading.Thread.Sleep(200)
+                                         _plc.Write("M8.2", 0)
+                                         AfficherForcage("RAZ envoye")
+                                         EnregistrerAction("COMMANDE", "RAZ", "M8.2=1->0", "M8.2", "1->0", "PLC_WRITE")
+                                     Catch ex As Exception
+                                         MessageBox.Show("Erreur RAZ : " & ex.Message)
+                                     End Try
+                                 End Sub
+
+        ' ════════════════════════════════════════════════════════
+        '  btnRAZDefaut — Impulsion M23.7
+        ' ════════════════════════════════════════════════════════
+        AddHandler btnRAZDefaut.Click, Sub(s, e)
+                                           If Not _plcConnecte Then Exit Sub
+                                           Try
+                                               _plc.Write("M23.7", 1)
+                                               System.Threading.Thread.Sleep(200)
+                                               _plc.Write("M23.7", 0)
+                                               AfficherForcage("Reprise Defaut envoyee")
+                                               EnregistrerAction("COMMANDE", "Reprise Defaut", "M23.7=1->0", "M23.7", "1->0", "PLC_WRITE")
+                                           Catch ex As Exception
+                                               MessageBox.Show("Erreur Reprise Defaut : " & ex.Message)
+                                           End Try
+                                       End Sub
+
+        ' ════════════════════════════════════════════════════════
+        '  btnFinChargement — Remet M50.3 a 0
+        ' ════════════════════════════════════════════════════════
+        AddHandler btnFinChargement.Click, Sub(s, e)
+                                               If Not _plcConnecte Then
+                                                   MessageBox.Show("PLC non connecte.", "Fin Chargement", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                                   Exit Sub
+                                               End If
+                                               Try
+                                                   _plc.Write("M50.3", 0)
+                                                   AfficherForcage("Fin Chargement confirme")
+                                                   EnregistrerAction("COMMANDE", "Fin Chargement", "M50.3=0", "M50.3", "0", "PLC_WRITE")
+                                               Catch ex As Exception
+                                                   MessageBox.Show("Erreur Fin Chargement : " & ex.Message)
+                                               End Try
+                                           End Sub
+
+        ' ════════════════════════════════════════════════════════
+        '  btnVidangeBeton — Bascule M58.3
+        '  CORRIGE : adresse unique M58.3 (etait M14.2 dans un handler)
+        ' ════════════════════════════════════════════════════════
+        AddHandler btnVidangeBeton.Click, Sub(s, e)
+                                              If Not _plcConnecte Then
+                                                  MessageBox.Show("PLC non connecte.", "Vidange", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                                  Exit Sub
+                                              End If
+                                              Try
+                                                  Dim vidangeActuelle As Boolean = CBool(_plc.Read("M58.3"))
+                                                  Dim nouvelleVidange As Boolean = Not vidangeActuelle
+                                                  _plc.Write("M58.3", If(nouvelleVidange, 1, 0))
+                                                  _vidangeMlx = nouvelleVidange
+                                                  MettreAJourBoutonsOperateur()
+                                                  AfficherForcage("Vidange beton " & If(nouvelleVidange, "AUTORISEE", "INTERDITE"))
+                                                  EnregistrerAction("COMMANDE", "Vidange beton " & If(nouvelleVidange, "AUTORISEE", "INTERDITE"),
+                                                      "M58.3=" & If(nouvelleVidange, "1", "0"), "M58.3",
+                                                      If(nouvelleVidange, "1", "0"), "PLC_WRITE")
+                                              Catch ex As Exception
+                                                  MessageBox.Show("Erreur Vidange : " & ex.Message)
+                                              End Try
+                                          End Sub
+
+        ' ── Visibilite initiale ──────────────────────────────────
+        btnDepartCycle.Visible = False
+        btnRAZ.Visible = False
+        btnRAZDefaut.Visible = False
+        btnFinChargement.Visible = False
+
+        MettreAJourBoutonsOperateur()
+    End Sub
+
+    ' ════════════════════════════════════════════════════════════
+    '  InitCommandesPrincipales — VIDE intentionnellement
+    '  Tous les handlers sont dans InitBoutonsOperateur ci-dessus
+    ' ════════════════════════════════════════════════════════════
+    Public Sub InitCommandesPrincipales()
+        ' Rien ici — handlers deja enregistres dans InitBoutonsOperateur
+    End Sub
+
+    ' ── Mise a jour affichage boutons selon etat CPU ──────────────
+    Public Sub MettreAJourBoutonsOperateur()
+        If Not _plcConnecte Then
+            btnDepartCycle.Visible = False
+            btnRAZ.Visible = False
+            btnRAZDefaut.Visible = False
+            btnFinChargement.Visible = False
+            btnModeAuto.Text = "MODE : ?"
+            btnModeAuto.BackColor = Color.Gray
+            btnVidangeBeton.Text = "VIDANGE : ?"
+            btnVidangeBeton.BackColor = Color.Gray
+            Exit Sub
+        End If
+
+        ' ── AUTO / MANU ──────────────────────────────────────────
+        If _modeAuto Then
+            btnModeAuto.Text = "⚙  AUTOMATIQUE"
+            btnModeAuto.BackColor = Color.FromArgb(0, 140, 0)
+            btnModeAuto.ForeColor = Color.White
+        Else
+            btnModeAuto.Text = "✋  MANUEL"
+            btnModeAuto.BackColor = Color.FromArgb(180, 100, 0)
+            btnModeAuto.ForeColor = Color.White
+        End If
+
+        ' ── Depart Cycle — visible seulement si AUTO ─────────────
+        btnDepartCycle.Visible = _modeAuto
+        If _modeAuto Then
+            btnDepartCycle.BackColor = Color.FromArgb(0, 140, 0)
+            btnDepartCycle.ForeColor = Color.White
+        End If
+
+        ' ── RAZ — visible seulement si MANUEL ────────────────────
+        btnRAZ.Visible = Not _modeAuto
+        If Not _modeAuto Then
+            btnRAZ.BackColor = Color.FromArgb(180, 100, 0)
+            btnRAZ.ForeColor = Color.White
+        End If
+
+        ' ── Reprise Defaut — visible seulement si defaut (M5.0=1) 
+        btnRAZDefaut.Visible = _defautActif
+        If _defautActif Then
+            btnRAZDefaut.BackColor = If(DateTime.Now.Second Mod 2 = 0,
+                Color.FromArgb(200, 50, 0), Color.FromArgb(255, 100, 50))
+            btnRAZDefaut.ForeColor = Color.White
+        End If
+
+        ' ── Fin Chargement — visible seulement si M50.3=1 ────────
+        btnFinChargement.Visible = _finChargement
+        If _finChargement Then
+            btnFinChargement.BackColor = Color.FromArgb(10, 50, 150)
+            btnFinChargement.ForeColor = Color.White
+        End If
+
+        ' ── Vidange Beton (M58.3) — toujours visible ─────────────
+        If _vidangeMlx Then
+            btnVidangeBeton.Text = "🔓  VIDANGE ON"
+            btnVidangeBeton.BackColor = Color.FromArgb(0, 120, 200)
+            btnVidangeBeton.ForeColor = Color.White
+        Else
+            btnVidangeBeton.Text = "🔒  VIDANGE OFF"
+            btnVidangeBeton.BackColor = Color.FromArgb(90, 90, 90)
+            btnVidangeBeton.ForeColor = Color.White
+        End If
+    End Sub
+
+    ' ── Actualiser commutateur vidange depuis Timer ───────────────
+    Public Sub ActualiserCommutateurVidange()
+        Try
+            If Not _plcConnecte Then Exit Sub
+            _vidangeMlx = CBool(_plc.Read("M58.3"))
+            MettreAJourBoutonsOperateur()
+        Catch
+        End Try
+    End Sub
+
+    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
+        Planning_journalier.Show()
+    End Sub
+    ' ═══════════════════════════════════════════════════════════════
+    '  CHARGER CONFIG ELEMENTS DEPUIS SQL
+    '  Appeler dans Timer2_Tick (toutes les 2s)
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub ChargerConfigElements()
+        Try
+            ' ── Trémies — vrais noms colonnes dbo.Cases ──────────
+            Dim dtC As DataTable = ModuleDb.Lire(
+        "SELECT NumeroCase, CodeCase, NiveauKg, CapaciteKg, SeuilAlerteKg " &
+        "FROM dbo.Cases WHERE Actif = 1 ORDER BY NumeroCase")
+
+            Dim i As Integer = 1
+            For Each row As DataRow In dtC.Rows
+                If i > 4 Then Exit For
+                ' CodeCase = nom trémie (ex: "TR1", "Gravier", etc.)
+                _nomTR(i) = If(IsDBNull(row("CodeCase")), "TR" & i,
+                            row("CodeCase").ToString())
+                _stockTR(i) = If(IsDBNull(row("NiveauKg")), 0, CDec(row("NiveauKg")))
+                _capaciteTR(i) = If(IsDBNull(row("CapaciteKg")), 0,
+                            CDec(row("CapaciteKg")))
+                _seuilTR(i) = If(IsDBNull(row("SeuilAlerteKg")), 0,
+                            CDec(row("SeuilAlerteKg")))
+                i += 1
+            Next
+
+            ' ── Silos — inchangé ──────────────────────────────────
+            Dim dtS As DataTable = ModuleDb.Lire(
+        "SELECT s.NomSilo, s.NiveauActuel, s.NiveauMini, " &
+        "       s.CapaciteMax_kg, p.Reference AS ProduitRef " &
+        "FROM dbo.Silos s " &
+        "LEFT JOIN dbo.Produits p ON s.ProduitID = p.ProduitID " &
+        "WHERE s.EstActif = 1 ORDER BY s.Position, s.SiloID")
+
+            Dim j As Integer = 1
+            For Each row As DataRow In dtS.Rows
+                If j > 2 Then Exit For
+                _nomS(j) = If(IsDBNull(row("ProduitRef")), "CIM",
+                         row("ProduitRef").ToString()) &
+                      " — " & row("NomSilo").ToString()
+                _niveauS(j) = If(IsDBNull(row("NiveauActuel")), 0, CDec(row("NiveauActuel")))
+                _miniS(j) = If(IsDBNull(row("NiveauMini")), 0, CDec(row("NiveauMini")))
+                _capKgS(j) = If(IsDBNull(row("CapaciteMax_kg")), 0, CDec(row("CapaciteMax_kg")))
+                j += 1
+            Next
+
+            ' ── Adjuvants ─────────────────────────────────────────
+            Dim dtA As DataTable = ModuleDb.Lire(
+        "SELECT b.NomBascule FROM dbo.Bascules b " &
+        "JOIN dbo.TypesBascule t ON b.TypeID = t.TypeID " &
+        "WHERE t.NomType LIKE '%ADJUVANT%' AND b.Actif = 1 " &
+        "ORDER BY b.Ordre, b.BasculeID")
+
+            Dim k As Integer = 1
+            For Each row As DataRow In dtA.Rows
+                If k > 4 Then Exit For
+                _nomADJ(k) = row("NomBascule").ToString()
+                k += 1
+            Next
+            For m As Integer = k To 4 : _nomADJ(m) = "-" : Next
+
+            ' ── Eau ───────────────────────────────────────────────
+            Dim dtE As DataTable = ModuleDb.Lire(
+        "SELECT TOP 1 b.NomBascule FROM dbo.Bascules b " &
+        "JOIN dbo.TypesBascule t ON b.TypeID = t.TypeID " &
+        "WHERE t.NomType LIKE '%EAU%' AND b.Actif = 1")
+            _nomEAU = If(dtE IsNot Nothing AndAlso dtE.Rows.Count > 0,
+                 dtE.Rows(0)("NomBascule").ToString(), "EAU")
+
+        Catch ex As Exception
+            Debug.WriteLine("ChargerConfigElements : " & ex.Message)
+        End Try
+    End Sub
+    ' ═══════════════════════════════════════════════════════════════
+    '  COULEUR SELON ECART POSE / CONSIGNE — factorisée
+    '  Gris = pas de donnée | Vert = dosage atteint (dans tolérance)
+    '  Bleu = en cours (pose < consigne) | Rouge = dépassement
+    ' ═══════════════════════════════════════════════════════════════
+    Private Function CouleurEcart(pose As Single, consigne As Single, tolerance As Single) As Color
+        If pose <= 0 AndAlso consigne <= 0 Then Return Color.Gray
+        Dim ecart As Single = consigne - pose
+        If Math.Abs(ecart) <= tolerance Then Return Color.DarkGreen
+        If pose < consigne Then Return Color.Blue
+        Return Color.Red
+    End Function
+    ' ═══════════════════════════════════════════════════════════════
+    '  AFFICHER LABELS EN CONTINU
+    '  Appeler dans Timer1_Tick (toutes les 1s)
+    '  Utilise les variables _nomTR, _stockTR, _nomS, _niveauS...
+    '  chargées par ChargerConfigElements()
+    ' ═══════════════════════════════════════════════════════════════
+    ' ═══════════════════════════════════════════════════════════════
+    '  AFFICHER LABELS EN CONTINU
+    '  Pose réelle DB18 par élément :
+    '  TR1=DBD2  TR2=DBD6  TR3=DBD10  TR4=DBD14
+    '  S1=DBD18  S2=DBD58  EAU=DBD22  ADJ1-4=DBD62/66/70/74
+    ' ═══════════════════════════════════════════════════════════════
+    ' ═══════════════════════════════════════════════════════════════
+    '  AFFICHER LABELS EN CONTINU
+    '  Mapping DB18 :
+    '   lblStockTR1=DBD2  lblStockTR2=DBD6  lblStockTR3=DBD10  lblStockTR4=DBD14
+    '   lblNiveauS1=DBD18 lblNiveauS2=DBD58 lblNomEAU=DBD22
+    '   lblNomADJ1=DBD62  lblNomADJ2=DBD66  lblNomADJ3=DBD70   lblNomADJ4=DBD74
+    ' ═══════════════════════════════════════════════════════════════
+    Private Sub AfficherLabelsContinu()
+        Try
+            ' ── TRÉMIES — chaque trémie a SA propre pose (DB18) ──
+            Dim lblsNomTR() As Label = {Nothing, lblNomTR1, lblNomTR2, lblNomTR3, lblNomTR4}
+            Dim lblsStockTR() As Label = {Nothing, lblStockTR1, lblStockTR2, lblStockTR3, lblStockTR4}
+            Dim posTR() As Single = {0, _pose_G1, _pose_SC, _pose_SL, _pose_D2}
+            Dim consTR() As Single = {0, _cons_G1, _cons_SC, _cons_SL, _cons_D2}
+
+            For i As Integer = 1 To 4
+                If lblsNomTR(i) Is Nothing Then Continue For
+
+                ' Nom produit
+                lblsNomTR(i).Text = If(_nomTR(i) <> "", _nomTR(i), "TR" & i)
+                lblsNomTR(i).ForeColor = Color.DarkBlue
+
+                ' Pose réelle uniquement (DB18 DBD2/6/10/14)
+                lblsStockTR(i).Text = posTR(i).ToString("0.0") & " kg"
+                lblsStockTR(i).ForeColor = CouleurEcart(posTR(i), consTR(i), TOL_KG)
+            Next
+
+            ' ── SILOS CIMENT (DB18 DBD18 / DBD58) ────────────────
+            Dim lblsNomS() As Label = {Nothing, lblNomS1, lblNomS2}
+            Dim lblsNiveauS() As Label = {Nothing, lblNiveauS1, lblNiveauS2}
+            Dim posS() As Single = {0, _pose_CIM_S1, _pose_CIM_S2}
+
+            For j As Integer = 1 To 2
+                If lblsNomS(j) Is Nothing Then Continue For
+
+                lblsNomS(j).Text = If(_nomS(j) <> "", _nomS(j), "SILO" & j)
+                lblsNomS(j).ForeColor = Color.DarkSlateBlue
+
+                ' Pose réelle uniquement
+                lblsNiveauS(j).Text = posS(j).ToString("0.0") & " kg"
+                lblsNiveauS(j).ForeColor = CouleurEcart(posS(j), _cons_CIM, TOL_KG)
+            Next
+
+            ' ── ADJUVANTS (DB18 DBD62/66/70/74) ──────────────────
+            Dim lblsAdj() As Label = {Nothing, lblNomADJ1, lblNomADJ2, lblNomADJ3, lblNomADJ4}
+            Dim posAdj() As Single = {0, _pose_ADJ1, _pose_ADJ2, _pose_ADJ3, _pose_ADJ4}
+            Dim consAdj() As Single = {0, _cons_ADJ1, _cons_ADJ2, _cons_ADJ3, _cons_ADJ4}
+
+            For k As Integer = 1 To 4
+                If lblsAdj(k) Is Nothing Then Continue For
+                lblsAdj(k).Text = If(_nomADJ(k) <> "", _nomADJ(k), "ADJ" & k) & vbCrLf &
+                              posAdj(k).ToString("0.000") & " kg"
+                lblsAdj(k).ForeColor = CouleurEcart(posAdj(k), consAdj(k), TOL_ADJ)
+            Next
+
+            ' ── EAU (DB18 DBD22) ──────────────────────────────────
+            If lblNomEAU IsNot Nothing Then
+                lblNomEAU.Text = If(_nomEAU <> "", _nomEAU, "EAU") & vbCrLf &
+                             _pose_EAU2.ToString("0.0") & " L"
+                lblNomEAU.ForeColor = CouleurEcart(_pose_EAU2, _cons_EAU2, TOL_L)
+            End If
+
+        Catch ex As Exception
+            Debug.WriteLine("AfficherLabelsContinu : " & ex.Message)
+        End Try
+    End Sub
+    ' ═══ SYNCHRONISATION depuis ModulePLCDuplex (0 appel réseau) ═══
+    Private Sub SynchroniserDepuisPLCData()
+        _poids_AGR = PLCData.Poids_AGR : _poids_CIM = PLCData.Poids_CIM
+        _poids_EAU = PLCData.Poids_EAU : _poids_ADJ = PLCData.Poids_ADJ
+        _poidsTapis = PLCData.PoidsTapis : _consigneTapis = PLCData.ConsigneTapis
+        _ecar_ADJ1 = PLCData.Ecar_ADJ1 : _ecar_ADJ2 = PLCData.Ecar_ADJ2
+        _ecar_ADJ3 = PLCData.Ecar_ADJ3 : _ecar_ADJ4 = PLCData.Ecar_ADJ4
+
+        _cons_G1 = PLCData.Cons_G1 : _cons_SC = PLCData.Cons_SC
+        _cons_SL = PLCData.Cons_SL : _cons_D2 = PLCData.Cons_D2
+        _cons_CIM = PLCData.Cons_CIM : _cons_EAU2 = PLCData.Cons_EAU2
+        _cons_ADJ1 = PLCData.Cons_ADJ1 : _cons_ADJ2 = PLCData.Cons_ADJ2
+        _cons_ADJ3 = PLCData.Cons_ADJ3 : _cons_ADJ4 = PLCData.Cons_ADJ4
+        _compGachee = PLCData.CompGachee : _comptCIMEAU = PLCData.ComptCIMEAU
+
+        _nGachee = PLCData.NGachee
+        _pose_G1 = PLCData.Pose_G1 : _pose_SC = PLCData.Pose_SC
+        _pose_SL = PLCData.Pose_SL : _pose_D2 = PLCData.Pose_D2
+        _pose_CIM_S1 = PLCData.Pose_CIM_S1 : _pose_CIM_S2 = PLCData.Pose_CIM_S2
+        _pose_EAU2 = PLCData.Pose_EAU2
+        _pose_ADJ1 = PLCData.Pose_ADJ1 : _pose_ADJ2 = PLCData.Pose_ADJ2
+        _pose_ADJ3 = PLCData.Pose_ADJ3 : _pose_ADJ4 = PLCData.Pose_ADJ4
+        _ecar_G1 = PLCData.Ecar_G1 : _ecar_SC = PLCData.Ecar_SC
+        _ecar_SL = PLCData.Ecar_SL : _ecar_D2 = PLCData.Ecar_D2
+        _ecar_CIM = PLCData.Ecar_CIM : _ecar_EAU2 = PLCData.Ecar_EAU2
+
+        _capMalaxeur = PLCData.CapMalaxeur : _capCamion = PLCData.CapCamion
+        _nGacheeTotal = PLCData.NGacheeTotal : _nGacheeReste = PLCData.NGacheeReste
+
+        _th_G1 = PLCData.Th_G1 : _th_SC = PLCData.Th_SC : _th_SL = PLCData.Th_SL
+        _th_D2 = PLCData.Th_D2 : _th_CIM = PLCData.Th_CIM : _th_EAU = PLCData.Th_EAU
+        _th_ADJ1 = PLCData.Th_ADJ1 : _th_ADJ2 = PLCData.Th_ADJ2
+        _th_ADJ3 = PLCData.Th_ADJ3 : _th_ADJ4 = PLCData.Th_ADJ4
+
+        _reel_G1 = PLCData.Reel_G1 : _reel_SC = PLCData.Reel_SC
+        _reel_SL = PLCData.Reel_SL : _reel_D2 = PLCData.Reel_D2
+        _reel_CIM = PLCData.Reel_CIM : _reel_EAU = PLCData.Reel_EAU
+        _reel_ADJ1 = PLCData.Reel_ADJ1 : _reel_ADJ2 = PLCData.Reel_ADJ2
+        _reel_ADJ3 = PLCData.Reel_ADJ3 : _reel_ADJ4 = PLCData.Reel_ADJ4
+
+        _pctEcar_G1 = PLCData.PctEcar_G1 : _pctEcar_SC = PLCData.PctEcar_SC
+        _pctEcar_SL = PLCData.PctEcar_SL : _pctEcar_D2 = PLCData.PctEcar_D2
+        _pctEcar_CIM = PLCData.PctEcar_CIM : _pctEcar_EAU = PLCData.PctEcar_EAU
+        _pctEcar_ADJ1 = PLCData.PctEcar_ADJ1 : _pctEcar_ADJ2 = PLCData.PctEcar_ADJ2
+        _pctEcar_ADJ3 = PLCData.PctEcar_ADJ3 : _pctEcar_ADJ4 = PLCData.PctEcar_ADJ4
+
+        _bitTr1 = PLCData.BitTr1 : _bitTr2 = PLCData.BitTr2
+        _bitTr3 = PLCData.BitTr3 : _bitTr4 = PLCData.BitTr4
+        _bitMx = PLCData.BitMx : _bitS1 = PLCData.BitS1 : _bitS2 = PLCData.BitS2
+        _bitSl = PLCData.BitSl : _bitEa1 = PLCData.BitEa1 : _bitEau = PLCData.BitEau
+        _bitAdj1 = PLCData.BitAdj1 : _bitAdj2 = PLCData.BitAdj2
+        _bitAdj3 = PLCData.BitAdj3 : _bitAdj4 = PLCData.BitAdj4
+        _bitEaadjj = PLCData.BitEaadjj
+        _malaxeurON = PLCData.MalaxeurON : _malaxeurPlein = PLCData.MalaxeurPlein
+        _cycleEnCours = PLCData.CycleEnCours : _arretUrg = PLCData.ArretUrg
+        _skipPlein = PLCData.SkipPlein : _skipHaut = PLCData.SkipHaut
+        _skipAttente = PLCData.SkipAttente : _skipBas = PLCData.SkipBas
+        _modeAuto = PLCData.ModeAuto : _defautActif = PLCData.DefautActif
+        _finChargement = PLCData.FinChargement : _vidangeMlx = PLCData.VidangeMlx
+
+        _bitDens1 = PLCData.BitDens(1) : _bitDens2 = PLCData.BitDens(2)
+        _bitDens3 = PLCData.BitDens(3) : _bitDens4 = PLCData.BitDens(4)
+        _bitDens5 = PLCData.BitDens(5) : _bitDens6 = PLCData.BitDens(6)
+        _bitDens7 = PLCData.BitDens(7) : _bitDens8 = PLCData.BitDens(8)
+        _bitDens9 = PLCData.BitDens(9) : _bitDens10 = PLCData.BitDens(10)
+        _bitDens11 = PLCData.BitDens(11) : _bitDens12 = PLCData.BitDens(12)
+
+        ' Vis ciment (DB8 DBW324)
+        ' Vis ciment (DB8 DBW324)
+        If Not _visEnEcriture AndAlso ComboBoxvis.Items.Count >= 2 Then
+            If PLCData.VisActif = 0 Then
+                If ComboBoxvis.SelectedIndex <> 0 Then ComboBoxvis.SelectedIndex = 0
+            ElseIf PLCData.VisActif = 1 Then
+                If ComboBoxvis.SelectedIndex <> 1 Then ComboBoxvis.SelectedIndex = 1
+            End If
+        End If
+
+        ' ── États calculés (identique à avant) ──
+        _etatTremie(1) = If(_bitTr1, 1, 0) : _etatTremie(2) = If(_bitTr2, 1, 0)
+        _etatTremie(3) = If(_bitTr3, 1, 0) : _etatTremie(4) = If(_bitTr4, 1, 0)
+        _etatSilo(1) = If(_bitS1, 1, 0) : _etatSilo(2) = If(_bitS2, 1, 0)
+        _etatBasculeCim = If(_bitSl, 1, 0) : _etatBasculeEau = If(_bitEa1, 1, 0)
+        _etatAdj(1) = If(_bitAdj1, 1, 0) : _etatAdj(2) = If(_bitAdj2, 1, 0)
+        _etatAdj(3) = If(_bitAdj3, 1, 0) : _etatAdj(4) = If(_bitAdj4, 1, 0)
+        _etatBasculeAdj = If(_poids_ADJ > 0.5, 1, 0)
+        ' Hystérésis : passe à PLEIN au-dessus de consigne,
+        ' ne repasse à VIDE qu'en dessous de consigne - 5 kg
+        If _consigneTapis > 0 Then
+            If _poidsTapis >= _consigneTapis Then
+                _tapisPlein = True
+            ElseIf _poidsTapis < _consigneTapis - 5.0F Then
+                _tapisPlein = False
+            End If
+            ' entre les deux : garder l'état précédent
+        Else
+            _tapisPlein = False
+        End If
+
+        If _arretUrg Then : _etatMalaxeur = 0
+        ElseIf Not _malaxeurON Then : _etatMalaxeur = 0
+        ElseIf _malaxeurPlein Then : _etatMalaxeur = 1
+        Else : _etatMalaxeur = 2
+        End If
+
+        If PLCData.TapisMarche Then
+            _etatTapis = If(_tapisPlein, 2, 3)
+        Else
+            _etatTapis = If(_tapisPlein, 1, 0)
+        End If
+
+        If PLCData.SkipMonte Then : _etatSkip = 6
+        ElseIf PLCData.SkipDesc Then : _etatSkip = 7
+        ElseIf _skipBas Then : _etatSkip = If(_skipPlein, 3, 0)
+        ElseIf _skipAttente Then : _etatSkip = If(_skipPlein, 4, 1)
+        ElseIf _skipHaut Then : _etatSkip = If(_skipPlein, 5, 2)
+        Else : _etatSkip = 0
+        End If
+    End Sub
+
+    Private Sub Buttontpm_Click(sender As Object, e As EventArgs) Handles Buttontpm.Click
+
+    End Sub
+
+    Private Sub btnModeAuto_Click(sender As Object, e As EventArgs) Handles btnModeAuto.Click
+
+    End Sub
+
+    Private Sub Buttontr1_Click(sender As Object, e As EventArgs) Handles Buttontr1.Click
+
+    End Sub
+End Class

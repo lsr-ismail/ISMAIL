@@ -1,0 +1,3 @@
+﻿Public Class Statistiques___Laboratoire
+
+End Class

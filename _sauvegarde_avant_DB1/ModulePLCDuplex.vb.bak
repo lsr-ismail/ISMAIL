@@ -1,0 +1,771 @@
+﻿Imports S7.Net
+Imports System.Threading
+Imports System.Text.RegularExpressions
+
+' ================================================================
+'  ModulePLCDuplex.vb — Communication "full duplex" avec le CPU
+'  ─────────────────────────────────────────────────────────────
+'  VERSION "DB1 UNIQUE" — optimisation vitesse
+'  MAJ 15/09/2026 v2 : MIGRATION COMPLÈTE DB1 (nouvel adressage CPU)
+'  MAJ 15/09/2026 v3 : compilation (pas de commentaires dans From { })
+'  MAJ 15/09/2026 v4 : EcrireInt traduit DBW ; DB101.DBD0→36 dans _mapRealDB1
+'  MAJ 15/09/2026 v5 : FORÇAGES QUI NE PARTAIENT PAS
+'   • EcrireBit : plus de Plc.Write("DB1.DBX4.5", True) (échouait en
+'     silence selon la version de S7.Net) → lecture-modification-écriture
+'     de l'octet avec ReadBytes/WriteBytes, compatible toutes versions.
+'   • PLCData.DerniereErreur : dernière erreur PLC (lecture OU écriture),
+'     à afficher dans les messages au lieu de Debug.WriteLine invisible.
+'   • Lecture DB1 : si le CPU refuse 1084 octets (DB1 trop petit),
+'     l'erreur est explicite : « DB1 trop petit ? il faut ≥ 1084 octets ».
+'  ─────────────────────────────────────────────────────────────
+'  ⚠️ Adresses ENCORE non migrées vers DB1 (absentes du tableau CPU) :
+'     M30.4 TAPIS, M31.1 TRAPPE_CIM, M14.2 MALAXEUR, M1.1 TARE,
+'     M14.7 CYCLE_EN_COURS, DB18.DBD20 Cons_EAU2
+' ================================================================
+
+' ═══════════════════════════════════════════════════════════════
+'  PLCDATA — toutes les valeurs lues en continu (lecture seule)
+' ═══════════════════════════════════════════════════════════════
+Public Class PLCData
+
+    ' ── DB4 — poids bascules temps réel  (→ DB1) ─────────────────
+    Public Shared PoidsTapis As Single = 0
+    Public Shared Poids_AGR As Single = 0     ' ex DB4 DBD0  → DB1 DBD86
+    Public Shared Poids_CIM As Single = 0     ' ex DB4 DBD4  → DB1 DBD78
+    Public Shared Poids_EAU As Single = 0     ' ex DB4 DBD8  → DB1 DBD82
+    Public Shared Poids_ADJ As Single = 0     ' ex DB90 DBD4 → DB1 DBD90
+    Public Shared Ecar_ADJ1 As Single = 0     ' ex DB4 DBD98  → DB1 DBD402
+    Public Shared Ecar_ADJ2 As Single = 0     ' ex DB4 DBD102 → DB1 DBD406
+    Public Shared Ecar_ADJ3 As Single = 0     ' ex DB4 DBD114 → DB1 DBD410
+    Public Shared Ecar_ADJ4 As Single = 0     ' ex DB4 DBD118 → DB1 DBD414
+
+    ' ── DB8 — consignes  (→ DB1) ──────────────────────────────────
+    Public Shared Cons_G1 As Single = 0       ' ex DB8 DBD0   → DB1 DBD118
+    Public Shared Cons_SC As Single = 0       ' ex DB8 DBD4   → DB1 DBD122
+    Public Shared Cons_SL As Single = 0       ' ex DB8 DBD8   → DB1 DBD126
+    Public Shared Cons_D2 As Single = 0       ' ex DB8 DBD12  → DB1 DBD130
+    Public Shared Cons_CIM As Single = 0      ' ex DB8 DBD16  → DB1 DBD94
+    Public Shared ConsigneTapis As Single = 0 ' ex DB8 DBD126 → DB1 DBD1052
+    Public Shared Cons_ADJ1 As Single = 0     ' ex DB8 DBD216 → DB1 DBD174
+    Public Shared Cons_ADJ2 As Single = 0     ' ex DB8 DBD228 → DB1 DBD178
+    Public Shared ComptCIMEAU As Single = 0   ' ex DB8 DBD240 → DB1 DBD1068
+    Public Shared CompGachee As Single = 0    ' ex DB8 DBD330 → DB1 DBD1072
+    Public Shared VisActif As Integer = 0     ' ex DB8 DBW324 → DB1 DBW52
+
+    ' ── DB78 — consignes ADJ3/ADJ4  (→ DB1) ──────────────────────
+    Public Shared Cons_ADJ3 As Single = 0     ' ex DB78 DBD0 → DB1 DBD182
+    Public Shared Cons_ADJ4 As Single = 0     ' ex DB78 DBD4 → DB1 DBD186
+
+    ' ── DB18 — poses / écarts gâchée  (→ DB1, sauf Cons_EAU2) ────
+    Public Shared NGachee As Integer = 0      ' ex DB18 DBW0  → DB1 DBW1076
+    Public Shared Pose_G1 As Single = 0       ' ex DB18 DBD2  → DB1 DBD230
+    Public Shared Pose_SC As Single = 0       ' ex DB18 DBD6  → DB1 DBD234
+    Public Shared Pose_SL As Single = 0       ' ex DB18 DBD10 → DB1 DBD238
+    Public Shared Pose_D2 As Single = 0       ' ex DB18 DBD14 → DB1 DBD242
+    Public Shared Pose_CIM_S1 As Single = 0   ' ex DB18 DBD18 → DB1 DBD206
+    Public Shared Cons_EAU2 As Single = 0     ' DB18 DBD20 (⚠ NON migré)
+    Public Shared Pose_EAU2 As Single = 0     ' ex DB18 DBD22 → DB1 DBD278
+    Public Shared Ecar_G1 As Single = 0       ' ex DB18 DBD26 → DB1 DBD346
+    Public Shared Ecar_SC As Single = 0       ' ex DB18 DBD30 → DB1 DBD350
+    Public Shared Ecar_SL As Single = 0       ' ex DB18 DBD34 → DB1 DBD354
+    Public Shared Ecar_D2 As Single = 0       ' ex DB18 DBD38 → DB1 DBD358
+    Public Shared Ecar_CIM As Single = 0      ' ex DB18 DBD42 → DB1 DBD318
+    Public Shared Ecar_EAU2 As Single = 0     ' ex DB18 DBD46 → DB1 DBD394
+    Public Shared Pose_CIM_S2 As Single = 0   ' ex DB18 DBD58 → DB1 DBD210
+    Public Shared Pose_ADJ1 As Single = 0     ' ex DB18 DBD62 → DB1 DBD286
+    Public Shared Pose_ADJ2 As Single = 0     ' ex DB18 DBD66 → DB1 DBD290
+    Public Shared Pose_ADJ3 As Single = 0     ' ex DB18 DBD70 → DB1 DBD294
+    Public Shared Pose_ADJ4 As Single = 0     ' ex DB18 DBD74 → DB1 DBD298
+
+    ' ── DB19 — capacités  (→ DB1) ─────────────────────────────────
+    Public Shared CapMalaxeur As Single = 0   ' ex DB19 DBD58 → DB1 DBD916
+    Public Shared CapCamion As Single = 0     ' ex DB19 DBD66 → DB1 DBD920
+    Public Shared NGacheeTotal As Integer = 0 ' ex DB19 DBD70 → DB1 DBD1078
+
+    ' ── DB101 — dosage théorique camion  (→ DB1) ──────────────────
+    Public Shared Th_G1 As Single = 0         ' ex DB101 DBD80  → DB1 DBD1008
+    Public Shared Th_SC As Single = 0         ' ex DB101 DBD84  → DB1 DBD1012
+    Public Shared Th_SL As Single = 0         ' ex DB101 DBD88  → DB1 DBD1016
+    Public Shared Th_D2 As Single = 0         ' ex DB101 DBD92  → DB1 DBD1020
+    Public Shared Th_CIM As Single = 0        ' ex DB101 DBD96  → DB1 DBD1024
+    Public Shared Th_EAU As Single = 0        ' ex DB101 DBD100 → DB1 DBD1028
+    Public Shared Th_ADJ1 As Single = 0       ' ex DB101 DBD104 → DB1 DBD1032
+    Public Shared Th_ADJ2 As Single = 0       ' ex DB101 DBD108 → DB1 DBD1036
+    Public Shared Th_ADJ3 As Single = 0       ' ex DB101 DBD112 → DB1 DBD1040
+    Public Shared Th_ADJ4 As Single = 0       ' ex DB101 DBD116 → DB1 DBD1044
+    Public Shared NGacheeReste As Integer = 0 ' ex DB101 DBD120 → DB1 DBD1048
+
+    ' ── DB65 — dosage réel camion  (→ DB1) ───────────────────────
+    Public Shared Reel_G1 As Single = 0       ' ex DB65 DBD0  → DB1 DBD924
+    Public Shared Reel_SC As Single = 0       ' ex DB65 DBD8  → DB1 DBD928
+    Public Shared Reel_SL As Single = 0       ' ex DB65 DBD16 → DB1 DBD932
+    Public Shared Reel_D2 As Single = 0       ' ex DB65 DBD24 → DB1 DBD936
+    Public Shared Reel_CIM As Single = 0      ' ex DB65 DBD32 → DB1 DBD940
+    Public Shared Reel_EAU As Single = 0      ' ex DB65 DBD48 → DB1 DBD948
+    Public Shared Reel_ADJ1 As Single = 0     ' ex DB65 DBD56 → DB1 DBD952
+    Public Shared Reel_ADJ2 As Single = 0     ' ex DB65 DBD64 → DB1 DBD956
+    Public Shared Reel_ADJ3 As Single = 0     ' ex DB65 DBD80 → DB1 DBD960
+    Public Shared Reel_ADJ4 As Single = 0     ' ex DB65 DBD88 → DB1 DBD964
+
+    ' ── DB114 — écart % camion  (→ DB1) ──────────────────────────
+    Public Shared PctEcar_G1 As Single = 0    ' ex DB114 DBD0  → DB1 DBD968
+    Public Shared PctEcar_SC As Single = 0    ' ex DB114 DBD4  → DB1 DBD972
+    Public Shared PctEcar_SL As Single = 0    ' ex DB114 DBD8  → DB1 DBD976
+    Public Shared PctEcar_D2 As Single = 0    ' ex DB114 DBD12 → DB1 DBD980
+    Public Shared PctEcar_CIM As Single = 0   ' ex DB114 DBD16 → DB1 DBD984
+    Public Shared PctEcar_EAU As Single = 0   ' ex DB114 DBD20 → DB1 DBD988
+    Public Shared PctEcar_ADJ1 As Single = 0  ' ex DB114 DBD24 → DB1 DBD992
+    Public Shared PctEcar_ADJ2 As Single = 0  ' ex DB114 DBD28 → DB1 DBD996
+    Public Shared PctEcar_ADJ3 As Single = 0  ' ex DB114 DBD32 → DB1 DBD1000
+    Public Shared PctEcar_ADJ4 As Single = 0  ' ex DB114 DBD36 → DB1 DBD1004
+
+    ' ── Merkers — bits d'état  (→ DB1) ───────────────────────────
+    Public Shared BitTr1 As Boolean = False       ' ex M12.0 → DB1.DBX12.0
+    Public Shared BitTr2 As Boolean = False       ' ex M12.1 → DB1.DBX12.2
+    Public Shared BitTr3 As Boolean = False       ' ex M12.2 → DB1.DBX12.4
+    Public Shared BitTr4 As Boolean = False       ' ex M12.3 → DB1.DBX12.6
+    Public Shared TapisMarche As Boolean = False  ' ex M12.4 → DB1.DBX16.4
+    Public Shared BitMx As Boolean = False        ' ex M15.1 → DB1.DBX23.0
+    Public Shared BitS1 As Boolean = False        ' ex M13.2 → DB1.DBX18.0
+    Public Shared BitS2 As Boolean = False        ' ex M13.3 → DB1.DBX18.1
+    Public Shared BitSl As Boolean = False        ' ex M13.4 → DB1.DBX19.4
+    Public Shared SkipMonte As Boolean = False    ' ex M13.5 → DB1.DBX17.4
+    Public Shared SkipDesc As Boolean = False     ' ex M13.6 → DB1.DBX17.5
+    Public Shared BitEa1 As Boolean = False       ' ex M13.7 → DB1.DBX22.2
+    Public Shared BitEau As Boolean = False       ' ex M14.1 → DB1.DBX22.4
+    Public Shared BitAdj1 As Boolean = False      ' ex M14.3 → DB1.DBX21.0
+    Public Shared BitAdj2 As Boolean = False      ' ex M14.4 → DB1.DBX21.1
+    Public Shared BitAdj3 As Boolean = False      ' ex M14.5 → DB1.DBX21.2
+    Public Shared BitAdj4 As Boolean = False      ' ex M14.6 → DB1.DBX21.3
+    Public Shared CycleEnCours As Boolean = False ' M14.7 (⚠ NON migré → zone M)
+    Public Shared BitEaadjj As Boolean = False    ' ex M19.6 → DB1.DBX22.1
+    Public Shared MalaxeurON As Boolean = False   ' ex M7.1  → DB1.DBX22.5
+    Public Shared MalaxeurPlein As Boolean = False ' ex M57.0 → DB1.DBX1082.2
+    Public Shared ArretUrg As Boolean = False     ' ex M20.2 → DB1.DBX1082.1
+    Public Shared SkipPlein As Boolean = False    ' ex M57.1 → DB1.DBX1082.3
+    Public Shared SkipHaut As Boolean = False     ' ex M25.0 → DB1.DBX25.5
+    Public Shared SkipAttente As Boolean = False  ' ex M25.1 → DB1.DBX25.6
+    Public Shared SkipBas As Boolean = False      ' ex M25.2 → DB1.DBX25.7
+    Public Shared ModeAuto As Boolean = False     ' ex M9.1  → DB1.DBX0.0
+    Public Shared DefautActif As Boolean = False  ' ex M5.0  → DB1.DBX1082.0
+    Public Shared FinChargement As Boolean = False ' ex M50.3 → DB1.DBX914.1
+    Public Shared FinGachee As Boolean = False    ' ex M64.6 → DB1.DBX1082.4
+    Public Shared VidangeMlx As Boolean = False   ' ex M58.3 → DB1.DBX914.5
+
+    ' ── Retours des sorties forcées NON migrées (zone M) ─────────
+    Public Shared ForceTapis As Boolean = False     ' M30.4  (⚠ NON migré)
+    Public Shared ForceTrappeCim As Boolean = False ' M31.1  (⚠ NON migré)
+    Public Shared ForceMalaxeur As Boolean = False  ' M14.2  (⚠ NON migré)
+
+    ' ── Bits capteurs densité  (→ DB1) ───────────────────────────
+    Public Shared BitDens(12) As Boolean
+
+    ' ── Champs DB1 sans correspondance identifiée ────────────────
+    Public Shared NonIdentifies As New Dictionary(Of String, Single)
+
+    ' ── État de la communication ─────────────────────────────────
+    Public Shared Connecte As Boolean = False
+    Public Shared DerniereMAJ As DateTime = DateTime.MinValue
+    ' Dernière erreur PLC (lecture ou écriture) — à AFFICHER à l'écran
+    Public Shared DerniereErreur As String = ""
+    Public Shared DerniereErreurQuand As DateTime = DateTime.MinValue
+End Class
+
+
+' ═══════════════════════════════════════════════════════════════
+'  MODULE PLC DUPLEX — moteur de communication
+' ═══════════════════════════════════════════════════════════════
+Module ModulePLCDuplex
+
+    ' Verrou UNIQUE — toute lecture ET toute écriture passent par lui
+    Private ReadOnly _lockPLC As New Object()
+
+    Private _threadLecture As Thread = Nothing
+    Private _actif As Boolean = False
+    Private _cycleCount As Long = 0
+
+    ' Cadence de lecture rapide (ms)
+    Public CadenceRapideMs As Integer = 300
+
+    ' Taille du bloc unique DB1 lu à chaque cycle rapide.
+    ' 1084 octets couvrent jusqu'au bit DB1.DBX1082.4 (M64.6 migré)
+    ' ⚠ DB1 côté CPU doit faire AU MOINS 1084 octets, sinon ReadBytes
+    '   échoue et PLCData.Connecte reste à False (boutons bloqués).
+    Private Const TAILLE_DB1 As Integer = 1084
+
+    ' Zone M relue à chaque cycle : MB14 → MB31 (18 octets)
+    Private Const M_DEBUT As Integer = 14
+    Private Const M_TAILLE As Integer = 18
+
+    Public Event NouvellesValeurs()
+
+    ' Mémorise une erreur PLC pour l'affichage
+    Private Sub NoterErreur(msg As String)
+        PLCData.DerniereErreur = msg
+        PLCData.DerniereErreurQuand = DateTime.Now
+        Debug.WriteLine("[PLC] " & msg)
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════
+    '  DÉMARRER — appeler UNE fois
+    ' ═══════════════════════════════════════════════════════════
+    Public Sub DemarrerDuplex()
+        If _actif Then Exit Sub
+        _actif = True
+
+        _threadLecture = New Thread(AddressOf BoucleLecture)
+        _threadLecture.IsBackground = True
+        _threadLecture.Name = "ThreadPLCDuplex"
+        _threadLecture.Start()
+    End Sub
+
+    Public Sub ArreterDuplex()
+        _actif = False
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════
+    '  BOUCLE DE LECTURE CONTINUE (thread d'arrière-plan)
+    ' ═══════════════════════════════════════════════════════════
+    Private Sub BoucleLecture()
+        Do While _actif
+            Try
+                ' ── Connexion / reconnexion automatique ──────────
+                If Not PLCPret() Then
+                    PLCData.Connecte = False
+                    Try
+                        SyncLock _lockPLC
+                            ConnecterPLCGlobal()   ' Module1
+                        End SyncLock
+                    Catch ex As Exception
+                        NoterErreur("Connexion : " & ex.Message)
+                    End Try
+                    If Not PLCPret() Then
+                        Thread.Sleep(3000)   ' réessai dans 3s
+                        Continue Do
+                    End If
+                End If
+
+                Dim plc As Plc = Module1.PLCInstance
+
+                ' ── LECTURE RAPIDE — DB1 + merkers non migrés ─────
+                SyncLock _lockPLC
+                    LireBlocDB1(plc)
+                    LireMerkersNonMigres(plc)
+                End SyncLock
+
+                ' ── LECTURE LENTE (1 cycle sur 10) ────────────────
+                If _cycleCount Mod 10 = 0 Then
+                    SyncLock _lockPLC
+                        LireBlocsComplement(plc)
+                    End SyncLock
+                End If
+
+                PLCData.Connecte = True
+                PLCData.DerniereMAJ = DateTime.Now
+                _cycleCount += 1
+
+                RaiseEvent NouvellesValeurs()
+
+            Catch ex As Exception
+                PLCData.Connecte = False
+                NoterErreur("Lecture DB1 (" & TAILLE_DB1 & " octets) : " & ex.Message &
+                            "  → DB1 trop petit dans le CPU ? Il faut ≥ " & TAILLE_DB1 &
+                            " octets, « accès optimisé » décoché, PUT/GET activé.")
+                Thread.Sleep(1000)
+            End Try
+
+            Thread.Sleep(CadenceRapideMs)
+        Loop
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════
+    '  LECTURE UNIQUE — DB1 (1084 octets)
+    ' ═══════════════════════════════════════════════════════════
+    Private Sub LireBlocDB1(plc As Plc)
+
+        Dim db1() As Byte = plc.ReadBytes(DataType.DataBlock, 1, 0, TAILLE_DB1)
+
+        ' ── Bits d'état / commandes ──────────────────────────────
+        PLCData.ModeAuto = ToBit(db1, 0, 0)
+        PLCData.BitTr1 = ToBit(db1, 12, 0)
+        PLCData.BitTr2 = ToBit(db1, 12, 2)
+        PLCData.BitTr3 = ToBit(db1, 12, 4)
+        PLCData.BitTr4 = ToBit(db1, 12, 6)
+        PLCData.TapisMarche = ToBit(db1, 16, 4)
+        PLCData.SkipMonte = ToBit(db1, 17, 4)
+        PLCData.SkipDesc = ToBit(db1, 17, 5)
+        PLCData.BitS1 = ToBit(db1, 18, 0)
+        PLCData.BitS2 = ToBit(db1, 18, 1)
+        PLCData.BitSl = ToBit(db1, 19, 4)
+        PLCData.BitAdj1 = ToBit(db1, 21, 0)
+        PLCData.BitAdj2 = ToBit(db1, 21, 1)
+        PLCData.BitAdj3 = ToBit(db1, 21, 2)
+        PLCData.BitAdj4 = ToBit(db1, 21, 3)
+        PLCData.BitEaadjj = ToBit(db1, 22, 1)
+        PLCData.BitEa1 = ToBit(db1, 22, 2)
+        PLCData.BitEau = ToBit(db1, 22, 4)          ' ex M14.1
+        PLCData.MalaxeurON = ToBit(db1, 22, 5)
+        PLCData.BitMx = ToBit(db1, 23, 0)
+        PLCData.SkipHaut = ToBit(db1, 25, 5)
+        PLCData.SkipAttente = ToBit(db1, 25, 6)
+        PLCData.SkipBas = ToBit(db1, 25, 7)
+        PLCData.FinChargement = ToBit(db1, 914, 1)
+        PLCData.VidangeMlx = ToBit(db1, 914, 5)
+
+        ' ── Merkers migrés vers DB1.DBX1082 ─────────────────────
+        PLCData.DefautActif = ToBit(db1, 1082, 0)   ' ex M5.0
+        PLCData.ArretUrg = ToBit(db1, 1082, 1)      ' ex M20.2
+        PLCData.MalaxeurPlein = ToBit(db1, 1082, 2) ' ex M57.0
+        PLCData.SkipPlein = ToBit(db1, 1082, 3)     ' ex M57.1
+        PLCData.FinGachee = ToBit(db1, 1082, 4)     ' ex M64.6
+
+        ' Capteurs densité
+        PLCData.BitDens(1) = ToBit(db1, 24, 0)   ' ex M26.0
+        PLCData.BitDens(2) = ToBit(db1, 24, 1)   ' ex M26.1
+        PLCData.BitDens(3) = ToBit(db1, 24, 2)   ' ex M26.2
+        PLCData.BitDens(4) = ToBit(db1, 24, 3)   ' ex M26.3
+        PLCData.BitDens(5) = ToBit(db1, 26, 0)   ' ex M25.4
+        PLCData.BitDens(6) = ToBit(db1, 25, 7)   ' ex M25.2
+        PLCData.BitDens(7) = ToBit(db1, 25, 6)   ' ex M25.1
+        PLCData.BitDens(8) = ToBit(db1, 25, 5)   ' ex M25.0
+        PLCData.BitDens(9) = ToBit(db1, 25, 4)   ' ex M25.3
+        PLCData.BitDens(10) = ToBit(db1, 29, 7)  ' ex M6.7
+        PLCData.BitDens(11) = ToBit(db1, 30, 1)  ' ex M7.0
+        PLCData.BitDens(12) = ToBit(db1, 28, 3)  ' ex M5.3
+
+        ' ── Poids bascules (ex DB4 / DB90) ────────────────────────
+        PLCData.Poids_CIM = ToFloat(db1, 78)
+        PLCData.Poids_EAU = ToFloat(db1, 82)
+        PLCData.Poids_AGR = ToFloat(db1, 86)
+        PLCData.PoidsTapis = ToFloat(db1, 86)
+        PLCData.Poids_ADJ = ToFloat(db1, 90)          ' ex DB90 DBD4
+
+        ' ── Consignes (ex DB8) ────────────────────────────────────
+        PLCData.Cons_CIM = ToFloat(db1, 94)
+        PLCData.VisActif = ToInt16(db1, 52)
+        PLCData.Cons_G1 = ToFloat(db1, 118)
+        PLCData.Cons_SC = ToFloat(db1, 122)
+        PLCData.Cons_SL = ToFloat(db1, 126)
+        PLCData.Cons_D2 = ToFloat(db1, 130)
+        PLCData.Cons_ADJ1 = ToFloat(db1, 174)
+        PLCData.Cons_ADJ2 = ToFloat(db1, 178)
+
+        ' ── Consignes ADJ3/4 (ex DB78) ────────────────────────────
+        PLCData.Cons_ADJ3 = ToFloat(db1, 182)
+        PLCData.Cons_ADJ4 = ToFloat(db1, 186)
+
+        ' ── Poses / écarts gâchée (ex DB18) ───────────────────────
+        PLCData.Pose_CIM_S1 = ToFloat(db1, 206)
+        PLCData.Pose_CIM_S2 = ToFloat(db1, 210)
+        PLCData.Pose_G1 = ToFloat(db1, 230)
+        PLCData.Pose_SC = ToFloat(db1, 234)
+        PLCData.Pose_SL = ToFloat(db1, 238)
+        PLCData.Pose_D2 = ToFloat(db1, 242)
+        PLCData.Pose_EAU2 = ToFloat(db1, 278)
+        PLCData.Pose_ADJ1 = ToFloat(db1, 286)
+        PLCData.Pose_ADJ2 = ToFloat(db1, 290)
+        PLCData.Pose_ADJ3 = ToFloat(db1, 294)
+        PLCData.Pose_ADJ4 = ToFloat(db1, 298)
+        PLCData.Ecar_CIM = ToFloat(db1, 318)
+        PLCData.Ecar_G1 = ToFloat(db1, 346)
+        PLCData.Ecar_SC = ToFloat(db1, 350)
+        PLCData.Ecar_SL = ToFloat(db1, 354)
+        PLCData.Ecar_D2 = ToFloat(db1, 358)
+        PLCData.Ecar_EAU2 = ToFloat(db1, 394)
+
+        ' ── Écarts adjuvants (ex DB4) ─────────────────────────────
+        PLCData.Ecar_ADJ1 = ToFloat(db1, 402)
+        PLCData.Ecar_ADJ2 = ToFloat(db1, 406)
+        PLCData.Ecar_ADJ3 = ToFloat(db1, 410)
+        PLCData.Ecar_ADJ4 = ToFloat(db1, 414)
+
+        ' ── DB19 — capacités malaxeur/camion ─────────────────────
+        PLCData.CapMalaxeur = ToFloat(db1, 916)         ' ex DB19 DBD58
+        PLCData.CapCamion = ToFloat(db1, 920)           ' ex DB19 DBD66
+        PLCData.NGacheeTotal = CInt(ToFloat(db1, 1078)) ' ex DB19 DBD70
+
+        ' ── DB65 — dosage réel camion ────────────────────────────
+        PLCData.Reel_G1 = ToFloat(db1, 924)
+        PLCData.Reel_SC = ToFloat(db1, 928)
+        PLCData.Reel_SL = ToFloat(db1, 932)
+        PLCData.Reel_D2 = ToFloat(db1, 936)
+        PLCData.Reel_CIM = ToFloat(db1, 940)
+        PLCData.Reel_EAU = ToFloat(db1, 948)
+        PLCData.Reel_ADJ1 = ToFloat(db1, 952)
+        PLCData.Reel_ADJ2 = ToFloat(db1, 956)
+        PLCData.Reel_ADJ3 = ToFloat(db1, 960)
+        PLCData.Reel_ADJ4 = ToFloat(db1, 964)
+
+        ' ── DB114 — écart % camion ───────────────────────────────
+        PLCData.PctEcar_G1 = ToFloat(db1, 968)
+        PLCData.PctEcar_SC = ToFloat(db1, 972)
+        PLCData.PctEcar_SL = ToFloat(db1, 976)
+        PLCData.PctEcar_D2 = ToFloat(db1, 980)
+        PLCData.PctEcar_CIM = ToFloat(db1, 984)
+        PLCData.PctEcar_EAU = ToFloat(db1, 988)
+        PLCData.PctEcar_ADJ1 = ToFloat(db1, 992)
+        PLCData.PctEcar_ADJ2 = ToFloat(db1, 996)
+        PLCData.PctEcar_ADJ3 = ToFloat(db1, 1000)
+        PLCData.PctEcar_ADJ4 = ToFloat(db1, 1004)
+
+        ' ── DB101 — dosage théorique camion ──────────────────────
+        PLCData.Th_G1 = ToFloat(db1, 1008)
+        PLCData.Th_SC = ToFloat(db1, 1012)
+        PLCData.Th_SL = ToFloat(db1, 1016)
+        PLCData.Th_D2 = ToFloat(db1, 1020)
+        PLCData.Th_CIM = ToFloat(db1, 1024)
+        PLCData.Th_EAU = ToFloat(db1, 1028)
+        PLCData.Th_ADJ1 = ToFloat(db1, 1032)
+        PLCData.Th_ADJ2 = ToFloat(db1, 1036)
+        PLCData.Th_ADJ3 = ToFloat(db1, 1040)
+        PLCData.Th_ADJ4 = ToFloat(db1, 1044)
+        PLCData.NGacheeReste = CInt(ToFloat(db1, 1048)) ' ex DB101 DBD120
+
+        ' ── DB8 reliquat ─────────────────────────────────────────
+        PLCData.ConsigneTapis = ToFloat(db1, 1052)  ' ex DB8 DBD126
+        PLCData.ComptCIMEAU = ToFloat(db1, 1068)    ' ex DB8 DBD240
+        PLCData.CompGachee = ToFloat(db1, 1072)     ' ex DB8 DBD330
+
+        ' ── DB18.DBW0 NGachee ────────────────────────────────────
+        PLCData.NGachee = ToInt16(db1, 1076)         ' ex DB18 DBW0
+
+        ' ── Consignes formule camion (ex DB101 DBD0→36) ──────────
+        PLCData.NonIdentifies("DB1.DBD166 (ex DB8.DBD20)") = ToFloat(db1, 166)
+        PLCData.NonIdentifies("DB1.DBD538 (ex DB101.DBD0 TR1)") = ToFloat(db1, 538)
+        PLCData.NonIdentifies("DB1.DBD542 (ex DB101.DBD4 TR2)") = ToFloat(db1, 542)
+        PLCData.NonIdentifies("DB1.DBD546 (ex DB101.DBD8 TR3)") = ToFloat(db1, 546)
+        PLCData.NonIdentifies("DB1.DBD550 (ex DB101.DBD12 TR4)") = ToFloat(db1, 550)
+        PLCData.NonIdentifies("DB1.DBD530 (ex DB101.DBD16 CIM)") = ToFloat(db1, 530)
+        PLCData.NonIdentifies("DB1.DBD586 (ex DB101.DBD20 EAU)") = ToFloat(db1, 586)
+        PLCData.NonIdentifies("DB1.DBD594 (ex DB101.DBD24 ADJ1)") = ToFloat(db1, 594)
+        PLCData.NonIdentifies("DB1.DBD598 (ex DB101.DBD28 ADJ2)") = ToFloat(db1, 598)
+        PLCData.NonIdentifies("DB1.DBD602 (ex DB101.DBD32 ADJ3)") = ToFloat(db1, 602)
+        PLCData.NonIdentifies("DB1.DBD606 (ex DB101.DBD36 ADJ4)") = ToFloat(db1, 606)
+
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════
+    '  MERKERS NON MIGRÉS — MB14 → MB31 (18 octets seulement)
+    ' ═══════════════════════════════════════════════════════════
+    Private Sub LireMerkersNonMigres(plc As Plc)
+        Dim mb() As Byte = plc.ReadBytes(DataType.Memory, 0, M_DEBUT, M_TAILLE)
+        PLCData.ForceMalaxeur = ToBit(mb, 14 - M_DEBUT, 2)  ' M14.2
+        PLCData.CycleEnCours = ToBit(mb, 14 - M_DEBUT, 7)   ' M14.7
+        PLCData.ForceTapis = ToBit(mb, 30 - M_DEBUT, 4)     ' M30.4
+        PLCData.ForceTrappeCim = ToBit(mb, 31 - M_DEBUT, 1) ' M31.1
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════
+    '  BLOCS COMPLÉMENT — seule DB18.DBD20 (Cons_EAU2) reste hors DB1
+    ' ═══════════════════════════════════════════════════════════
+    Private Sub LireBlocsComplement(plc As Plc)
+        Try
+            Dim db18_20() As Byte = plc.ReadBytes(DataType.DataBlock, 18, 20, 4)
+            PLCData.Cons_EAU2 = ToFloat(db18_20, 0)   ' DB18.DBD20
+        Catch ex As Exception
+            ' DB18 absent du nouveau CPU ? on ne bloque pas le reste
+            NoterErreur("DB18.DBD20 (Cons_EAU2) illisible : " & ex.Message)
+        End Try
+    End Sub
+
+    ' ═══════════════════════════════════════════════════════════
+    '  TABLE DE TRADUCTION — anciennes adresses M → DB1.octet.bit
+    '  ⚠ AUCUN commentaire à l'intérieur du From { } : interdit en VB.
+    ' ═══════════════════════════════════════════════════════════
+    Private Structure BitLoc
+        Public Octet As Integer
+        Public Bit As Integer
+        Public Sub New(o As Integer, b As Integer)
+            Octet = o : Bit = b
+        End Sub
+    End Structure
+
+    Private ReadOnly _mapBitsDB1 As New Dictionary(Of String, BitLoc)(StringComparer.OrdinalIgnoreCase) From {
+        {"M9.1", New BitLoc(0, 0)}, {"M9.0", New BitLoc(0, 1)}, {"M4.5", New BitLoc(0, 4)},
+        {"M30.0", New BitLoc(0, 5)}, {"M30.1", New BitLoc(0, 6)}, {"M30.2", New BitLoc(0, 7)},
+        {"M30.3", New BitLoc(3, 5)}, {"M30.5", New BitLoc(4, 5)}, {"M30.6", New BitLoc(4, 6)},
+        {"M30.7", New BitLoc(5, 1)}, {"M31.0", New BitLoc(5, 2)}, {"M1.6", New BitLoc(6, 5)},
+        {"M31.4", New BitLoc(8, 1)}, {"M31.5", New BitLoc(8, 2)}, {"M31.6", New BitLoc(8, 3)},
+        {"M31.7", New BitLoc(8, 4)}, {"M80.0", New BitLoc(9, 1)}, {"M32.0", New BitLoc(9, 2)},
+        {"M31.2", New BitLoc(9, 3)}, {"M31.3", New BitLoc(9, 5)}, {"M32.1", New BitLoc(10, 0)},
+        {"M32.2", New BitLoc(10, 2)}, {"M12.0", New BitLoc(12, 0)}, {"M12.1", New BitLoc(12, 2)},
+        {"M12.2", New BitLoc(12, 4)}, {"M12.3", New BitLoc(12, 6)}, {"M12.4", New BitLoc(16, 4)},
+        {"M13.5", New BitLoc(17, 4)}, {"M13.6", New BitLoc(17, 5)}, {"M13.2", New BitLoc(18, 0)},
+        {"M13.3", New BitLoc(18, 1)}, {"M13.4", New BitLoc(19, 4)}, {"M14.3", New BitLoc(21, 0)},
+        {"M14.4", New BitLoc(21, 1)}, {"M14.5", New BitLoc(21, 2)}, {"M14.6", New BitLoc(21, 3)},
+        {"M19.3", New BitLoc(22, 0)}, {"M19.6", New BitLoc(22, 1)}, {"M13.7", New BitLoc(22, 2)},
+        {"M14.1", New BitLoc(22, 4)}, {"M7.1", New BitLoc(22, 5)}, {"M15.0", New BitLoc(22, 6)},
+        {"M15.1", New BitLoc(23, 0)}, {"M26.0", New BitLoc(24, 0)}, {"M26.1", New BitLoc(24, 1)},
+        {"M26.2", New BitLoc(24, 2)}, {"M26.3", New BitLoc(24, 3)}, {"M25.3", New BitLoc(25, 4)},
+        {"M25.0", New BitLoc(25, 5)}, {"M25.1", New BitLoc(25, 6)}, {"M25.2", New BitLoc(25, 7)},
+        {"M25.4", New BitLoc(26, 0)}, {"M5.3", New BitLoc(28, 3)}, {"M6.7", New BitLoc(29, 7)},
+        {"M7.0", New BitLoc(30, 1)}, {"M23.0", New BitLoc(32, 0)}, {"M23.1", New BitLoc(32, 1)},
+        {"M23.2", New BitLoc(32, 2)}, {"M23.3", New BitLoc(32, 3)}, {"M21.4", New BitLoc(33, 4)},
+        {"M21.5", New BitLoc(33, 5)}, {"M21.6", New BitLoc(33, 6)}, {"M21.7", New BitLoc(33, 7)},
+        {"M23.4", New BitLoc(36, 5)}, {"M22.0", New BitLoc(37, 3)}, {"M22.2", New BitLoc(40, 1)},
+        {"M22.3", New BitLoc(40, 2)}, {"M22.5", New BitLoc(40, 3)}, {"M22.6", New BitLoc(40, 4)},
+        {"M23.5", New BitLoc(41, 2)}, {"M22.1", New BitLoc(41, 3)}, {"M23.7", New BitLoc(914, 0)},
+        {"M50.3", New BitLoc(914, 1)}, {"M50.4", New BitLoc(914, 2)}, {"M51.0", New BitLoc(914, 3)},
+        {"M8.2", New BitLoc(914, 4)}, {"M58.3", New BitLoc(914, 5)},
+        {"M5.0", New BitLoc(1082, 0)}, {"M20.2", New BitLoc(1082, 1)}, {"M57.0", New BitLoc(1082, 2)},
+        {"M57.1", New BitLoc(1082, 3)}, {"M64.6", New BitLoc(1082, 4)}
+    }
+
+    ' Traductions REAL confirmées (clé = "DBx.y" ancien → offset DB1)
+    Private ReadOnly _mapRealDB1 As New Dictionary(Of String, Integer)(StringComparer.OrdinalIgnoreCase) From {
+        {"4.0", 86}, {"4.4", 78}, {"4.8", 82}, {"4.98", 402}, {"4.102", 406}, {"4.114", 410}, {"4.118", 414},
+        {"8.0", 118}, {"8.4", 122}, {"8.8", 126}, {"8.12", 130}, {"8.16", 94}, {"8.216", 174}, {"8.228", 178},
+        {"8.126", 1052}, {"8.240", 1068}, {"8.330", 1072},
+        {"78.0", 182}, {"78.4", 186},
+        {"18.2", 230}, {"18.6", 234}, {"18.10", 238}, {"18.14", 242}, {"18.18", 206}, {"18.22", 278},
+        {"18.26", 346}, {"18.30", 350}, {"18.34", 354}, {"18.38", 358}, {"18.42", 318}, {"18.46", 394},
+        {"18.58", 210}, {"18.62", 286}, {"18.66", 290}, {"18.70", 294}, {"18.74", 298},
+        {"90.4", 90},
+        {"19.58", 916}, {"19.66", 920}, {"19.70", 1078},
+        {"65.0", 924}, {"65.8", 928}, {"65.16", 932}, {"65.24", 936}, {"65.32", 940},
+        {"65.48", 948}, {"65.56", 952}, {"65.64", 956}, {"65.80", 960}, {"65.88", 964},
+        {"101.0", 538}, {"101.4", 542}, {"101.8", 546}, {"101.12", 550}, {"101.16", 530},
+        {"101.20", 586}, {"101.24", 594}, {"101.28", 598}, {"101.32", 602}, {"101.36", 606},
+        {"101.80", 1008}, {"101.84", 1012}, {"101.88", 1016}, {"101.92", 1020},
+        {"101.96", 1024}, {"101.100", 1028}, {"101.104", 1032}, {"101.108", 1036},
+        {"101.112", 1040}, {"101.116", 1044}, {"101.120", 1048},
+        {"114.0", 968}, {"114.4", 972}, {"114.8", 976}, {"114.12", 980}, {"114.16", 984},
+        {"114.20", 988}, {"114.24", 992}, {"114.28", 996}, {"114.32", 1000}, {"114.36", 1004}
+    }
+
+    ' Traductions WORD (DBW, 16 bits) : "DBx.DBWy" ancien → "DB1.DBWz"
+    Private ReadOnly _mapWordDB1 As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase) From {
+        {"DB8.DBW324", "DB1.DBW52"},
+        {"DB18.DBW0", "DB1.DBW1076"}
+    }
+
+    ' ═══════════════════════════════════════════════════════════
+    '  RÉSOLUTION D'ADRESSE BIT
+    ' ═══════════════════════════════════════════════════════════
+    Private Structure BitCible
+        Public Zone As DataType
+        Public Db As Integer
+        Public Octet As Integer
+        Public Bit As Integer
+    End Structure
+
+    Private ReadOnly _rxDBX As New Regex("^DB(\d+)\.DBX(\d+)\.([0-7])$", RegexOptions.IgnoreCase)
+    Private ReadOnly _rxM As New Regex("^M(\d+)\.([0-7])$", RegexOptions.IgnoreCase)
+
+    Private Function ResoudreBit(adresse As String, ByRef cible As BitCible) As Boolean
+        If String.IsNullOrWhiteSpace(adresse) Then Return False
+        Dim a As String = adresse.Trim().Replace(" ", "")
+
+        Dim loc As BitLoc
+        If _mapBitsDB1.TryGetValue(a, loc) Then
+            cible = New BitCible With {.Zone = DataType.DataBlock, .Db = 1, .Octet = loc.Octet, .Bit = loc.Bit}
+            Return True
+        End If
+
+        Dim m As Match = _rxDBX.Match(a)
+        If m.Success Then
+            cible = New BitCible With {.Zone = DataType.DataBlock, .Db = CInt(m.Groups(1).Value),
+                                       .Octet = CInt(m.Groups(2).Value), .Bit = CInt(m.Groups(3).Value)}
+            Return True
+        End If
+
+        m = _rxM.Match(a)
+        If m.Success Then
+            cible = New BitCible With {.Zone = DataType.Memory, .Db = 0,
+                                       .Octet = CInt(m.Groups(1).Value), .Bit = CInt(m.Groups(2).Value)}
+            Return True
+        End If
+        Return False
+    End Function
+
+    Private Function AdresseS7(c As BitCible) As String
+        If c.Zone = DataType.DataBlock Then Return "DB" & c.Db & ".DBX" & c.Octet & "." & c.Bit
+        Return "M" & c.Octet & "." & c.Bit
+    End Function
+
+    Public Function AdresseWordReelle(adresse As String) As String
+        Dim a As String = adresse.Trim().Replace(" ", "")
+        Dim cible As String = Nothing
+        If _mapWordDB1.TryGetValue(a, cible) Then Return cible
+        Return a
+    End Function
+
+    Public Function EstMigree(adresse As String) As Boolean
+        Dim c As BitCible
+        Return ResoudreBit(adresse, c) AndAlso c.Zone = DataType.DataBlock
+    End Function
+
+    Public Function AdresseReelle(adresse As String) As String
+        Dim c As BitCible
+        If Not ResoudreBit(adresse, c) Then Return adresse & " (?)"
+        If c.Zone = DataType.DataBlock Then Return AdresseS7(c)
+        Return AdresseS7(c) & " (non migré)"
+    End Function
+
+    ' ═══════════════════════════════════════════════════════════
+    '  ÉCRITURES THREAD-SAFE — utilisables PARTOUT
+    ' ═══════════════════════════════════════════════════════════
+
+    ' Écrire un bit — ex : EcrireBit(AdrForcage.TAPIS, True)
+    '  v5 : lecture de l'octet → modification du bit → réécriture.
+    '  Marche avec TOUTES les versions de S7.Net (pas de WriteBit,
+    '  pas de Write("DBX") dont le comportement varie selon la version).
+    Public Function EcrireBit(adresse As String, valeur As Boolean) As Boolean
+        Dim c As BitCible
+        Try
+            If Not PLCPret() Then
+                NoterErreur("EcrireBit " & adresse & " : PLC non connecté")
+                Return False
+            End If
+            If Not ResoudreBit(adresse, c) Then
+                NoterErreur("EcrireBit : adresse invalide « " & adresse & " »")
+                Return False
+            End If
+            SyncLock _lockPLC
+                Dim plc As Plc = Module1.PLCInstance
+                Dim b() As Byte = plc.ReadBytes(c.Zone, c.Db, c.Octet, 1)
+                If b Is Nothing OrElse b.Length < 1 Then
+                    NoterErreur("EcrireBit " & AdresseS7(c) & " : lecture de l'octet impossible")
+                    Return False
+                End If
+                Dim masque As Byte = CByte(1 << c.Bit)
+                If valeur Then
+                    b(0) = CByte(b(0) Or masque)
+                Else
+                    b(0) = CByte(b(0) And (Not masque))
+                End If
+                plc.WriteBytes(c.Zone, c.Db, c.Octet, b)
+            End SyncLock
+            Return True
+        Catch ex As Exception
+            NoterErreur("EcrireBit " & AdresseReelle(adresse) & " : " & ex.Message)
+            Return False
+        End Try
+    End Function
+
+    ' Écrire un entier 16 bits — ex: EcrireInt("DB8.DBW324", 1)
+    Public Function EcrireInt(adresse As String, valeur As Integer) As Boolean
+        Dim adrReelle As String = AdresseWordReelle(adresse)
+        Try
+            If Not PLCPret() Then Return False
+            SyncLock _lockPLC
+                Module1.PLCInstance.Write(adrReelle, CShort(valeur))
+            End SyncLock
+            Return True
+        Catch ex As Exception
+            NoterErreur("EcrireInt " & adrReelle & " : " & ex.Message)
+            Return False
+        End Try
+    End Function
+
+    ' Écrire un REAL Big Endian — redirigé vers DB1 si migré
+    Public Function EcrireReal(db As Integer, offset As Integer,
+                               valeur As Single) As Boolean
+        Try
+            If Not PLCPret() Then Return False
+
+            Dim dbCible As Integer = db
+            Dim offsetCible As Integer = offset
+            Dim offsetDB1 As Integer
+            If _mapRealDB1.TryGetValue(db & "." & offset, offsetDB1) Then
+                dbCible = 1
+                offsetCible = offsetDB1
+            End If
+
+            Dim b() As Byte = BitConverter.GetBytes(valeur)
+            Dim octets() As Byte = {b(3), b(2), b(1), b(0)}   ' Big Endian S7
+            SyncLock _lockPLC
+                Module1.PLCInstance.WriteBytes(
+                    DataType.DataBlock, dbCible, offsetCible, octets)
+            End SyncLock
+            Return True
+        Catch ex As Exception
+            NoterErreur("EcrireReal DB" & db & "." & offset & " : " & ex.Message)
+            Return False
+        End Try
+    End Function
+
+    ' Impulsion (1 puis 0) SANS geler l'UI
+    Public Sub EcrireImpulsion(adresse As String,
+                               Optional dureeMs As Integer = 200)
+        Dim t As New Thread(Sub()
+                                EcrireBit(adresse, True)
+                                Thread.Sleep(dureeMs)
+                                EcrireBit(adresse, False)
+                            End Sub)
+        t.IsBackground = True
+        t.Start()
+    End Sub
+
+    ' Lecture ponctuelle thread-safe (bit M / DBX traduit, sinon S7.Net)
+    Public Function LireAdresse(adresse As String) As Object
+        Try
+            If Not PLCPret() Then Return Nothing
+
+            Dim c As BitCible
+            If ResoudreBit(adresse, c) Then
+                SyncLock _lockPLC
+                    Dim b() As Byte = Module1.PLCInstance.ReadBytes(c.Zone, c.Db, c.Octet, 1)
+                    Return ToBit(b, 0, c.Bit)
+                End SyncLock
+            End If
+
+            SyncLock _lockPLC
+                Return Module1.PLCInstance.Read(AdresseWordReelle(adresse))
+            End SyncLock
+        Catch ex As Exception
+            NoterErreur("LireAdresse " & adresse & " : " & ex.Message)
+            Return Nothing
+        End Try
+    End Function
+
+    ' Lecture REAL ponctuelle thread-safe (redirigée vers DB1 si migré)
+    Public Function LireDBDReal(db As Integer, offset As Integer) As Single
+        Try
+            If Not PLCPret() Then Return 0.0F
+
+            Dim dbCible As Integer = db
+            Dim offsetCible As Integer = offset
+            Dim offsetDB1 As Integer
+            If _mapRealDB1.TryGetValue(db & "." & offset, offsetDB1) Then
+                dbCible = 1
+                offsetCible = offsetDB1
+            End If
+
+            SyncLock _lockPLC
+                Dim b() As Byte = Module1.PLCInstance.ReadBytes(DataType.DataBlock, dbCible, offsetCible, 4)
+                Return ToFloat(b, 0)
+            End SyncLock
+        Catch ex As Exception
+            NoterErreur("LireDBDReal DB" & db & "." & offset & " : " & ex.Message)
+            Return 0.0F
+        End Try
+    End Function
+
+    Private Function PLCPret() As Boolean
+        Return Module1.PLCInstance IsNot Nothing AndAlso
+               Module1.PLCInstance.IsConnected
+    End Function
+
+    ' ═══════════════════════════════════════════════════════════
+    '  HELPERS Big Endian
+    ' ═══════════════════════════════════════════════════════════
+    Private Function ToFloat(data() As Byte, offset As Integer) As Single
+        If data Is Nothing OrElse offset + 3 >= data.Length Then Return 0
+        Dim b() As Byte = {data(offset + 3), data(offset + 2),
+                           data(offset + 1), data(offset)}
+        Return BitConverter.ToSingle(b, 0)
+    End Function
+
+    Private Function ToInt16(data() As Byte, offset As Integer) As Integer
+        If data Is Nothing OrElse offset + 1 >= data.Length Then Return 0
+        Return CInt(data(offset)) * 256 + CInt(data(offset + 1))
+    End Function
+
+    Private Function ToBit(data() As Byte, byteOff As Integer,
+                           bitOff As Integer) As Boolean
+        If data Is Nothing OrElse byteOff < 0 OrElse byteOff >= data.Length Then Return False
+        Return (data(byteOff) And (1 << bitOff)) <> 0
+    End Function
+
+End Module
