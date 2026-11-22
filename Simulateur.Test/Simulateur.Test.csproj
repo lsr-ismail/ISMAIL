@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Test d'intégration : lance le simulateur (sans interface) et le pilote avec un client S7 réel (S7netplus). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>SimulateurAutomate.Test</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Simulateur\PlcMemory.cs" Link="Sim\PlcMemory.cs" />
+    <Compile Include="..\Simulateur\S7Server.cs" Link="Sim\S7Server.cs" />
+    <Compile Include="..\Simulateur\CpuEngine.cs" Link="Sim\CpuEngine.cs" />
+    <PackageReference Include="S7netplus" Version="0.20.0" />
+  </ItemGroup>
+
+</Project>

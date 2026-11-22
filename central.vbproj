@@ -24,7 +24,7 @@
 
   <ItemGroup>
     <Reference Include="S7.Net">
-      <HintPath>..\S7netplus.0.1.4\lib\net45\S7.Net.dll</HintPath>
+      <HintPath>libs\S7.Net.dll</HintPath>
     </Reference>
   </ItemGroup>
 
