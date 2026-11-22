@@ -45,6 +45,9 @@ Module Module1
     Public PLC_IP As String = "192.168.0.1"
     Public PLC_Rack As Short = 0
     Public PLC_Slot As Short = 1
+    ' Port ISO-on-TCP (102 = automate reel). Un autre port sert uniquement au simulateur :
+    ' dans dbo.Machines.Adresse_IP_PLC, ecrire "127.0.0.1:1102".
+    Public PLC_Port As Integer = 102
     Public PLC_Connecte As Boolean = False
 
     ' Instance PLC partagee entre tous les modules
@@ -112,7 +115,18 @@ Module Module1
                 "SELECT TOP 1 Adresse_IP_PLC FROM dbo.Machines WHERE Actif=1")
             If dt IsNot Nothing AndAlso dt.Rows.Count > 0 Then
                 Dim ip = dt.Rows(0)("Adresse_IP_PLC").ToString()
-                If ip <> "" Then PLC_IP = ip
+                If ip <> "" Then
+                    ' format accepte : "192.168.0.1" ou "127.0.0.1:1102"
+                    Dim p As Integer = ip.LastIndexOf(":"c)
+                    Dim portLu As Integer = 0
+                    If p > 0 AndAlso Integer.TryParse(ip.Substring(p + 1), portLu) AndAlso portLu > 0 AndAlso portLu < 65536 Then
+                        PLC_IP = ip.Substring(0, p).Trim()
+                        PLC_Port = portLu
+                    Else
+                        PLC_IP = ip.Trim()
+                        PLC_Port = 102
+                    End If
+                End If
             End If
         Catch
             ' Garder IP par defaut 192.168.0.1
@@ -124,7 +138,7 @@ Module Module1
     ' ═══════════════════════════════════════════════════════════════
     Public Sub ConnecterPLCGlobal()
         Try
-            PLCInstance = New Plc(CpuType.S71200, PLC_IP, PLC_Rack, PLC_Slot)
+            PLCInstance = New Plc(CpuType.S71200, PLC_IP, PLC_Port, PLC_Rack, PLC_Slot)
             PLCInstance.Open()
             If PLCInstance.IsConnected Then
                 PLC_Connecte = True
