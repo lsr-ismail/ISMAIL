@@ -513,7 +513,7 @@ Partial Class PanelMain
         ' 
         DELTABETONToolStripMenuItem.Name = "DELTABETONToolStripMenuItem"
         DELTABETONToolStripMenuItem.Size = New Size(134, 29)
-        DELTABETONToolStripMenuItem.Text = "DELTABETON"
+        DELTABETONToolStripMenuItem.Text = "BETONIA"
         ' 
         ' ROUTEURToolStripMenuItem
         ' 

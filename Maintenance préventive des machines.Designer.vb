@@ -33,7 +33,7 @@ Partial Class Maintenance_préventive_des_machines
         Label21.Name = "Label21"
         Label21.Size = New Size(351, 28)
         Label21.TabIndex = 179
-        Label21.Text = "Maintenance_préventive_des_machines"
+        Label21.Text = "Maintenance préventive des machines"
         ' 
         ' Maintenance_préventive_des_machines
         ' 
@@ -42,7 +42,7 @@ Partial Class Maintenance_préventive_des_machines
         ClientSize = New Size(1082, 723)
         Controls.Add(Label21)
         Name = "Maintenance_préventive_des_machines"
-        Text = "Maintenance_préventive_des_machines"
+        Text = "Maintenance préventive des machines"
         ResumeLayout(False)
         PerformLayout()
     End Sub

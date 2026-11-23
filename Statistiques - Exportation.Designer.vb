@@ -33,7 +33,7 @@ Partial Class Statistiques___Exportation
         Label21.Name = "Label21"
         Label21.Size = New Size(238, 28)
         Label21.TabIndex = 151
-        Label21.Text = "Statistiques___Exportation"
+        Label21.Text = "Statistiques - Exportation"
         ' 
         ' Statistiques___Exportation
         ' 
@@ -42,7 +42,7 @@ Partial Class Statistiques___Exportation
         ClientSize = New Size(1729, 996)
         Controls.Add(Label21)
         Name = "Statistiques___Exportation"
-        Text = "Statistiques___Exportation"
+        Text = "Statistiques - Exportation"
         ResumeLayout(False)
         PerformLayout()
     End Sub

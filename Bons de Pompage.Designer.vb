@@ -82,7 +82,7 @@ Partial Class Bons_de_Pompage
         Label13.Name = "Label13"
         Label13.Size = New Size(206, 31)
         Label13.TabIndex = 253
-        Label13.Text = "Bons_de_Pompage"
+        Label13.Text = "Bons de Pompage"
         ' 
         ' btnEnregistrer
         ' 
@@ -523,7 +523,7 @@ Partial Class Bons_de_Pompage
         Controls.Add(btnNouveau)
         Controls.Add(Label13)
         Name = "Bons_de_Pompage"
-        Text = "Bons_de_Pompage"
+        Text = "Bons de Pompage"
         CType(DataGridView1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()

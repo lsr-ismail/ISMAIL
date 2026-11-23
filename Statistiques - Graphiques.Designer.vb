@@ -33,7 +33,7 @@ Partial Class Statistiques___Graphiques
         Label21.Name = "Label21"
         Label21.Size = New Size(236, 28)
         Label21.TabIndex = 151
-        Label21.Text = "Statistiques___Graphiques"
+        Label21.Text = "Statistiques - Graphiques"
         ' 
         ' Statistiques___Graphiques
         ' 
@@ -42,7 +42,7 @@ Partial Class Statistiques___Graphiques
         ClientSize = New Size(1729, 996)
         Controls.Add(Label21)
         Name = "Statistiques___Graphiques"
-        Text = "Statistiques___Graphiques"
+        Text = "Statistiques - Graphiques"
         ResumeLayout(False)
         PerformLayout()
     End Sub

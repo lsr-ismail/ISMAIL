@@ -66,7 +66,7 @@ Partial Class Bons_de_livraison
         Label21.Name = "Label21"
         Label21.Size = New Size(165, 28)
         Label21.TabIndex = 94
-        Label21.Text = "Bons_de_livraison"
+        Label21.Text = "Bons de livraison"
         ' 
         ' btnActualiser
         ' 
@@ -383,7 +383,7 @@ Partial Class Bons_de_livraison
         Controls.Add(btnAjouter)
         Controls.Add(Label21)
         Name = "Bons_de_livraison"
-        Text = "Bons_de_livraison"
+        Text = "Bons de livraison"
         CType(DataGridView1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()

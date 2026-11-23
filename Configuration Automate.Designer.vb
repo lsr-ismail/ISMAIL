@@ -13991,7 +13991,7 @@ Partial Class Configuration_Automate
         Me.Controls.Add(GroupBox4)
         Me.Controls.Add(TabControl1)
         Me.Name = "Configuration_Automate"
-        Me.Text = "Configuration_Automate"
+        Me.Text = "Configuration Automate"
         TabControl1.ResumeLayout(False)
         CASES.ResumeLayout(False)
         CASES.PerformLayout()

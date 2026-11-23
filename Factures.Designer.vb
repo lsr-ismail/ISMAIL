@@ -257,7 +257,7 @@ Partial Class Factures
         Label1.Name = "Label1"
         Label1.Size = New Size(47, 20)
         Label1.TabIndex = 316
-        Label1.Text = "txtICE"
+        Label1.Text = "ICE"
         ' 
         ' Label2
         ' 

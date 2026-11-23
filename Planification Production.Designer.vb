@@ -57,7 +57,7 @@ Partial Class Planification_Production
         Label21.Name = "Label21"
         Label21.Size = New Size(224, 28)
         Label21.TabIndex = 154
-        Label21.Text = "Planification_Production"
+        Label21.Text = "Planification Production"
         ' 
         ' btnActualiser
         ' 
@@ -306,7 +306,7 @@ Partial Class Planification_Production
         Controls.Add(btnDemarrer)
         Controls.Add(Label21)
         Name = "Planification_Production"
-        Text = "Planification_Production"
+        Text = "Planification Production"
         CType(DataGridViewProduction, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()

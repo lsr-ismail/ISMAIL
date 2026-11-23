@@ -33,7 +33,7 @@ Partial Class Statistiques___Laboratoire
         Label21.Name = "Label21"
         Label21.Size = New Size(237, 28)
         Label21.TabIndex = 151
-        Label21.Text = "Statistiques___Laboratoire"
+        Label21.Text = "Statistiques - Laboratoire"
         ' 
         ' Statistiques___Laboratoire
         ' 
@@ -42,7 +42,7 @@ Partial Class Statistiques___Laboratoire
         ClientSize = New Size(1729, 996)
         Controls.Add(Label21)
         Name = "Statistiques___Laboratoire"
-        Text = "Statistiques___Laboratoire"
+        Text = "Statistiques - Laboratoire"
         ResumeLayout(False)
         PerformLayout()
     End Sub

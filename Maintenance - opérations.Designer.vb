@@ -33,7 +33,7 @@ Partial Class Maintenance___opérations
         Label21.Name = "Label21"
         Label21.Size = New Size(242, 28)
         Label21.TabIndex = 179
-        Label21.Text = "Maintenance___opérations"
+        Label21.Text = "Maintenance - opérations"
         ' 
         ' Maintenance___opérations
         ' 
@@ -42,7 +42,7 @@ Partial Class Maintenance___opérations
         ClientSize = New Size(1082, 723)
         Controls.Add(Label21)
         Name = "Maintenance___opérations"
-        Text = "Maintenance___opérations"
+        Text = "Maintenance - opérations"
         ResumeLayout(False)
         PerformLayout()
     End Sub

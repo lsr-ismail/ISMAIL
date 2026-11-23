@@ -1496,7 +1496,7 @@ Public Class Configuration_Automate
     End Sub
 
     Private Sub BtnAide_Click(sender As Object, e As EventArgs) Handles BtnAide.Click
-        MessageBox.Show("Configuration Automate — DeltaBéton" & vbCrLf &
+        MessageBox.Show("Configuration Automate — BETONIA" & vbCrLf &
                         "Remplir tous les paramètres puis cliquer sur Valider.",
                         "Aide", MessageBoxButtons.OK, MessageBoxIcon.Information)
     End Sub

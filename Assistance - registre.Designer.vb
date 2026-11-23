@@ -30,7 +30,7 @@ Partial Class Assistance___registre
         AutoScaleMode = AutoScaleMode.Font
         ClientSize = New Size(1082, 723)
         Name = "Assistance___registre"
-        Text = "Assistance___registre"
+        Text = "Assistance - registre"
         ResumeLayout(False)
     End Sub
 End Class

@@ -33,7 +33,7 @@ Partial Class Assistance___configuration_entrées_sorties
         Label21.Name = "Label21"
         Label21.Size = New Size(379, 28)
         Label21.TabIndex = 149
-        Label21.Text = "Assistance___configuration_entrées_sorties"
+        Label21.Text = "Assistance - configuration entrées sorties"
         ' 
         ' Assistance___configuration_entrées_sorties
         ' 
@@ -42,7 +42,7 @@ Partial Class Assistance___configuration_entrées_sorties
         ClientSize = New Size(1082, 723)
         Controls.Add(Label21)
         Name = "Assistance___configuration_entrées_sorties"
-        Text = "Assistance___configuration_entrées_sorties"
+        Text = "Assistance - configuration entrées sorties"
         ResumeLayout(False)
         PerformLayout()
     End Sub

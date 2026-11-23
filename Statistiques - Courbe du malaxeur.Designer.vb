@@ -33,7 +33,7 @@ Partial Class Statistiques___Courbe_du_malaxeur
         Label21.Name = "Label21"
         Label21.Size = New Size(318, 28)
         Label21.TabIndex = 152
-        Label21.Text = "Statistiques___Courbe_du_malaxeur"
+        Label21.Text = "Statistiques - Courbe du malaxeur"
         ' 
         ' Statistiques___Courbe_du_malaxeur
         ' 
@@ -42,7 +42,7 @@ Partial Class Statistiques___Courbe_du_malaxeur
         ClientSize = New Size(1729, 996)
         Controls.Add(Label21)
         Name = "Statistiques___Courbe_du_malaxeur"
-        Text = "Statistiques___Courbe_du_malaxeur"
+        Text = "Statistiques - Courbe du malaxeur"
         ResumeLayout(False)
         PerformLayout()
     End Sub

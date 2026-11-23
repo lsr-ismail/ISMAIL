@@ -30,7 +30,7 @@ Partial Class Form_ConfirmationBL
         AutoScaleMode = AutoScaleMode.Font
         ClientSize = New Size(800, 450)
         Name = "Form_ConfirmationBL"
-        Text = "Form_ConfirmationBL"
+        Text = "Form ConfirmationBL"
         ResumeLayout(False)
     End Sub
 End Class

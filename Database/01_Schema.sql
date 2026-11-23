@@ -266,7 +266,8 @@ GO
 IF OBJECT_ID('dbo.Cases','U') IS NULL
 CREATE TABLE dbo.Cases (
     NumeroCase INT NOT NULL CONSTRAINT PK_Cases PRIMARY KEY,
-    TypeMateriau NVARCHAR(50) NULL, NomCase NVARCHAR(100) NULL, CodeCase NVARCHAR(50) NULL,
+    TypeMateriau INT NULL,   -- index entier : 0 = GR (granulats), 1 = L (liants), 2 = E (eau), 3 = ADJ (Configuration Automate.vb l.99 et l.985)
+    NomCase NVARCHAR(100) NULL, CodeCase NVARCHAR(50) NULL,
     IdMateriau INT NULL CONSTRAINT FK_Cases_Materiau REFERENCES dbo.Materiaux(IdMateriau),
     DosageValide BIT NULL, Actif BIT NULL DEFAULT 1,
     TempsDosageMax FLOAT NULL, CapaciteCase FLOAT NULL, SeuilAlerte FLOAT NULL, NiveauCase FLOAT NULL, OrdreDosage INT NULL,
@@ -277,6 +278,36 @@ CREATE TABLE dbo.Cases (
     E_DestBascule INT NULL, E_TypeDosage INT NULL, E_EauChargee BIT NULL, E_Compartiment INT NULL, E_SeuilPV FLOAT NULL, E_ChargeMES BIT NULL,
     A_DestBascule INT NULL, A_TypeDosage INT NULL, A_SeuilPV FLOAT NULL, A_DebitPompe FLOAT NULL
 );
+GO
+
+/* Migration : une premiere version de ce script declarait Cases.TypeMateriau en texte ; l'ERP attend un entier */
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.Cases') AND name = 'TypeMateriau' AND system_type_id IN (167, 231))
+BEGIN
+    UPDATE dbo.Cases SET TypeMateriau = CASE UPPER(TypeMateriau) WHEN 'L' THEN '1' WHEN 'LIANT' THEN '1' WHEN 'CIMENT' THEN '1'
+                                                               WHEN 'E' THEN '2' WHEN 'EAU' THEN '2' WHEN 'ADJ' THEN '3' WHEN 'ADJUVANT' THEN '3'
+                                                               ELSE '0' END;
+    ALTER TABLE dbo.Cases ALTER COLUMN TypeMateriau INT NULL;
+END
+GO
+
+/* Cases : l'ERP lit ces colonnes avec CInt(dr("...")) sans tester NULL (Configuration Automate.vb l.985+) -> NOT NULL DEFAULT 0 */
+DECLARE @col SYSNAME, @sql NVARCHAR(MAX);
+DECLARE c CURSOR LOCAL FAST_FORWARD FOR
+    SELECT name FROM sys.columns
+    WHERE object_id = OBJECT_ID('dbo.Cases') AND is_nullable = 1
+      AND name NOT IN ('TypeMateriau','NomCase','CodeCase','IdMateriau','DosageValide','Actif');
+OPEN c; FETCH NEXT FROM c INTO @col;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    SET @sql = 'UPDATE dbo.Cases SET [' + @col + '] = 0 WHERE [' + @col + '] IS NULL; ' +
+               'ALTER TABLE dbo.Cases ALTER COLUMN [' + @col + '] FLOAT NOT NULL; ' +
+               'ALTER TABLE dbo.Cases ADD CONSTRAINT [DF_Cases_' + @col + '] DEFAULT 0 FOR [' + @col + '];';
+    EXEC (@sql);
+    FETCH NEXT FROM c INTO @col;
+END
+CLOSE c; DEALLOCATE c;
+UPDATE dbo.Cases SET TypeMateriau = 0 WHERE TypeMateriau IS NULL;
+ALTER TABLE dbo.Cases ALTER COLUMN TypeMateriau INT NOT NULL;
 GO
 
 /* ───── Planning, commandes, bons de livraison, production ───── */

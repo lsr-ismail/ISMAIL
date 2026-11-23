@@ -399,7 +399,7 @@ Partial Class Chantiers
         Label13.Name = "Label13"
         Label13.Size = New Size(168, 20)
         Label13.TabIndex = 86
-        Label13.Text = "txtDerniereModification"
+        Label13.Text = "Dernière modification"
         ' 
         ' Label14
         ' 

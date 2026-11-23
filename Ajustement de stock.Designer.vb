@@ -33,7 +33,7 @@ Partial Class Ajustement_de_stock
         Label21.Name = "Label21"
         Label21.Size = New Size(195, 28)
         Label21.TabIndex = 93
-        Label21.Text = "Ajustement_de_stock"
+        Label21.Text = "Ajustement de stock"
         ' 
         ' Ajustement_de_stock
         ' 
@@ -42,7 +42,7 @@ Partial Class Ajustement_de_stock
         ClientSize = New Size(1082, 723)
         Controls.Add(Label21)
         Name = "Ajustement_de_stock"
-        Text = "Ajustement_de_stock"
+        Text = "Ajustement de stock"
         ResumeLayout(False)
         PerformLayout()
     End Sub

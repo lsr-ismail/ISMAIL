@@ -33,7 +33,7 @@ Partial Class Assistance___simulation
         Label21.Name = "Label21"
         Label21.Size = New Size(216, 28)
         Label21.TabIndex = 148
-        Label21.Text = "Assistance___simulation"
+        Label21.Text = "Assistance - simulation"
         ' 
         ' Assistance___simulation
         ' 
@@ -42,7 +42,7 @@ Partial Class Assistance___simulation
         ClientSize = New Size(1082, 723)
         Controls.Add(Label21)
         Name = "Assistance___simulation"
-        Text = "Assistance___simulation"
+        Text = "Assistance - simulation"
         ResumeLayout(False)
         PerformLayout()
     End Sub

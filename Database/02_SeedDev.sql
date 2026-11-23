@@ -60,7 +60,7 @@ UNION ALL SELECT 'ADJ',2,'Adjuvant 2',50,10,80,40,(SELECT IdMateriau FROM dbo.Ma
 /* Cases automate (tremies 1 a 4) */
 IF NOT EXISTS (SELECT 1 FROM dbo.Cases)
 INSERT INTO dbo.Cases (NumeroCase, TypeMateriau, NomCase, CodeCase, IdMateriau, DosageValide, Actif)
-SELECT s.NumeroElement, 'GRANULAT', s.NomSilo, m.CodeMateriau, s.IdMateriau, 1, 1
+SELECT s.NumeroElement, 0, s.NomSilo, m.CodeMateriau, s.IdMateriau, 1, 1
 FROM dbo.Silos s JOIN dbo.Materiaux m ON m.IdMateriau = s.IdMateriau WHERE s.TypeElement='TR';
 
 /* Stock (reconstruit comme le fait ModuleStock.SynchroniserStock) */

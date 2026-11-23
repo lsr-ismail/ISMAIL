@@ -50,7 +50,7 @@ Partial Class Entrées_de_matières_premières
         Label21.Name = "Label21"
         Label21.Size = New Size(281, 28)
         Label21.TabIndex = 311
-        Label21.Text = "Entrées_de_matières_premières"
+        Label21.Text = "Entrées de matières premières"
         ' 
         ' btnEnregistrer
         ' 
@@ -218,7 +218,7 @@ Partial Class Entrées_de_matières_premières
         Controls.Add(DataGridView1)
         Controls.Add(Label21)
         Name = "Entrées_de_matières_premières"
-        Text = "Entrées_de_matières_premières"
+        Text = "Entrées de matières premières"
         CType(DataGridView1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()

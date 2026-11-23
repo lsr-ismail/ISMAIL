@@ -1141,7 +1141,7 @@ Partial Class Planification_Demands
         Label35.Name = "Label35"
         Label35.Size = New Size(209, 28)
         Label35.TabIndex = 274
-        Label35.Text = "Planification_Demands"
+        Label35.Text = "Planification Demandes"
         ' 
         ' Label4
         ' 
@@ -1232,7 +1232,7 @@ Partial Class Planification_Demands
         Controls.Add(Abandonner)
         Name = "Planification_Demands"
         StartPosition = FormStartPosition.CenterScreen
-        Text = "Planification_Demands"
+        Text = "Planification Demandes"
         GroupBox1.ResumeLayout(False)
         GroupBox1.PerformLayout()
         GroupBox2.ResumeLayout(False)

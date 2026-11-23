@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Outil de développement : ouvre des écrans de l'ERP (par réflexion), applique le thème et enregistre des captures PNG.
+       Usage : CaptureEcrans.exe <central.dll> <dossier_sortie> <Clair|Sombre|Aucun> <TypeFormulaire> [<TypeFormulaire> ...] -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- même chaîne de connexion que l'ERP (lue par ModuleDb via ConfigurationManager) -->
+    <Content Include="..\..\app.config" Link="CaptureEcrans.dll.config" CopyToOutputDirectory="PreserveNewest" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.1" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.9" />
+    <PackageReference Include="System.Management" Version="10.0.11" />
+  </ItemGroup>
+
+</Project>

@@ -127,7 +127,7 @@ Partial Class DELTABETON
         Label21.Name = "Label21"
         Label21.Size = New Size(126, 28)
         Label21.TabIndex = 312
-        Label21.Text = "DELTABETON"
+        Label21.Text = "BETONIA"
         ' 
         ' RoleUtilisateu
         ' 
@@ -155,7 +155,7 @@ Partial Class DELTABETON
         Controls.Add(SUPRIME)
         Controls.Add(AJOUTE)
         Name = "DELTABETON"
-        Text = "DELTABETON"
+        Text = "BETONIA"
         CType(DataGridView1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()

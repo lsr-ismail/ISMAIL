@@ -57,7 +57,7 @@ Partial Class Fiche_planning
         Label21.Name = "Label21"
         Label21.Size = New Size(142, 28)
         Label21.TabIndex = 311
-        Label21.Text = "Fiche_planning"
+        Label21.Text = "Fiche planning"
         ' 
         ' btnActualiser
         ' 
@@ -295,7 +295,7 @@ Partial Class Fiche_planning
         Controls.Add(btnAujourdhui)
         Controls.Add(Label21)
         Name = "Fiche_planning"
-        Text = "Fiche_planning"
+        Text = "Fiche planning"
         CType(DataGridView1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()

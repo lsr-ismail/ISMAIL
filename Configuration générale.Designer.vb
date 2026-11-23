@@ -104,7 +104,7 @@ Partial Class Configuration_générale
         Label13.Name = "Label13"
         Label13.Size = New Size(253, 31)
         Label13.TabIndex = 252
-        Label13.Text = "Configuration_générale"
+        Label13.Text = "Configuration générale"
         ' 
         ' TabControl1
         ' 
@@ -393,7 +393,7 @@ Partial Class Configuration_générale
         Label20.Name = "Label20"
         Label20.Size = New Size(93, 20)
         Label20.TabIndex = 54
-        Label20.Text = "txtOperateur"
+        Label20.Text = "Opérateur"
         ' 
         ' Label22
         ' 
@@ -772,7 +772,7 @@ Partial Class Configuration_générale
         Controls.Add(TabControl1)
         Controls.Add(Label13)
         Name = "Configuration_générale"
-        Text = "Configuration_générale"
+        Text = "Configuration générale"
         TabControl1.ResumeLayout(False)
         TabPage1.ResumeLayout(False)
         TabPage1.PerformLayout()

@@ -33,7 +33,7 @@ Partial Class Demandes_de_Dosage_de_Béton
         Label21.Name = "Label21"
         Label21.Size = New Size(297, 28)
         Label21.TabIndex = 312
-        Label21.Text = "Demandes_de_Dosage_de_Béton"
+        Label21.Text = "Demandes de Dosage de Béton"
         ' 
         ' Demandes_de_Dosage_de_Béton
         ' 
@@ -42,7 +42,7 @@ Partial Class Demandes_de_Dosage_de_Béton
         ClientSize = New Size(1082, 723)
         Controls.Add(Label21)
         Name = "Demandes_de_Dosage_de_Béton"
-        Text = "Demandes_de_Dosage_de_Béton"
+        Text = "Demandes de Dosage de Béton"
         ResumeLayout(False)
         PerformLayout()
     End Sub

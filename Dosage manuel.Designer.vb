@@ -30,7 +30,7 @@ Partial Class Dosage_manuel
         AutoScaleMode = AutoScaleMode.Font
         ClientSize = New Size(1082, 723)
         Name = "Dosage_manuel"
-        Text = "Dosage_manuel"
+        Text = "Dosage manuel"
         ResumeLayout(False)
     End Sub
     Friend WithEvents Label298 As Label

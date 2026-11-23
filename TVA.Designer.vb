@@ -296,7 +296,7 @@ Partial Class TVA
         lblNombre.Name = "lblNombre"
         lblNombre.Size = New Size(73, 20)
         lblNombre.TabIndex = 218
-        lblNombre.Text = "txtTVA_ID"
+        lblNombre.Text = "txtTVA ID"
         ' 
         ' TVA
         ' 

@@ -236,7 +236,7 @@ Partial Class Éléments_à_bétonner
         Label21.Name = "Label21"
         Label21.Size = New Size(196, 28)
         Label21.TabIndex = 311
-        Label21.Text = "Éléments_à_bétonner"
+        Label21.Text = "Éléments à bétonner"
         ' 
         ' Éléments_à_bétonner
         ' 
@@ -266,7 +266,7 @@ Partial Class Éléments_à_bétonner
         Controls.Add(btnSupprimer)
         Controls.Add(btnAjouter)
         Name = "Éléments_à_bétonner"
-        Text = "Éléments_à_bétonner"
+        Text = "Éléments à bétonner"
         CType(DataGridView1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()

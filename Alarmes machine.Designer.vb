@@ -215,7 +215,7 @@ Partial Class Alarmes_machine
         Controls.Add(DataGridView1)
         Controls.Add(btnInstantane)
         Name = "Alarmes_machine"
-        Text = "Alarmes_machine"
+        Text = "Alarmes machine"
         CType(DataGridView1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()

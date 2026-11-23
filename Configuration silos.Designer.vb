@@ -33,7 +33,7 @@ Partial Class Configuration_silos
         Label13.Name = "Label13"
         Label13.Size = New Size(209, 31)
         Label13.TabIndex = 252
-        Label13.Text = "Configuration_silos"
+        Label13.Text = "Configuration silos"
         ' 
         ' Configuration_silos
         ' 
@@ -42,7 +42,7 @@ Partial Class Configuration_silos
         ClientSize = New Size(1078, 723)
         Controls.Add(Label13)
         Name = "Configuration_silos"
-        Text = "Configuration_silos"
+        Text = "Configuration silos"
         ResumeLayout(False)
         PerformLayout()
     End Sub

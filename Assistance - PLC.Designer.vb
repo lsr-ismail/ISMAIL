@@ -74,7 +74,7 @@ Partial Class Assistance___PLC
         Label21.Name = "Label21"
         Label21.Size = New Size(156, 28)
         Label21.TabIndex = 149
-        Label21.Text = "Assistance___PLC"
+        Label21.Text = "Assistance - PLC"
         ' 
         ' Label7
         ' 
@@ -92,7 +92,7 @@ Partial Class Assistance___PLC
         Label8.Name = "Label8"
         Label8.Size = New Size(104, 20)
         Label8.TabIndex = 284
-        Label8.Text = "txtValeurEcrire"
+        Label8.Text = "Valeur à écrire"
         ' 
         ' Label9
         ' 
@@ -101,7 +101,7 @@ Partial Class Assistance___PLC
         Label9.Name = "Label9"
         Label9.Size = New Size(90, 20)
         Label9.TabIndex = 283
-        Label9.Text = "txtValeurLue"
+        Label9.Text = "Valeur lue"
         ' 
         ' Label10
         ' 
@@ -110,7 +110,7 @@ Partial Class Assistance___PLC
         Label10.Name = "Label10"
         Label10.Size = New Size(78, 20)
         Label10.TabIndex = 282
-        Label10.Text = "txtAdresse"
+        Label10.Text = "Adresse"
         ' 
         ' Label11
         ' 
@@ -119,7 +119,7 @@ Partial Class Assistance___PLC
         Label11.Name = "Label11"
         Label11.Size = New Size(101, 20)
         Label11.TabIndex = 281
-        Label11.Text = "txtNbGachees"
+        Label11.Text = "Nb gâchées"
         ' 
         ' Label12
         ' 
@@ -128,7 +128,7 @@ Partial Class Assistance___PLC
         Label12.Name = "Label12"
         Label12.Size = New Size(96, 20)
         Label12.TabIndex = 280
-        Label12.Text = "txtNiveauEau"
+        Label12.Text = "Niveau eau"
         ' 
         ' Label4
         ' 
@@ -137,7 +137,7 @@ Partial Class Assistance___PLC
         Label4.Name = "Label4"
         Label4.Size = New Size(103, 20)
         Label4.TabIndex = 279
-        Label4.Text = "txtPoidsActuel"
+        Label4.Text = "Poids actuel"
         ' 
         ' lblTapis
         ' 
@@ -146,7 +146,7 @@ Partial Class Assistance___PLC
         lblTapis.Name = "lblTapis"
         lblTapis.Size = New Size(59, 20)
         lblTapis.TabIndex = 278
-        lblTapis.Text = "lblTapis"
+        lblTapis.Text = "—"
         ' 
         ' lblEtat
         ' 
@@ -155,7 +155,7 @@ Partial Class Assistance___PLC
         lblEtat.Name = "lblEtat"
         lblEtat.Size = New Size(52, 20)
         lblEtat.TabIndex = 277
-        lblEtat.Text = "lblEtat"
+        lblEtat.Text = "—"
         ' 
         ' Label3
         ' 
@@ -164,7 +164,7 @@ Partial Class Assistance___PLC
         Label3.Name = "Label3"
         Label3.Size = New Size(52, 20)
         Label3.TabIndex = 276
-        Label3.Text = "txtSlot"
+        Label3.Text = "Slot"
         ' 
         ' Label2
         ' 
@@ -173,7 +173,7 @@ Partial Class Assistance___PLC
         Label2.Name = "Label2"
         Label2.Size = New Size(57, 20)
         Label2.TabIndex = 275
-        Label2.Text = "txtRack"
+        Label2.Text = "Rack"
         ' 
         ' Label1
         ' 
@@ -182,7 +182,7 @@ Partial Class Assistance___PLC
         Label1.Name = "Label1"
         Label1.Size = New Size(38, 20)
         Label1.TabIndex = 274
-        Label1.Text = "txtIP"
+        Label1.Text = "Adresse IP"
         ' 
         ' btnEcrire
         ' 
@@ -190,7 +190,7 @@ Partial Class Assistance___PLC
         btnEcrire.Name = "btnEcrire"
         btnEcrire.Size = New Size(166, 61)
         btnEcrire.TabIndex = 273
-        btnEcrire.Text = "btnEcrire"
+        btnEcrire.Text = "Écrire"
         btnEcrire.UseVisualStyleBackColor = True
         ' 
         ' CheckBoxVerrouille
@@ -292,7 +292,7 @@ Partial Class Assistance___PLC
         btnArretUrgence.Name = "btnArretUrgence"
         btnArretUrgence.Size = New Size(166, 61)
         btnArretUrgence.TabIndex = 255
-        btnArretUrgence.Text = "btnArretUrgence"
+        btnArretUrgence.Text = "Arrêt d'urgence"
         btnArretUrgence.UseVisualStyleBackColor = True
         ' 
         ' btnDepartCycle
@@ -301,7 +301,7 @@ Partial Class Assistance___PLC
         btnDepartCycle.Name = "btnDepartCycle"
         btnDepartCycle.Size = New Size(166, 61)
         btnDepartCycle.TabIndex = 254
-        btnDepartCycle.Text = "btnDepartCycle"
+        btnDepartCycle.Text = "Départ cycle"
         btnDepartCycle.UseVisualStyleBackColor = True
         ' 
         ' btnDeconnecter
@@ -310,7 +310,7 @@ Partial Class Assistance___PLC
         btnDeconnecter.Name = "btnDeconnecter"
         btnDeconnecter.Size = New Size(166, 61)
         btnDeconnecter.TabIndex = 253
-        btnDeconnecter.Text = "btnDeconnecter"
+        btnDeconnecter.Text = "Déconnecter"
         btnDeconnecter.UseVisualStyleBackColor = True
         ' 
         ' btnConnecter
@@ -319,7 +319,7 @@ Partial Class Assistance___PLC
         btnConnecter.Name = "btnConnecter"
         btnConnecter.Size = New Size(166, 61)
         btnConnecter.TabIndex = 252
-        btnConnecter.Text = "btnConnecter"
+        btnConnecter.Text = "Connecter"
         btnConnecter.UseVisualStyleBackColor = True
         ' 
         ' lblMalaxeur
@@ -329,7 +329,7 @@ Partial Class Assistance___PLC
         lblMalaxeur.Name = "lblMalaxeur"
         lblMalaxeur.Size = New Size(87, 20)
         lblMalaxeur.TabIndex = 287
-        lblMalaxeur.Text = "lblMalaxeur"
+        lblMalaxeur.Text = "—"
         ' 
         ' lblPorte
         ' 
@@ -338,7 +338,7 @@ Partial Class Assistance___PLC
         lblPorte.Name = "lblPorte"
         lblPorte.Size = New Size(60, 20)
         lblPorte.TabIndex = 288
-        lblPorte.Text = "lblPorte"
+        lblPorte.Text = "—"
         ' 
         ' lblAlarme
         ' 
@@ -347,7 +347,7 @@ Partial Class Assistance___PLC
         lblAlarme.Name = "lblAlarme"
         lblAlarme.Size = New Size(74, 20)
         lblAlarme.TabIndex = 289
-        lblAlarme.Text = "lblAlarme"
+        lblAlarme.Text = "—"
         ' 
         ' lblCycle
         ' 
@@ -356,7 +356,7 @@ Partial Class Assistance___PLC
         lblCycle.Name = "lblCycle"
         lblCycle.Size = New Size(61, 20)
         lblCycle.TabIndex = 290
-        lblCycle.Text = "lblCycle"
+        lblCycle.Text = "—"
         ' 
         ' lblDerniereMAJ
         ' 
@@ -365,7 +365,7 @@ Partial Class Assistance___PLC
         lblDerniereMAJ.Name = "lblDerniereMAJ"
         lblDerniereMAJ.Size = New Size(112, 20)
         lblDerniereMAJ.TabIndex = 291
-        lblDerniereMAJ.Text = "lblDerniereMAJ"
+        lblDerniereMAJ.Text = "—"
         ' 
         ' btnLire
         ' 
@@ -373,7 +373,7 @@ Partial Class Assistance___PLC
         btnLire.Name = "btnLire"
         btnLire.Size = New Size(166, 61)
         btnLire.TabIndex = 292
-        btnLire.Text = "btnLire"
+        btnLire.Text = "Lire"
         btnLire.UseVisualStyleBackColor = True
         ' 
         ' btnResetAlarme
@@ -382,7 +382,7 @@ Partial Class Assistance___PLC
         btnResetAlarme.Name = "btnResetAlarme"
         btnResetAlarme.Size = New Size(166, 61)
         btnResetAlarme.TabIndex = 293
-        btnResetAlarme.Text = "Button2"
+        btnResetAlarme.Text = "Reset alarme"
         btnResetAlarme.UseVisualStyleBackColor = True
         ' 
         ' lstLog
@@ -400,7 +400,7 @@ Partial Class Assistance___PLC
         lblBascEAU.Name = "lblBascEAU"
         lblBascEAU.Size = New Size(84, 20)
         lblBascEAU.TabIndex = 295
-        lblBascEAU.Text = "lblBascEAU"
+        lblBascEAU.Text = "—"
         ' 
         ' lblBascCIM
         ' 
@@ -409,7 +409,7 @@ Partial Class Assistance___PLC
         lblBascCIM.Name = "lblBascCIM"
         lblBascCIM.Size = New Size(82, 20)
         lblBascCIM.TabIndex = 296
-        lblBascCIM.Text = "lblBascCIM"
+        lblBascCIM.Text = "—"
         ' 
         ' lblBascAGR
         ' 
@@ -418,7 +418,7 @@ Partial Class Assistance___PLC
         lblBascAGR.Name = "lblBascAGR"
         lblBascAGR.Size = New Size(85, 20)
         lblBascAGR.TabIndex = 297
-        lblBascAGR.Text = "lblBascAGR"
+        lblBascAGR.Text = "—"
         ' 
         ' lblBascADJ
         ' 
@@ -427,7 +427,7 @@ Partial Class Assistance___PLC
         lblBascADJ.Name = "lblBascADJ"
         lblBascADJ.Size = New Size(82, 20)
         lblBascADJ.TabIndex = 298
-        lblBascADJ.Text = "lblBascADJ"
+        lblBascADJ.Text = "—"
         ' 
         ' Assistance___PLC
         ' 
@@ -477,7 +477,7 @@ Partial Class Assistance___PLC
         Controls.Add(btnConnecter)
         Controls.Add(Label21)
         Name = "Assistance___PLC"
-        Text = "lblDerniereMAJ"
+        Text = "Assistance PLC"
         ResumeLayout(False)
         PerformLayout()
     End Sub

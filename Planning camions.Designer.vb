@@ -69,7 +69,7 @@ Partial Class Planning_camions
         Label21.Name = "Label21"
         Label21.Size = New Size(168, 28)
         Label21.TabIndex = 154
-        Label21.Text = "Planning_camions"
+        Label21.Text = "Planning camions"
         ' 
         ' lblNombre
         ' 
@@ -411,7 +411,7 @@ Partial Class Planning_camions
         Controls.Add(btnAjouter)
         Controls.Add(Label21)
         Name = "Planning_camions"
-        Text = "Planning_camions"
+        Text = "Planning camions"
         CType(DataGridView1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()

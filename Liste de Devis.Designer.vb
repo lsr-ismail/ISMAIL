@@ -33,7 +33,7 @@ Partial Class Liste_de_Devis
         Label21.Name = "Label21"
         Label21.Size = New Size(136, 28)
         Label21.TabIndex = 179
-        Label21.Text = "Liste_de_Devis"
+        Label21.Text = "Liste de Devis"
         ' 
         ' Liste_de_Devis
         ' 
@@ -42,7 +42,7 @@ Partial Class Liste_de_Devis
         ClientSize = New Size(1082, 723)
         Controls.Add(Label21)
         Name = "Liste_de_Devis"
-        Text = "Liste_de_Devis"
+        Text = "Liste de Devis"
         ResumeLayout(False)
         PerformLayout()
     End Sub

@@ -47,7 +47,7 @@ Partial Class Planning_journalier
         Label21.Name = "Label21"
         Label21.Size = New Size(179, 28)
         Label21.TabIndex = 154
-        Label21.Text = "Planning_journalier"
+        Label21.Text = "Planning journalier"
         ' 
         ' Imprimer
         ' 
@@ -188,7 +188,7 @@ Partial Class Planning_journalier
         Controls.Add(btnAjouter)
         Controls.Add(Label21)
         Name = "Planning_journalier"
-        Text = "Planning_journalier"
+        Text = "Planning journalier"
         CType(DataGridViewPlanning, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()

@@ -33,7 +33,7 @@ Partial Class Détails_des_livraisons
         Label21.Name = "Label21"
         Label21.Size = New Size(198, 28)
         Label21.TabIndex = 312
-        Label21.Text = "Détails_des_livraisons"
+        Label21.Text = "Détails des livraisons"
         ' 
         ' Détails_des_livraisons
         ' 
@@ -42,7 +42,7 @@ Partial Class Détails_des_livraisons
         ClientSize = New Size(1082, 723)
         Controls.Add(Label21)
         Name = "Détails_des_livraisons"
-        Text = "Détails_des_livraisons"
+        Text = "Détails des livraisons"
         ResumeLayout(False)
         PerformLayout()
     End Sub

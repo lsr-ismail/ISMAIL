@@ -68,7 +68,7 @@ Partial Class Prévisions_de_Matières_Premières
         Label21.Name = "Label21"
         Label21.Size = New Size(305, 28)
         Label21.TabIndex = 153
-        Label21.Text = "Prévisions_de_Matières_Premières"
+        Label21.Text = "Prévisions de Matières Premières"
         ' 
         ' Label516
         ' 
@@ -433,7 +433,7 @@ Partial Class Prévisions_de_Matières_Premières
         Controls.Add(Label518)
         Controls.Add(Label21)
         Name = "Prévisions_de_Matières_Premières"
-        Text = "Prévisions_de_Matières_Premières"
+        Text = "Prévisions de Matières Premières"
         ResumeLayout(False)
         PerformLayout()
     End Sub

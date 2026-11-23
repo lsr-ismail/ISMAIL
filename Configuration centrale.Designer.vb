@@ -359,7 +359,7 @@ Partial Class Configuration_centrale
         Label20.Name = "Label20"
         Label20.Size = New Size(228, 46)
         Label20.TabIndex = 54
-        Label20.Text = "txtOperateur"
+        Label20.Text = "Opérateur"
         ' 
         ' Label10
         ' 
@@ -1922,7 +1922,7 @@ Partial Class Configuration_centrale
         Controls.Add(btnLire)
         Controls.Add(TabControl1)
         Name = "Configuration_centrale"
-        Text = "Configuration_centrale"
+        Text = "Configuration centrale"
         TabControl1.ResumeLayout(False)
         TabPage1.ResumeLayout(False)
         TabPage1.PerformLayout()

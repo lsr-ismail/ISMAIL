@@ -623,7 +623,7 @@ Partial Class Références_commerciales
         Label27.Name = "Label27"
         Label27.Size = New Size(231, 28)
         Label27.TabIndex = 176
-        Label27.Text = "Références_commerciales"
+        Label27.Text = "Références commerciales"
         ' 
         ' Références_commerciales
         ' 
@@ -694,7 +694,7 @@ Partial Class Références_commerciales
         Controls.Add(btnSupprimer)
         Controls.Add(btnAjouter)
         Name = "Références_commerciales"
-        Text = "Références_commerciales"
+        Text = "Références commerciales"
         CType(DataGridView1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()

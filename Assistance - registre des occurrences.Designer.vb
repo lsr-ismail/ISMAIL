@@ -43,7 +43,7 @@ Partial Class Assistance___registre_des_occurrences
         Label21.Name = "Label21"
         Label21.Size = New Size(353, 28)
         Label21.TabIndex = 149
-        Label21.Text = "Assistance__A_registre_des_occurrences"
+        Label21.Text = "Assistance - registre des occurrences"
         ' 
         ' RECHERCHE
         ' 
@@ -142,7 +142,7 @@ Partial Class Assistance___registre_des_occurrences
         Controls.Add(RECHERCHE)
         Controls.Add(Label21)
         Name = "Assistance___registre_des_occurrences"
-        Text = "Assistance__A_registre_des_occurrences"
+        Text = "Assistance - registre des occurrences"
         CType(DataGridView1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()

@@ -33,7 +33,7 @@ Partial Class Autorisations_groupes
         Label21.Name = "Label21"
         Label21.Size = New Size(208, 28)
         Label21.TabIndex = 148
-        Label21.Text = "Autorisations_groupes"
+        Label21.Text = "Autorisations groupes"
         ' 
         ' Autorisations_groupes
         ' 
@@ -42,7 +42,7 @@ Partial Class Autorisations_groupes
         ClientSize = New Size(1082, 723)
         Controls.Add(Label21)
         Name = "Autorisations_groupes"
-        Text = "Autorisations_groupes"
+        Text = "Autorisations groupes"
         ResumeLayout(False)
         PerformLayout()
     End Sub

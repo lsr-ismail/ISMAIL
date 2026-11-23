@@ -33,7 +33,7 @@ Partial Class Autorisations_type_machine
         Label21.Name = "Label21"
         Label21.Size = New Size(256, 28)
         Label21.TabIndex = 148
-        Label21.Text = "Autorisations_type_machine"
+        Label21.Text = "Autorisations type machine"
         ' 
         ' Autorisations_type_machine
         ' 
@@ -42,7 +42,7 @@ Partial Class Autorisations_type_machine
         ClientSize = New Size(1082, 723)
         Controls.Add(Label21)
         Name = "Autorisations_type_machine"
-        Text = "Autorisations_type_machine"
+        Text = "Autorisations type machine"
         ResumeLayout(False)
         PerformLayout()
     End Sub
