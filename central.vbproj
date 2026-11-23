@@ -5,7 +5,6 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <StartupObject>central.My.MyApplication</StartupObject>
     <UseWindowsForms>true</UseWindowsForms>
-    <ApplicationIcon>Resources\logo.ico</ApplicationIcon>
     <MyType>WindowsForms</MyType>
     <ImportedNamespaces>System.Data=False,System.Data.SqlClient=False,System.Drawing=False,System.Windows.Forms=False,Microsoft.VisualBasic=True,System=True,System.Collections=True,System.Collections.Generic=True,System.Diagnostics=True,System.Linq=True,System.Xml.Linq=True,System.Threading.Tasks=True,central=True</ImportedNamespaces>
   </PropertyGroup>
@@ -65,10 +64,6 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\logo.png" LogicalName="central.logo.png" />
   </ItemGroup>
 
 </Project>
