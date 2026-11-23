@@ -39,7 +39,7 @@ Partial Class FrmRecherche
         btnSelectionner.Name = "btnSelectionner"
         btnSelectionner.Size = New Size(137, 36)
         btnSelectionner.TabIndex = 0
-        btnSelectionner.Text = "Selectionner"
+        btnSelectionner.Text = "Sélectionner"
         btnSelectionner.UseVisualStyleBackColor = True
         ' 
         ' btnAnnuler

@@ -205,7 +205,7 @@ Partial Class Planification_Production
         lblTotalQte.Name = "lblTotalQte"
         lblTotalQte.Size = New Size(93, 28)
         lblTotalQte.TabIndex = 341
-        lblTotalQte.Text = "Total QTE"
+        lblTotalQte.Text = "Total QTÉ"
         ' 
         ' lblTotalLivre
         ' 
@@ -265,7 +265,7 @@ Partial Class Planification_Production
         Label4.Name = "Label4"
         Label4.Size = New Size(93, 28)
         Label4.TabIndex = 345
-        Label4.Text = "Total QTE"
+        Label4.Text = "Total QTÉ"
         ' 
         ' btnSemaineSuivante
         ' 

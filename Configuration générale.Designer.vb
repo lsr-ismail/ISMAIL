@@ -251,7 +251,7 @@ Partial Class Configuration_générale
         Label30.Name = "Label30"
         Label30.Size = New Size(93, 20)
         Label30.TabIndex = 70
-        Label30.Text = "Temperature"
+        Label30.Text = "Température"
         Label30.TextAlign = ContentAlignment.MiddleCenter
         ' 
         ' Label31
@@ -279,7 +279,7 @@ Partial Class Configuration_générale
         Label33.Name = "Label33"
         Label33.Size = New Size(77, 20)
         Label33.TabIndex = 67
-        Label33.Text = "Sans ntete"
+        Label33.Text = "Sans en-tête"
         ' 
         ' btnAbandonner
         ' 
@@ -383,7 +383,7 @@ Partial Class Configuration_générale
         rbParametreChantier.Size = New Size(156, 24)
         rbParametreChantier.TabIndex = 55
         rbParametreChantier.TabStop = True
-        rbParametreChantier.Text = "Parametre Chantier"
+        rbParametreChantier.Text = "Paramètre Chantier"
         rbParametreChantier.UseVisualStyleBackColor = True
         ' 
         ' Label20
@@ -590,7 +590,7 @@ Partial Class Configuration_générale
         Label4.Name = "Label4"
         Label4.Size = New Size(76, 20)
         Label4.TabIndex = 29
-        Label4.Text = "Operateur"
+        Label4.Text = "Opérateur"
         ' 
         ' FDGFDDF
         ' 

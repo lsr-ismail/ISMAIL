@@ -720,7 +720,7 @@ Partial Class Synoptique
         btnVidangeBeton.Name = "btnVidangeBeton"
         btnVidangeBeton.Size = New Size(153, 70)
         btnVidangeBeton.TabIndex = 202
-        btnVidangeBeton.Text = "vidange Beton"
+        btnVidangeBeton.Text = "vidange Béton"
         btnVidangeBeton.UseVisualStyleBackColor = True
         ' 
         ' btnModeAuto
@@ -1241,7 +1241,7 @@ Partial Class Synoptique
         btnabbondomennt.Name = "btnabbondomennt"
         btnabbondomennt.Size = New Size(156, 58)
         btnabbondomennt.TabIndex = 264
-        btnabbondomennt.Text = "Arret en fin"
+        btnabbondomennt.Text = "Arrêt en fin"
         btnabbondomennt.UseVisualStyleBackColor = True
         ' 
         ' finno

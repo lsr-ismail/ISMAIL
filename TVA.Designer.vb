@@ -244,7 +244,7 @@ Partial Class TVA
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(178, 61)
         btnAjouter.TabIndex = 178
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' Label21

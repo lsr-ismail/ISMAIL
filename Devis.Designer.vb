@@ -110,7 +110,7 @@ Partial Class Devis
         Label8.Name = "Label8"
         Label8.Size = New Size(78, 20)
         Label8.TabIndex = 304
-        Label8.Text = "Telephone"
+        Label8.Text = "Téléphone"
         ' 
         ' Label9
         ' 
@@ -137,7 +137,7 @@ Partial Class Devis
         Label11.Name = "Label11"
         Label11.Size = New Size(67, 20)
         Label11.TabIndex = 301
-        Label11.Text = "Capacite"
+        Label11.Text = "Capacité"
         ' 
         ' Label12
         ' 
@@ -155,7 +155,7 @@ Partial Class Devis
         Label4.Name = "Label4"
         Label4.Size = New Size(89, 20)
         Label4.TabIndex = 299
-        Label4.Text = "Equipement"
+        Label4.Text = "Équipement"
         ' 
         ' Label5
         ' 
@@ -327,7 +327,7 @@ Partial Class Devis
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(178, 61)
         btnAjouter.TabIndex = 277
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' RECHERCHE

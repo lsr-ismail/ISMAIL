@@ -1543,7 +1543,7 @@ Public Class Synoptique
                 'lblEtatPLC.Text = "PLC : Connecté " & PLC_IP
                 ' lblEtatPLC.ForeColor = Color.Green
                 ' lblEtatPLC.BackColor = Color.FromArgb(220, 255, 220)
-                EnregistrerAction("SYNOPTIQUE", "PLC connecte", "IP " & PLC_IP, "", "", "CONNEXION")
+                EnregistrerAction("SYNOPTIQUE", "PLC connecté", "IP " & PLC_IP, "", "", "CONNEXION")
             Else
                 'lblEtatPLC.Text = "PLC : Déconnecté"
                 '  lblEtatPLC.ForeColor = Color.Red
@@ -1673,7 +1673,7 @@ Public Class Synoptique
         lblInfoLivraison.ForeColor = If(_plcConnecte, Color.Black, Color.OrangeRed)
 
         If _arretUrg Then
-            lblAlarme.Text = "ARRET URGENCE !"
+            lblAlarme.Text = "ARRÊT D'URGENCE !"
             lblAlarme.ForeColor = Color.White
             lblAlarme.BackColor = Color.Red
         Else
@@ -2017,7 +2017,7 @@ Public Class Synoptique
     Private Sub DemarrerRemplissage(num As Integer)
         If MessageBox.Show("Demarrer remplissage Silo " & num & " ?", "Confirmation",
                            MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
-            MessageBox.Show("Ordre remplissage envoye.")
+            MessageBox.Show("Ordre remplissage envoyé.")
         End If
     End Sub
 
@@ -2216,44 +2216,44 @@ Public Class Synoptique
         AjouterPoussoir(Buttontr4, "DB1.DBX1.0", "GRANULATS", "Tremie 4", stockSource:="TR4")   ' 19/09 : ex DB1.DBX3.5
         StyleBoutonMarche(Buttontpa) : StyleBoutonArret(Buttontpm)
         AddHandler Buttontpa.Click, Sub(s, e)
-                                        If Not Dosage_manuel.ModeForceGranulats Then MessageBox.Show("Activez FORCAGE GRANULATS !") : Exit Sub
+                                        If Not Dosage_manuel.ModeForceGranulats Then MessageBox.Show("Activez FORÇAGE GRANULATS !") : Exit Sub
                                         ModulePLCDuplex.EcrireBit("DB1.DBX3.5", CBool(1)) : MAJBoutonActif(Buttontpa, True) : MAJBoutonActif(Buttontpm, False)
                                         ModuleStockManuel.DebutVidange("AGR")   ' 26/09 : stock manuel — poids AGR avant vidange
-                                        AfficherForcage("Tapis MARCHE") : EnregistrerAction("FORCAGE", "Tapis marche", DetailBascules("GRANULATS"), "DB1.DBX3.5", "1", "FORCAGE")
+                                        AfficherForcage("Tapis MARCHE") : EnregistrerAction("FORÇAGE", "Tapis marche", DetailBascules("GRANULATS"), "DB1.DBX3.5", "1", "FORCAGE")
                                     End Sub
         AddHandler Buttontpm.Click, Sub(s, e)
-                                        If Not Dosage_manuel.ModeForceGranulats Then MessageBox.Show("Activez FORCAGE GRANULATS !") : Exit Sub
+                                        If Not Dosage_manuel.ModeForceGranulats Then MessageBox.Show("Activez FORÇAGE GRANULATS !") : Exit Sub
                                         ModulePLCDuplex.EcrireBit("DB1.DBX3.5", CBool(0)) : MAJBoutonActif(Buttontpm, True) : MAJBoutonActif(Buttontpa, False)
                                         BloquerGroupeStabilisation("GRANULATS", Sub() ModuleStockManuel.FinVidange("AGR"))   ' 26/09
-                                        AfficherForcage("Tapis ARRET") : EnregistrerAction("FORCAGE", "Tapis arret", DetailBascules("GRANULATS"), "DB1.DBX3.5", "0", "FORCAGE")
+                                        AfficherForcage("Tapis ARRET") : EnregistrerAction("FORÇAGE", "Tapis arrêt", DetailBascules("GRANULATS"), "DB1.DBX3.5", "0", "FORCAGE")
                                     End Sub
         StyleBoutonMarche(Buttonskh) : StyleBoutonMarche(Buttonskb) : StyleBoutonArret(Buttonska)
         AddHandler Buttonskh.Click, Sub(s, e)
-                                        If Not Dosage_manuel.ModeForceGranulats Then MessageBox.Show("Activez FORCAGE GRANULATS !") : Exit Sub
+                                        If Not Dosage_manuel.ModeForceGranulats Then MessageBox.Show("Activez FORÇAGE GRANULATS !") : Exit Sub
                                         ModulePLCDuplex.EcrireBit("DB1.DBX4.5", CBool(1)) : ModulePLCDuplex.EcrireBit("DB1.DBX4.6", CBool(0))
                                         MAJBoutonActif(Buttonskh, True) : MAJBoutonActif(Buttonskb, False) : MAJBoutonActif(Buttonska, False)
-                                        AfficherForcage("Skip MONTEE") : EnregistrerAction("FORCAGE", "Skip montee", DetailBascules("GRANULATS"), "DB1.DBX4.5", "1", "FORCAGE")
+                                        AfficherForcage("Skip MONTEE") : EnregistrerAction("FORÇAGE", "Skip montee", DetailBascules("GRANULATS"), "DB1.DBX4.5", "1", "FORCAGE")
                                     End Sub
         AddHandler Buttonskb.Click, Sub(s, e)
-                                        If Not Dosage_manuel.ModeForceGranulats Then MessageBox.Show("Activez FORCAGE GRANULATS !") : Exit Sub
+                                        If Not Dosage_manuel.ModeForceGranulats Then MessageBox.Show("Activez FORÇAGE GRANULATS !") : Exit Sub
                                         ModulePLCDuplex.EcrireBit("DB1.DBX4.6", CBool(1)) : ModulePLCDuplex.EcrireBit("DB1.DBX4.5", CBool(0))
                                         MAJBoutonActif(Buttonskb, True) : MAJBoutonActif(Buttonskh, False) : MAJBoutonActif(Buttonska, False)
-                                        AfficherForcage("Skip DESCENTE") : EnregistrerAction("FORCAGE", "Skip descente", DetailBascules("GRANULATS"), "DB1.DBX4.6", "1", "FORCAGE")
+                                        AfficherForcage("Skip DESCENTE") : EnregistrerAction("FORÇAGE", "Skip descente", DetailBascules("GRANULATS"), "DB1.DBX4.6", "1", "FORCAGE")
                                     End Sub
         AddHandler Buttonska.Click, Sub(s, e)
-                                        If Not Dosage_manuel.ModeForceGranulats Then MessageBox.Show("Activez FORCAGE GRANULATS !") : Exit Sub
+                                        If Not Dosage_manuel.ModeForceGranulats Then MessageBox.Show("Activez FORÇAGE GRANULATS !") : Exit Sub
                                         ModulePLCDuplex.EcrireBit("DB1.DBX4.5", CBool(0)) : ModulePLCDuplex.EcrireBit("DB1.DBX4.6", CBool(0))
                                         MAJBoutonActif(Buttonska, True) : MAJBoutonActif(Buttonskh, False) : MAJBoutonActif(Buttonskb, False)
-                                        AfficherForcage("Skip ARRET") : EnregistrerAction("FORCAGE", "Skip arret", DetailBascules("GRANULATS"), "DB1.DBX4.5+DB1.DBX4.6", "0", "FORCAGE")
+                                        AfficherForcage("Skip ARRET") : EnregistrerAction("FORÇAGE", "Skip arrêt", DetailBascules("GRANULATS"), "DB1.DBX4.5+DB1.DBX4.6", "0", "FORCAGE")
                                     End Sub
         AjouterPoussoir(Buttonsl1, "DB1.DBX5.1", "CIMENTS", "Vis CIM 1", stockSource:="S1")
         AjouterPoussoir(Buttonsl2, "DB1.DBX5.2", "CIMENTS", "Vis CIM 2", stockSource:="S2")
         AjouterPoussoir(Buttonsltr, "DB1.DBX6.5", "CIMENTS", "Trappe CIM", stockVidange:="CIM")
         AjouterPoussoir(Buttoneau1, "DB1.DBX9.3", "EAUX", "Vanne EAU Ouvrir", stockSource:="EAU")
         AddHandler Buttoneau2.MouseDown, Sub(s, e)
-                                             If Not Dosage_manuel.ModeForceEaux Then MessageBox.Show("Activez FORCAGE EAUX !") : Exit Sub
+                                             If Not Dosage_manuel.ModeForceEaux Then MessageBox.Show("Activez FORÇAGE EAUX !") : Exit Sub
                                              EcrirePLC("DB1.DBX9.3", False) : MAJBoutonActif(Buttoneau2, True)
-                                             AfficherForcage("Vanne EAU FERMER") : EnregistrerAction("FORCAGE", "Vanne EAU fermer", DetailBascules("EAUX"), "DB1.DBX9.3", "False", "FORCAGE")
+                                             AfficherForcage("Vanne EAU FERMER") : EnregistrerAction("FORÇAGE", "Vanne EAU fermer", DetailBascules("EAUX"), "DB1.DBX9.3", "False", "FORCAGE")
                                          End Sub
         AddHandler Buttoneau2.MouseUp, Sub(s, e) MAJBoutonActif(Buttoneau2, False)
         AjouterPoussoir(Buttoneautr, "DB1.DBX9.5", "EAUX", "Trappe EAU", stockVidange:="EAU")
@@ -2264,16 +2264,16 @@ Public Class Synoptique
         AjouterPoussoir(Buttonadjtr, "DB1.DBX9.2", "ADJUVANTS", "Trappe ADJ", stockVidange:="ADJ")
         StyleBoutonMarche(Buttonmxm) : StyleBoutonArret(Buttonmxa)
         AddHandler Buttonmxm.Click, Sub(s, e)
-                                        If Not Dosage_manuel.ModeForceMalaxeurs Then MessageBox.Show("Activez FORCAGE MALAXEURS !") : Exit Sub
+                                        If Not Dosage_manuel.ModeForceMalaxeurs Then MessageBox.Show("Activez FORÇAGE MALAXEURS !") : Exit Sub
                                         If MessageBox.Show("Demarrer le malaxeur ?", "Confirmation",
                                             MessageBoxButtons.YesNo, MessageBoxIcon.Warning) = DialogResult.No Then Exit Sub
                                         ModulePLCDuplex.EcrireBit("DB1.DBX1088.2", CBool(1)) : MAJBoutonActif(Buttonmxm, True) : MAJBoutonActif(Buttonmxa, False)
-                                        AfficherForcage("Malaxeur MARCHE") : EnregistrerAction("FORCAGE", "Malaxeur marche", DetailBascules("MALAXEURS"), "DB1.DBX1088.2", "1", "FORCAGE")
+                                        AfficherForcage("Malaxeur MARCHE") : EnregistrerAction("FORÇAGE", "Malaxeur marche", DetailBascules("MALAXEURS"), "DB1.DBX1088.2", "1", "FORCAGE")
                                     End Sub
         AddHandler Buttonmxa.Click, Sub(s, e)
-                                        If Not Dosage_manuel.ModeForceMalaxeurs Then MessageBox.Show("Activez FORCAGE MALAXEURS !") : Exit Sub
+                                        If Not Dosage_manuel.ModeForceMalaxeurs Then MessageBox.Show("Activez FORÇAGE MALAXEURS !") : Exit Sub
                                         ModulePLCDuplex.EcrireBit("DB1.DBX1088.2", CBool(0)) : MAJBoutonActif(Buttonmxa, True) : MAJBoutonActif(Buttonmxm, False)
-                                        AfficherForcage("Malaxeur ARRET") : EnregistrerAction("FORCAGE", "Malaxeur arret", DetailBascules("MALAXEURS"), "DB1.DBX1088.2", "0", "FORCAGE")
+                                        AfficherForcage("Malaxeur ARRET") : EnregistrerAction("FORÇAGE", "Malaxeur arrêt", DetailBascules("MALAXEURS"), "DB1.DBX1088.2", "0", "FORCAGE")
                                     End Sub
         AjouterPoussoir(Buttonmxov, "DB1.DBX10.0", "MALAXEURS", "Trappe MLX Ouvrir")
         AjouterPoussoir(Buttonmxfr, "DB1.DBX10.2", "MALAXEURS", "Trappe MLX Fermer")
@@ -2290,15 +2290,15 @@ Public Class Synoptique
     Private Function DetailBascules(groupe As String) As String
         Select Case groupe.ToUpper()
             Case "GRANULATS"
-                Return String.Format("AGR={0:0}kg | Cons={1:0}kg | Ecart={2:+0;-0}kg",
+                Return String.Format("AGR={0:0}kg | Cons={1:0}kg | Écart={2:+0;-0}kg",
                     _poids_AGR, _cons_G1 + _cons_SC + _cons_SL + _cons_D2,
                     _ecar_G1 + _ecar_SC + _ecar_SL + _ecar_D2)
             Case "CIMENTS"
                 Dim poseCIM As Single = If(_siloCimentActif = 1, _pose_CIM_S1, _pose_CIM_S2)
-                Return String.Format("CIM={0:0}kg | Cons={1:0}kg | Ecart={2:+0;-0}kg | Silo={3}",
+                Return String.Format("CIM={0:0}kg | Cons={1:0}kg | Écart={2:+0;-0}kg | Silo={3}",
                     _poids_CIM, _cons_CIM, _ecar_CIM, _siloCimentActif)
             Case "EAUX"
-                Return String.Format("EAU={0:0}L | Cons={1:0}L | Ecart={2:+0;-0}L",
+                Return String.Format("EAU={0:0}L | Cons={1:0}L | Écart={2:+0;-0}L",
                     _poids_EAU, _cons_EAU2, _ecar_EAU2)
             Case "ADJUVANTS"
                 Return String.Format("ADJ={0:0.000}kg | Cons={1:0.000}kg | A1={2:0.000} A2={3:0.000} A3={4:0.000} A4={5:0.000}",
@@ -2306,9 +2306,9 @@ Public Class Synoptique
                     _cons_ADJ1 + _cons_ADJ2 + _cons_ADJ3 + _cons_ADJ4,
                     _pose_ADJ1, _pose_ADJ2, _pose_ADJ3, _pose_ADJ4)
             Case "MALAXEURS"
-                Return String.Format("Malaxeur={0} | Cycle={1} | Gachee={2}",
-                    If(_malaxeurON, "MARCHE", "ARRET"),
-                    If(_cycleEnCours, "EN COURS", "ARRET"),
+                Return String.Format("Malaxeur={0} | Cycle={1} | Gâchée={2}",
+                    If(_malaxeurON, "MARCHE", "ARRÊT"),
+                    If(_cycleEnCours, "EN COURS", "ARRÊT"),
                     _nGachee)
             Case Else
                 Return ""
@@ -2329,8 +2329,8 @@ Public Class Synoptique
                                           Case "MALAXEURS" : ok = Dosage_manuel.ModeForceMalaxeurs
                                       End Select
                                       If Not ok Then
-                                          MessageBox.Show("Activez d'abord FORCAGE " & groupe & " !",
-                                              "Forcage requis", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                          MessageBox.Show("Activez d'abord FORÇAGE " & groupe & " !",
+                                              "Forçage requis", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                                           Exit Sub
                                       End If
                                       ' 26/09 : stock manuel — poids de la bascule AVANT l'action
@@ -2342,7 +2342,7 @@ Public Class Synoptique
                                       MAJBoutonActif(CType(s, Button), True)
                                       AfficherForcage(nom & " ACTIVE")
                                       EnregistrerAction("FORCAGE", nom & " active",
-                                          DetailBascules(groupe), adresse, "1", "FORCAGE")
+                                          DetailBascules(groupe), adresse, "1", "FORÇAGE")
                                   End Sub
         Dim relacher = Sub(s As Object, e As EventArgs)
                            If Not String.Equals(TryCast(btn.Tag, String), "appuye") Then Exit Sub
@@ -2352,8 +2352,8 @@ Public Class Synoptique
                            ' 26/09 : stock manuel — boutons du groupe bloqués 0,5 s, puis lecture du poids
                            If stockSource <> "" Then BloquerGroupeStabilisation(groupe, Sub() ModuleStockManuel.FinRemplissage(stockSource))
                            If stockVidange <> "" Then BloquerGroupeStabilisation(groupe, Sub() ModuleStockManuel.FinVidange(stockVidange))
-                           EnregistrerAction("FORCAGE", nom & " desactive",
-                               DetailBascules(groupe), adresse, "0", "FORCAGE")
+                           EnregistrerAction("FORCAGE", nom & " désactivé",
+                               DetailBascules(groupe), adresse, "0", "FORÇAGE")
                        End Sub
         AddHandler btn.MouseUp, Sub(s, e) relacher(s, e)
         AddHandler btn.MouseLeave, relacher   ' 22/09 : souris sortie du bouton → bit remis à 0
@@ -2448,9 +2448,9 @@ Public Class Synoptique
         Next
 
         ' ── Textes fixes ─────────────────────────────────────────
-        btnDepartCycle.Text = "▶  DEPART CYCLE"
+        btnDepartCycle.Text = "▶  DÉPART CYCLE"
         btnRAZ.Text = "↺  RAZ"
-        btnRAZDefaut.Text = "⚠  REPRISE DEFAUT"
+        btnRAZDefaut.Text = "⚠  REPRISE DÉFAUT"
         btnFinChargement.Text = "✔  FIN CHARGEMENT"
 
         ' ════════════════════════════════════════════════════════
@@ -2459,7 +2459,7 @@ Public Class Synoptique
         ' ════════════════════════════════════════════════════════
         AddHandler btnModeAuto.Click, Sub(s, e)
                                           If Not _plcConnecte Then
-                                              MessageBox.Show("PLC non connecte.", "Mode", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                              MessageBox.Show("PLC non connecté.", "Mode", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                                               Exit Sub
                                           End If
                                           Try
@@ -2484,20 +2484,20 @@ Public Class Synoptique
         ' ════════════════════════════════════════════════════════
         AddHandler btnDepartCycle.Click, Sub(s, e)
                                              If Not _plcConnecte Then
-                                                 MessageBox.Show("PLC non connecte.", "Depart Cycle", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                                 MessageBox.Show("PLC non connecté.", "Départ Cycle", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                                                  Exit Sub
                                              End If
                                              Try
                                                  If CBool(ModulePLCDuplex.LireAdresse("DB1.DBX0.4")) Then
                                                      MessageBox.Show("Commande en cours (DB1.DBX0.4 = 1) : attendez la fin de la commande.",
-                                                                     "Depart Cycle", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                                                     "Départ Cycle", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                                                      Exit Sub
                                                  End If
                                                  ModulePLCDuplex.EcrireBit("DB1.DBX0.4", True)
-                                                 AfficherForcage("Depart Cycle envoye")
-                                                 EnregistrerAction("COMMANDE", "Depart Cycle", "0.4=0->1 (maintenu)", "DB1.DBX0.4", "1", "PLC_WRITE")
+                                                 AfficherForcage("Départ Cycle envoyé")
+                                                 EnregistrerAction("COMMANDE", "Départ Cycle", "0.4=0->1 (maintenu)", "DB1.DBX0.4", "1", "PLC_WRITE")
                                              Catch ex As Exception
-                                                 MessageBox.Show("Erreur Depart Cycle : " & ex.Message)
+                                                 MessageBox.Show("Erreur Départ Cycle : " & ex.Message)
                                              End Try
                                          End Sub
 
@@ -2506,12 +2506,12 @@ Public Class Synoptique
         ' ════════════════════════════════════════════════════════
         AddHandler btnRAZ.Click, Sub(s, e)
                                      If Not _plcConnecte Then
-                                         MessageBox.Show("PLC non connecte.", "RAZ", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                         MessageBox.Show("PLC non connecté.", "RAZ", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                                          Exit Sub
                                      End If
                                      Try
                                          ModulePLCDuplex.EcrireImpulsion("DB1.DBX914.4", 200)
-                                         AfficherForcage("RAZ envoye")
+                                         AfficherForcage("RAZ envoyé")
                                          EnregistrerAction("COMMANDE", "RAZ", "DB1.DBX914.4=1->0", "DB1.DBX914.4", "1->0", "PLC_WRITE")
                                      Catch ex As Exception
                                          MessageBox.Show("Erreur RAZ : " & ex.Message)
@@ -2525,10 +2525,10 @@ Public Class Synoptique
                                            If Not _plcConnecte Then Exit Sub
                                            Try
                                                ModulePLCDuplex.EcrireImpulsion("DB1.DBX914.0", 200)
-                                               AfficherForcage("Reprise Defaut envoyee")
-                                               EnregistrerAction("COMMANDE", "Reprise Defaut", "DB1.DBX914.0=1->0", "DB1.DBX914.0", "1->0", "PLC_WRITE")
+                                               AfficherForcage("Reprise Défaut envoyée")
+                                               EnregistrerAction("COMMANDE", "Reprise Défaut", "DB1.DBX914.0=1->0", "DB1.DBX914.0", "1->0", "PLC_WRITE")
                                            Catch ex As Exception
-                                               MessageBox.Show("Erreur Reprise Defaut : " & ex.Message)
+                                               MessageBox.Show("Erreur Reprise Défaut : " & ex.Message)
                                            End Try
                                        End Sub
 
@@ -2537,12 +2537,12 @@ Public Class Synoptique
         ' ════════════════════════════════════════════════════════
         AddHandler btnFinChargement.Click, Sub(s, e)
                                                If Not _plcConnecte Then
-                                                   MessageBox.Show("PLC non connecte.", "Fin Chargement", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                                   MessageBox.Show("PLC non connecté.", "Fin Chargement", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                                                    Exit Sub
                                                End If
                                                Try
                                                    ModulePLCDuplex.EcrireBit("DB1.DBX914.1", CBool(0))
-                                                   AfficherForcage("Fin Chargement confirme")
+                                                   AfficherForcage("Fin Chargement confirmé")
                                                    EnregistrerAction("COMMANDE", "Fin Chargement", "DB1.DBX914.1=0", "DB1.DBX914.1", "0", "PLC_WRITE")
                                                Catch ex As Exception
                                                    MessageBox.Show("Erreur Fin Chargement : " & ex.Message)
@@ -2555,7 +2555,7 @@ Public Class Synoptique
         ' ════════════════════════════════════════════════════════
         AddHandler btnVidangeBeton.Click, Sub(s, e)
                                               If Not _plcConnecte Then
-                                                  MessageBox.Show("PLC non connecte.", "Vidange", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                                  MessageBox.Show("PLC non connecté.", "Vidange", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                                                   Exit Sub
                                               End If
                                               Try
@@ -2564,8 +2564,8 @@ Public Class Synoptique
                                                   ModulePLCDuplex.EcrireBit("DB1.DBX914.5", CBool(If(nouvelleVidange, 1, 0)))
                                                   _vidangeMlx = nouvelleVidange
                                                   MettreAJourBoutonsOperateur()
-                                                  AfficherForcage("Vidange beton " & If(nouvelleVidange, "AUTORISEE", "INTERDITE"))
-                                                  EnregistrerAction("COMMANDE", "Vidange beton " & If(nouvelleVidange, "AUTORISEE", "INTERDITE"),
+                                                  AfficherForcage("Vidange béton " & If(nouvelleVidange, "AUTORISEE", "INTERDITE"))
+                                                  EnregistrerAction("COMMANDE", "Vidange béton " & If(nouvelleVidange, "AUTORISEE", "INTERDITE"),
                                                       "DB1.DBX914.5=" & If(nouvelleVidange, "1", "0"), "DB1.DBX914.5",
                                                       If(nouvelleVidange, "1", "0"), "PLC_WRITE")
                                               Catch ex As Exception
@@ -2898,7 +2898,7 @@ Public Class Synoptique
             If demandeEnCours Then
                 btnabbondomennt.BackColor = Color.Orange
                 btnabbondomennt.ForeColor = Color.Black
-                btnabbondomennt.Text = "Annule" & vbCrLf & "arret en fin"
+                btnabbondomennt.Text = "Annuler" & vbCrLf & "arrêt en fin"
             Else
                 btnabbondomennt.BackColor = _btnAbandonCouleur
                 btnabbondomennt.UseVisualStyleBackColor = True
@@ -2929,7 +2929,7 @@ Public Class Synoptique
     '   OUI / NON (finoui / finno) apparaissent quand 1088.0 = 1
     Private Sub btnabbondomennt_Click(sender As Object, e As EventArgs) Handles btnabbondomennt.Click
         If Not _plcConnecte Then
-            MessageBox.Show("PLC non connecte.", "Fin de cycle", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            MessageBox.Show("PLC non connecté.", "Fin de cycle", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             Exit Sub
         End If
         If ModuleArchivageGachees.Instance.AbandonEnCours Then
@@ -2937,14 +2937,14 @@ Public Class Synoptique
             ModuleArchivageGachees.Instance.ConfirmerFinCycle(False)
             AfficherConfirmationFinCycle(False)
             MAJBoutonAbandon(False)
-            AfficherForcage("Arret en fin ANNULE (914.2 = 0)")
+            AfficherForcage("Arrêt en fin ANNULÉ (914.2 = 0)")
             Exit Sub
         End If
         If ModuleArchivageGachees.Instance.DemanderFinCycle() Then
             MAJBoutonAbandon(True)
-            AfficherForcage("Arret en fin demande (914.2 = 1) - attente fin de la gachee")
+            AfficherForcage("Arrêt en fin demandé (914.2 = 1) - attente fin de la gâchée")
         Else
-            MessageBox.Show("Aucune commande en cours : rien a arreter.", "Fin de cycle",
+            MessageBox.Show("Aucune commande en cours : rien à arrêter.", "Fin de cycle",
                             MessageBoxButtons.OK, MessageBoxIcon.Warning)
         End If
     End Sub
@@ -2966,14 +2966,14 @@ Public Class Synoptique
     Private Sub finoui_Click(sender As Object, e As EventArgs) Handles finoui.Click
         ModuleArchivageGachees.Instance.ConfirmerFinCycle(True)
         AfficherConfirmationFinCycle(False)
-        AfficherForcage("Fin de cycle confirmee (914.3 = 1)")
+        AfficherForcage("Fin de cycle confirmée (914.3 = 1)")
     End Sub
 
     Private Sub finno_Click(sender As Object, e As EventArgs) Handles finno.Click
         ModuleArchivageGachees.Instance.ConfirmerFinCycle(False)
         AfficherConfirmationFinCycle(False)
         MAJBoutonAbandon(False)
-        AfficherForcage("Fin de cycle annulee (914.2 = 0)")
+        AfficherForcage("Fin de cycle annulée (914.2 = 0)")
     End Sub
     ' ═══════════════════════════════════════════════════════════════
     '  CURSEUR CORRECTION EAU (21/09/2026) — TrackBarEAU du Designer
@@ -3172,7 +3172,7 @@ Public Class Synoptique
 
     Private Sub EnvoyerCorrectionEau(valeur As Integer)
         If Not _plcConnecte Then
-            AfficherForcage("PLC non connecte : correction eau non envoyee")
+            AfficherForcage("PLC non connecté : correction eau non envoyée")
             Exit Sub
         End If
         Try
@@ -3180,7 +3180,7 @@ Public Class Synoptique
                 AfficherForcage("Correction eau = " & valeur)
                 EnregistrerAction("COMMANDE", "Correction eau", valeur.ToString(), ADR_CORR_EAU, valeur.ToString(), "PLC_WRITE")
             Else
-                AfficherForcage("Erreur ecriture correction eau (" & ADR_CORR_EAU & ")")
+                AfficherForcage("Erreur écriture correction eau (" & ADR_CORR_EAU & ")")
             End If
         Catch ex As Exception
             AfficherForcage("Erreur correction eau : " & ex.Message)

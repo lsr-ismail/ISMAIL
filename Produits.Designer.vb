@@ -260,7 +260,7 @@ Partial Class Produits
         btnAjouteTable.Name = "btnAjouteTable"
         btnAjouteTable.Size = New Size(140, 61)
         btnAjouteTable.TabIndex = 255
-        btnAjouteTable.Text = "AJOUTE"
+        btnAjouteTable.Text = "AJOUTER"
         btnAjouteTable.UseVisualStyleBackColor = True
         ' 
         ' Label1
@@ -279,7 +279,7 @@ Partial Class Produits
         v.Name = "v"
         v.Size = New Size(56, 20)
         v.TabIndex = 295
-        v.Text = "Unite 2"
+        v.Text = "Unité 2"
         ' 
         ' Label4
         ' 
@@ -306,7 +306,7 @@ Partial Class Produits
         Label7.Name = "Label7"
         Label7.Size = New Size(99, 20)
         Label7.TabIndex = 289
-        Label7.Text = "Date Entree 1"
+        Label7.Text = "Date Entrée 1"
         ' 
         ' txtMontantUnitaire2
         ' 
@@ -330,7 +330,7 @@ Partial Class Produits
         Label5.Name = "Label5"
         Label5.Size = New Size(56, 20)
         Label5.TabIndex = 296
-        Label5.Text = "Unite 1"
+        Label5.Text = "Unité 1"
         ' 
         ' cmbUnite2
         ' 
@@ -427,7 +427,7 @@ Partial Class Produits
         Label10.Name = "Label10"
         Label10.Size = New Size(99, 20)
         Label10.TabIndex = 312
-        Label10.Text = "Date Entree 2"
+        Label10.Text = "Date Entrée 2"
         ' 
         ' Produits
         ' 

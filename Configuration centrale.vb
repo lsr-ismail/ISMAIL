@@ -300,14 +300,14 @@ Public Class Configuration_centrale
                             If erreurs.Count = 0 Then
                                 lblEtat.Text = "Paramètres enregistrés dans le CPU à " & Now.ToString("HH:mm:ss")
                                 lblEtat.ForeColor = Color.DarkGreen
-                                Synoptique.EnregistrerAction("PARAMETRES", "Parametres CPU enregistres",
+                                Synoptique.EnregistrerAction("PARAMETRES", "Paramètres CPU enregistrés",
                                     aEcrire.Count & " valeurs", "DB8/DB19/DB63/DB90/DB1", "", "PLC_WRITE")
                             Else
                                 lblEtat.Text = erreurs.Count & " erreur(s) d'écriture"
                                 lblEtat.ForeColor = Color.Red
                                 MessageBox.Show(String.Join(vbCrLf, erreurs), "Erreurs d'écriture CPU",
                                                 MessageBoxButtons.OK, MessageBoxIcon.Error)
-                                Synoptique.EnregistrerAction("ALARME", "Parametres CPU : erreurs d'ecriture",
+                                Synoptique.EnregistrerAction("ALARME", "Paramètres CPU : erreurs d'écriture",
                                     String.Join(" | ", erreurs), "", "", "ALARME")
                             End If
                             LireCPU()

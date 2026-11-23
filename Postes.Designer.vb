@@ -120,7 +120,7 @@ Partial Class Postes
         Label8.Name = "Label8"
         Label8.Size = New Size(78, 20)
         Label8.TabIndex = 172
-        Label8.Text = "Telephone"
+        Label8.Text = "Téléphone"
         ' 
         ' Label9
         ' 
@@ -147,7 +147,7 @@ Partial Class Postes
         Label11.Name = "Label11"
         Label11.Size = New Size(67, 20)
         Label11.TabIndex = 169
-        Label11.Text = "Capacite"
+        Label11.Text = "Capacité"
         ' 
         ' Label12
         ' 
@@ -165,7 +165,7 @@ Partial Class Postes
         Label4.Name = "Label4"
         Label4.Size = New Size(89, 20)
         Label4.TabIndex = 167
-        Label4.Text = "Equipement"
+        Label4.Text = "Équipement"
         ' 
         ' Label5
         ' 
@@ -346,7 +346,7 @@ Partial Class Postes
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(178, 61)
         btnAjouter.TabIndex = 145
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' Label21

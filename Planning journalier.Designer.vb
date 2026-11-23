@@ -99,7 +99,7 @@ Partial Class Planning_journalier
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(147, 61)
         btnAjouter.TabIndex = 307
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' Duplique
@@ -108,7 +108,7 @@ Partial Class Planning_journalier
         Duplique.Name = "Duplique"
         Duplique.Size = New Size(147, 61)
         Duplique.TabIndex = 315
-        Duplique.Text = "Duplique"
+        Duplique.Text = "Dupliquer"
         Duplique.UseVisualStyleBackColor = True
         ' 
         ' Exécute

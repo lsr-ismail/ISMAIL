@@ -43,7 +43,7 @@ Partial Class DELTABETON
         Label3.Name = "Label3"
         Label3.Size = New Size(110, 20)
         Label3.TabIndex = 39
-        Label3.Text = "Role Utilisateur"
+        Label3.Text = "Rôle Utilisateur"
         ' 
         ' Label2
         ' 
@@ -101,7 +101,7 @@ Partial Class DELTABETON
         AJOUTE.Name = "AJOUTE"
         AJOUTE.Size = New Size(178, 61)
         AJOUTE.TabIndex = 30
-        AJOUTE.Text = "AJOUTE"
+        AJOUTE.Text = "AJOUTER"
         AJOUTE.UseVisualStyleBackColor = True
         ' 
         ' DataGridView1

@@ -1076,7 +1076,7 @@ Partial Class Configuration_centrale
         lblModeDemarrage.Name = "lblModeDemarrage"
         lblModeDemarrage.Size = New Size(197, 35)
         lblModeDemarrage.TabIndex = 387
-        lblModeDemarrage.Text = "Type demrage :"
+        lblModeDemarrage.Text = "Type démarrage :"
         ' 
         ' btnModeDemarrage
         ' 
@@ -1909,7 +1909,7 @@ Partial Class Configuration_centrale
         lblEtat.Name = "lblEtat"
         lblEtat.Size = New Size(61, 35)
         lblEtat.TabIndex = 357
-        lblEtat.Text = "Etat"
+        lblEtat.Text = "État"
         ' 
         ' Configuration_centrale
         ' 

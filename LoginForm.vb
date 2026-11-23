@@ -83,7 +83,7 @@ Public Class LoginForm
             Else
                 MessageBox.Show("Mot de passe incorrect.",
                 "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                Synoptique.EnregistrerAction("SECURITE", "Echec de connexion", "Utilisateur saisi : " & utilisateur.Text.Trim(), "", "", "LOGIN_ECHEC")
+                Synoptique.EnregistrerAction("SECURITE", "Échec de connexion", "Utilisateur saisi : " & utilisateur.Text.Trim(), "", "", "LOGIN_ECHEC")
                 motdepasse.Clear()
                 motdepasse.Focus()
             End If

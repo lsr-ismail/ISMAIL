@@ -109,7 +109,7 @@ Public Class Dosage_manuel
         ' 21/09 : les deux boutons centrés dans la page (180 + 10 + 200 = 390 px)
         Dim xG As Integer = Math.Max(0, (Me.ClientSize.Width - 390) \ 2)
         With btnTousForcages
-            .Text = "TOUS LES FORCAGES"
+            .Text = "TOUS LES FORÇAGES"
             .Location = New Point(xG, yG)
             .Size = New Size(180, 45)
             .Font = New Font("Segoe UI", 10, FontStyle.Bold)
@@ -119,7 +119,7 @@ Public Class Dosage_manuel
         Me.Controls.Add(btnTousForcages)
 
         With btnAnnulation
-            .Text = "ANNULATION FORCAGES"
+            .Text = "ANNULATION FORÇAGES"
             .Location = New Point(xG + 190, yG)
             .Size = New Size(200, 45)
             .Font = New Font("Segoe UI", 10, FontStyle.Bold)
@@ -241,7 +241,7 @@ Public Class Dosage_manuel
 
     ' ═══ TOUS FORCAGES / ANNULATION / ABANDON ═════════════════════════
     Private Sub btnTousForcages_Click(s As Object, e As EventArgs) Handles btnTousForcages.Click
-        If MessageBox.Show("Activer TOUS les forcages ?", "Confirmation",
+        If MessageBox.Show("Activer TOUS les forçages ?", "Confirmation",
             MessageBoxButtons.YesNo, MessageBoxIcon.Warning) = DialogResult.No Then Exit Sub
         ModeForceGranulats = True : MAJBtnForce(btnForceGR, True, "GRANULATS")
         ModeForceCiments = True : MAJBtnForce(btnForceCIM, True, "CIMENTS")
@@ -251,7 +251,7 @@ Public Class Dosage_manuel
         MAJBoutonsSynoptique()
         MAJBoutonsSynoptique()
         Log("TOUS LES FORCAGES actives")
-        Synoptique.EnregistrerAction("FORCAGE", "TOUS LES FORCAGES actives", "", "", "", "FORCAGE")
+        Synoptique.EnregistrerAction("FORCAGE", "TOUS LES FORÇAGES actives", "", "", "", "FORCAGE")
     End Sub
 
     Private Sub btnAnnulation_Click(s As Object, e As EventArgs) Handles btnAnnulation.Click
@@ -269,7 +269,7 @@ Public Class Dosage_manuel
         MAJBoutonsSynoptique()
         MAJBoutonsSynoptique()
         Log("ANNULATION TOUS FORCAGES")
-        Synoptique.EnregistrerAction("FORCAGE", "ANNULATION TOUS FORCAGES", "", "", "", "FORCAGE")
+        Synoptique.EnregistrerAction("FORCAGE", "ANNULATION TOUS FORÇAGES", "", "", "", "FORCAGE")
     End Sub
 
     ' 21/09 : bouton ABANDON DE CYCLE supprimé (fin de cycle gérée par le Synoptique : 914.2 / 1088.0 / 914.3)

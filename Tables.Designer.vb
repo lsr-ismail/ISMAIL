@@ -133,7 +133,7 @@ Partial Class Tables
         lblNomElement.Name = "lblNomElement"
         lblNomElement.Size = New Size(100, 20)
         lblNomElement.TabIndex = 197
-        lblNomElement.Text = "Nom Element"
+        lblNomElement.Text = "Nom Élément"
         ' 
         ' lblCodeElement
         ' 
@@ -142,7 +142,7 @@ Partial Class Tables
         lblCodeElement.Name = "lblCodeElement"
         lblCodeElement.Size = New Size(102, 20)
         lblCodeElement.TabIndex = 196
-        lblCodeElement.Text = "Code Element"
+        lblCodeElement.Text = "Code Élément"
         ' 
         ' lblNomTable
         ' 
@@ -252,7 +252,7 @@ Partial Class Tables
         btnAjouteTable.Name = "btnAjouteTable"
         btnAjouteTable.Size = New Size(178, 61)
         btnAjouteTable.TabIndex = 178
-        btnAjouteTable.Text = "AJOUTE"
+        btnAjouteTable.Text = "AJOUTER"
         btnAjouteTable.UseVisualStyleBackColor = True
         ' 
         ' PrintPreviewDialog1

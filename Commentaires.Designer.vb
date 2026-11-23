@@ -184,7 +184,7 @@ Partial Class Commentaires
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(141, 61)
         btnAjouter.TabIndex = 112
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' Label13
@@ -194,7 +194,7 @@ Partial Class Commentaires
         Label13.Name = "Label13"
         Label13.Size = New Size(155, 20)
         Label13.TabIndex = 146
-        Label13.Text = "Derniere Modification"
+        Label13.Text = "Dernière Modification"
         ' 
         ' PrintDialog1
         ' 

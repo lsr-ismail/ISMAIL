@@ -331,7 +331,7 @@ Partial Class Planning_camions
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(178, 61)
         btnAjouter.TabIndex = 372
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' cmbStatut

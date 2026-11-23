@@ -101,7 +101,7 @@ Public Class Normes
             Exit Sub
         End If
         modeEditionNorme = True
-        MessageBox.Show("Modifie les champs puis clique sur Actualiser l'enregistrement.")
+        MessageBox.Show("Modifiez les champs puis cliquez sur Actualiser l'enregistrement.")
     End Sub
 
     ' ═══════════════════════════════════════════════════════════════════

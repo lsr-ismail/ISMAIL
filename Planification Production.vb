@@ -128,7 +128,7 @@ Public Class Planification_Production
         Next
 
         lblNbPlannings.Text = "Plannings : " & dt.Rows.Count
-        lblTotalQte.Text = "Total QTE : " & totalQte.ToString("0.00") & " m³"
+        lblTotalQte.Text = "Total QTÉ : " & totalQte.ToString("0.00") & " m³"
         lblTotalLivre.Text = "Livré : " & totalLivre.ToString("0.00") & " m³"
         lblTotalReste.Text = "Reste : " & totalReste.ToString("0.00") & " m³"
     End Sub

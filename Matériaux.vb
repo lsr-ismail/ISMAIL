@@ -157,7 +157,7 @@ Public Class Matériaux
             Exit Sub
         End If
         modeEdition = True
-        MessageBox.Show("Mode modification activé. Modifie les champs puis clique sur AJOUTE pour enregistrer.")
+        MessageBox.Show("Mode modification activé. Modifiez les champs puis cliquez sur AJOUTER pour enregistrer.")
     End Sub
 
     ' ═══════════════════════════════════════════════════════════════════

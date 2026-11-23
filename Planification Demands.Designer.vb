@@ -509,7 +509,7 @@ Partial Class Planification_Demands
         Label33.Name = "Label33"
         Label33.Size = New Size(69, 20)
         Label33.TabIndex = 285
-        Label33.Text = "capacite "
+        Label33.Text = "capacité "
         ' 
         ' Label7
         ' 
@@ -1003,7 +1003,7 @@ Partial Class Planification_Demands
         Label36.Name = "Label36"
         Label36.Size = New Size(50, 20)
         Label36.TabIndex = 300
-        Label36.Text = "UNITE"
+        Label36.Text = "UNITÉ"
         ' 
         ' cmbUnitePS7
         ' 
@@ -1131,7 +1131,7 @@ Partial Class Planification_Demands
         Label30.Name = "Label30"
         Label30.Size = New Size(35, 20)
         Label30.TabIndex = 252
-        Label30.Text = "QTE"
+        Label30.Text = "QTÉ"
         ' 
         ' Label35
         ' 
@@ -1184,7 +1184,7 @@ Partial Class Planification_Demands
         Label34.Name = "Label34"
         Label34.Size = New Size(64, 20)
         Label34.TabIndex = 287
-        Label34.Text = "quantite"
+        Label34.Text = "quantité"
         ' 
         ' txtCodeEquipementService
         ' 
@@ -1214,7 +1214,7 @@ Partial Class Planification_Demands
         GroupBox6.Size = New Size(125, 46)
         GroupBox6.TabIndex = 272
         GroupBox6.TabStop = False
-        GroupBox6.Text = "Equipement du camion service"
+        GroupBox6.Text = "Équipement du camion service"
         ' 
         ' Planification_Demands
         ' 

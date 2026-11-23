@@ -285,7 +285,7 @@ Public Class Formules
             Exit Sub
         End If
         modeEditionFormule = True
-        MessageBox.Show("Modifie les champs puis clique sur Enregistrer.")
+        MessageBox.Show("Modifiez les champs puis cliquez sur Enregistrer.")
     End Sub
 
     Private Sub btnActualiserFormule_Click(sender As Object, e As EventArgs) Handles btnActualiserFormule.Click
@@ -451,7 +451,7 @@ Public Class Formules
     End Sub
 
     Private Sub btnInsererComposition_Click(sender As Object, e As EventArgs) Handles btnInsererComposition.Click
-        If idFormuleSelectionne = 0 Then MessageBox.Show("Enregistre d'abord la formule.") : Exit Sub
+        If idFormuleSelectionne = 0 Then MessageBox.Show("Enregistrez d'abord la formule.") : Exit Sub
         If cmbTypeMateriauFormule.Text.Trim() = "" Then MessageBox.Show("Choisis le type matériau.") : Exit Sub
         If cmbMateriauFormule.Text.Trim() = "" Then MessageBox.Show("Choisis le matériau.") : Exit Sub
         If txtQuantiteFormule.Text.Trim() = "" Then MessageBox.Show("Saisis la quantité.") : Exit Sub

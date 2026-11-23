@@ -170,7 +170,7 @@ Partial Class Stocks
         btnEntree.Name = "btnEntree"
         btnEntree.Size = New Size(178, 61)
         btnEntree.TabIndex = 241
-        btnEntree.Text = "Entree"
+        btnEntree.Text = "Entrée"
         btnEntree.UseVisualStyleBackColor = True
         ' 
         ' lblNombre
@@ -189,7 +189,7 @@ Partial Class Stocks
         Label11.Name = "Label11"
         Label11.Size = New Size(79, 20)
         Label11.TabIndex = 236
-        Label11.Text = "Qte Entree"
+        Label11.Text = "Qté Entrée"
         ' 
         ' Label12
         ' 
@@ -225,7 +225,7 @@ Partial Class Stocks
         Label6.Name = "Label6"
         Label6.Size = New Size(142, 20)
         Label6.TabIndex = 232
-        Label6.Text = "STO Somme Entrees"
+        Label6.Text = "STO Somme Entrées"
         ' 
         ' Label3
         ' 
@@ -293,7 +293,7 @@ Partial Class Stocks
         Label1.Name = "Label1"
         Label1.Size = New Size(74, 20)
         Label1.TabIndex = 245
-        Label1.Text = "STO Unite"
+        Label1.Text = "STO Unité"
         ' 
         ' btnMiseAJour
         ' 

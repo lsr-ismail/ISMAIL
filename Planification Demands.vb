@@ -587,7 +587,7 @@ Public Class Planification_Demands
     Private Sub RechercheEquipement()
         Dim f As New FrmRecherche
         f.Initialiser("SELECT IdProduit, CodeProduit, NomProduit FROM dbo.ProduitsServices WHERE Actif = 1 OR Actif IS NULL", "IdProduit", "CodeProduit", "NomProduit")
-        f.Text = "Recherche Equipement Service"
+        f.Text = "Recherche Équipement Service"
         If f.ShowDialog() = DialogResult.OK Then
             txtCodeEquipementService.Text = f.ValeurSelectionnee
             txtCodeEquipementService_Leave(Nothing, Nothing)

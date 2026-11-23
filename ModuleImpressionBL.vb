@@ -51,7 +51,7 @@ Module ModuleImpressionBL
                           Optional apercu As Boolean = True)
         Try
             If numeroBL Is Nothing OrElse numeroBL.Trim = "" Then
-                MessageBox.Show("Numero de BL vide.") : Return
+                MessageBox.Show("Numéro de BL vide.") : Return
             End If
             numeroBL = numeroBL.Trim()
 

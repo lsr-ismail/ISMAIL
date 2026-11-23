@@ -97,7 +97,7 @@ Module Module1
             SocieteLogoPath = LireDR(dr, "LogoPath")
 
         Catch ex As Exception
-            MessageBox.Show("Erreur chargement societe : " & ex.Message,
+            MessageBox.Show("Erreur chargement société : " & ex.Message,
                             "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Warning)
         End Try
     End Sub

@@ -6791,7 +6791,7 @@ Partial Class Configuration_Automate
         GroupBox3.Size = New Size(452, 194)
         GroupBox3.TabIndex = 427
         GroupBox3.TabStop = False
-        GroupBox3.Text = "Compteur Hygromettre"
+        GroupBox3.Text = "Compteur Hygromètre"
         ' 
         ' Label280
         ' 
@@ -7321,7 +7321,7 @@ Partial Class Configuration_Automate
         tabMalGen.Padding = New Padding(3)
         tabMalGen.Size = New Size(946, 444)
         tabMalGen.TabIndex = 0
-        tabMalGen.Text = "GENERAL"
+        tabMalGen.Text = "GÉNÉRAL"
         tabMalGen.UseVisualStyleBackColor = True
         ' 
         ' Label287
@@ -8226,7 +8226,7 @@ Partial Class Configuration_Automate
         tabMalPlas.Padding = New Padding(3)
         tabMalPlas.Size = New Size(946, 444)
         tabMalPlas.TabIndex = 3
-        tabMalPlas.Text = "GESTION PLASTICITE"
+        tabMalPlas.Text = "GESTION PLASTICITÉ"
         tabMalPlas.UseVisualStyleBackColor = True
         ' 
         ' Label326
@@ -11552,7 +11552,7 @@ Partial Class Configuration_Automate
         TabPage6.Padding = New Padding(3)
         TabPage6.Size = New Size(946, 444)
         TabPage6.TabIndex = 1
-        TabPage6.Text = "TREMIE TAMPON"
+        TabPage6.Text = "TRÉMIE TAMPON"
         TabPage6.UseVisualStyleBackColor = True
         ' 
         ' Label480
@@ -12713,7 +12713,7 @@ Partial Class Configuration_Automate
         PARAMETRAGEVIDANGE.Name = "PARAMETRAGEVIDANGE"
         PARAMETRAGEVIDANGE.Size = New Size(1025, 643)
         PARAMETRAGEVIDANGE.TabIndex = 7
-        PARAMETRAGEVIDANGE.Text = "PARAMETRAGE VIDANGE"
+        PARAMETRAGEVIDANGE.Text = "PARAMÉTRAGE VIDANGE"
         PARAMETRAGEVIDANGE.UseVisualStyleBackColor = True
         ' 
         ' Label542
@@ -13110,7 +13110,7 @@ Partial Class Configuration_Automate
         GACHEESECHE.Name = "GACHEESECHE"
         GACHEESECHE.Size = New Size(1025, 643)
         GACHEESECHE.TabIndex = 8
-        GACHEESECHE.Text = "GACHEE SECHE"
+        GACHEESECHE.Text = "GÂCHÉE SÈCHE"
         GACHEESECHE.UseVisualStyleBackColor = True
         ' 
         ' Label562
@@ -13710,7 +13710,7 @@ Partial Class Configuration_Automate
         PARAMETRAGELAVAGE.Name = "PARAMETRAGELAVAGE"
         PARAMETRAGELAVAGE.Size = New Size(1025, 643)
         PARAMETRAGELAVAGE.TabIndex = 9
-        PARAMETRAGELAVAGE.Text = "PARAMETRAGE LAVAGE"
+        PARAMETRAGELAVAGE.Text = "PARAMÉTRAGE LAVAGE"
         PARAMETRAGELAVAGE.UseVisualStyleBackColor = True
         ' 
         ' txtNbGacheesLavage
@@ -13721,7 +13721,7 @@ Partial Class Configuration_Automate
         txtNbGacheesLavage.Name = "txtNbGacheesLavage"
         txtNbGacheesLavage.Size = New Size(132, 23)
         txtNbGacheesLavage.TabIndex = 821
-        txtNbGacheesLavage.Text = "Gachees Lavage"
+        txtNbGacheesLavage.Text = "Gâchées Lavage"
         ' 
         ' txtNbCyclesRM
         ' 
@@ -13942,7 +13942,7 @@ Partial Class Configuration_Automate
         DEFAUTSPARAMETRABLES.Name = "DEFAUTSPARAMETRABLES"
         DEFAUTSPARAMETRABLES.Size = New Size(1025, 643)
         DEFAUTSPARAMETRABLES.TabIndex = 12
-        DEFAUTSPARAMETRABLES.Text = "DEFAUTS PARAMETRABLES"
+        DEFAUTSPARAMETRABLES.Text = "DÉFAUTS PARAMÉTRABLES"
         DEFAUTSPARAMETRABLES.UseVisualStyleBackColor = True
         ' 
         ' CONNEXIONETHERNET

@@ -88,7 +88,7 @@ Partial Class Clients
         AJOUTE.Name = "AJOUTE"
         AJOUTE.Size = New Size(160, 61)
         AJOUTE.TabIndex = 0
-        AJOUTE.Text = "AJOUTE"
+        AJOUTE.Text = "AJOUTER"
         AJOUTE.UseVisualStyleBackColor = True
         ' 
         ' EDITE
@@ -351,7 +351,7 @@ Partial Class Clients
         Label12.Name = "Label12"
         Label12.Size = New Size(78, 20)
         Label12.TabIndex = 33
-        Label12.Text = "Telephone"
+        Label12.Text = "Téléphone"
         ' 
         ' Label18
         ' 

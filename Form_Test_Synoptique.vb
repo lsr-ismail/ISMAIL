@@ -45,7 +45,7 @@ Public Class vForm_Test_Synoptique
     '  CONSTRUCTION FORMULAIRE
     ' ═══════════════════════════════════════════════════════════
     Private Sub InitForm()
-        Me.Text = "Lecture CPU — Etats Equipements Temps Reel"
+        Me.Text = "Lecture CPU — États Équipements Temps Réel"
         Me.Size = New Size(680, 620)
         Me.StartPosition = FormStartPosition.CenterScreen
         Me.FormBorderStyle = FormBorderStyle.FixedDialog
@@ -54,7 +54,7 @@ Public Class vForm_Test_Synoptique
 
         ' ── Titre ──────────────────────────────────────────────
         Dim lblTitre As New Label()
-        lblTitre.Text = "ETATS EQUIPEMENTS — LECTURE CPU S7-1200"
+        lblTitre.Text = "ÉTATS ÉQUIPEMENTS — LECTURE CPU S7-1200"
         lblTitre.Location = New Point(10, 10)
         lblTitre.Size = New Size(640, 28)
         lblTitre.Font = New Font("Segoe UI", 12, FontStyle.Bold)
@@ -156,16 +156,16 @@ Public Class vForm_Test_Synoptique
     ' ═══════════════════════════════════════════════════════════
     Private Sub vForm_Test_Synoptique_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         If PLCInstance IsNot Nothing AndAlso PLCInstance.IsConnected Then
-            lblEtatPLC.Text = "PLC CONNECTE — Lecture toutes les 2s"
+            lblEtatPLC.Text = "PLC CONNECTÉ — Lecture toutes les 2s"
             lblEtatPLC.ForeColor = Color.DarkGreen
             timerCPU.Interval = 2000
             timerCPU.Start()
             ' Lecture immediate
             LireEtatsDepuisCPU()
         Else
-            lblEtatPLC.Text = "PLC NON CONNECTE"
+            lblEtatPLC.Text = "PLC NON CONNECTÉ"
             lblEtatPLC.ForeColor = Color.Red
-            lblStatut.Text = "Connexion PLC requise pour lire les etats."
+            lblStatut.Text = "Connexion PLC requise pour lire les états."
         End If
     End Sub
 
@@ -262,7 +262,7 @@ Public Class vForm_Test_Synoptique
                                 If(CBool(ModulePLCDuplex.LireAdresse("DB1.DBX12.6")), 1, 0),
                                 0, 0, 0, 0}
 
-            lblStatut.Text = "Derniere lecture : " & DateTime.Now.ToString("HH:mm:ss")
+            lblStatut.Text = "Dernière lecture : " & DateTime.Now.ToString("HH:mm:ss")
             lblStatut.ForeColor = Color.DarkGreen
 
         Catch ex As Exception

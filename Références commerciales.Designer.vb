@@ -381,7 +381,7 @@ Partial Class Références_commerciales
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(178, 61)
         btnAjouter.TabIndex = 112
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' Label14

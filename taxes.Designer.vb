@@ -209,7 +209,7 @@ Partial Class taxes
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(129, 61)
         btnAjouter.TabIndex = 145
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' Label21
@@ -238,7 +238,7 @@ Partial Class taxes
         Label4.Name = "Label4"
         Label4.Size = New Size(155, 20)
         Label4.TabIndex = 181
-        Label4.Text = "Derniere Modification"
+        Label4.Text = "Dernière Modification"
         ' 
         ' dtpDerniereModification
         ' 

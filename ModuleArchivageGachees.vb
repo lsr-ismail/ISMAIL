@@ -129,8 +129,8 @@ Public Class ModuleArchivageGachees
                 "SELECT COUNT(*) FROM dbo.GacheesDetails WHERE NumeroBL=@bl",
                 Sub(cmd) cmd.Parameters.AddWithValue("@bl", bl))
             _actif = True
-            Synoptique.EnregistrerAction("COMMANDE", "BL en cours repris apres redemarrage",
-                "BL=" & bl & " gachees deja archivees=" & _nGachee, "", "", "AUTO")
+            Synoptique.EnregistrerAction("COMMANDE", "BL en cours repris après redémarrage",
+                "BL=" & bl & " gâchées déjà archivées=" & _nGachee, "", "", "AUTO")
         Catch ex As Exception
             Synoptique.EnregistrerAction("ALARME", "Reprise BL en cours : erreur", ex.Message, "", "", "ALARME")
         End Try
@@ -164,8 +164,8 @@ Public Class ModuleArchivageGachees
         _abandonDemande = True
         _abandonConfirmationAffichee = False
         ModulePLCDuplex.EcrireBit(ADR_DEMANDE_ARRET, True)
-        Synoptique.EnregistrerAction("COMMANDE", "Fin de cycle demandee",
-            "BL=" & _numeroBL & " gachees faites=" & _nGachee, ADR_DEMANDE_ARRET, "1", "CLIC")
+        Synoptique.EnregistrerAction("COMMANDE", "Fin de cycle demandée",
+            "BL=" & _numeroBL & " gâchées faites=" & _nGachee, ADR_DEMANDE_ARRET, "1", "CLIC")
         Return True
     End Function
 
@@ -175,12 +175,12 @@ Public Class ModuleArchivageGachees
         If Not _abandonDemande Then Exit Sub
         If oui Then
             ModulePLCDuplex.EcrireBit(ADR_CONFIRME_ARRET, True)
-            Synoptique.EnregistrerAction("COMMANDE", "Fin de cycle CONFIRMEE (OUI)",
-                "BL=" & _numeroBL & " gachees=" & _nGachee, ADR_CONFIRME_ARRET, "1", "CLIC")
+            Synoptique.EnregistrerAction("COMMANDE", "Fin de cycle CONFIRMÉE (OUI)",
+                "BL=" & _numeroBL & " gâchées=" & _nGachee, ADR_CONFIRME_ARRET, "1", "CLIC")
         Else
             ModulePLCDuplex.EcrireBit(ADR_DEMANDE_ARRET, False)
             _abandonDemande = False : _abandonConfirmationAffichee = False
-            Synoptique.EnregistrerAction("COMMANDE", "Fin de cycle ANNULEE (NON) - le cycle continue",
+            Synoptique.EnregistrerAction("COMMANDE", "Fin de cycle ANNULÉE (NON) - le cycle continue",
                 "BL=" & _numeroBL, ADR_DEMANDE_ARRET, "0", "CLIC")
         End If
     End Sub
@@ -209,10 +209,10 @@ Public Class ModuleArchivageGachees
             If _numeroBL = numBL Then
                 _numeroBL = "" : _idPlanning = 0 : _nGachee = 0 : _actif = False
             End If
-            Synoptique.EnregistrerAction("COMMANDE", "BL cloture automatiquement",
+            Synoptique.EnregistrerAction("COMMANDE", "BL clôturé automatiquement",
                 "BL=" & numBL & " | " & motif, ADR_FIN_COMMANDE, "1", "AUTO")
         Catch ex As Exception
-            Synoptique.EnregistrerAction("ALARME", "Cloture BL manque : erreur", ex.Message, "", "", "ALARME")
+            Synoptique.EnregistrerAction("ALARME", "Clôture du BL manquée : erreur", ex.Message, "", "", "ALARME")
         End Try
     End Sub
 
@@ -234,7 +234,7 @@ Public Class ModuleArchivageGachees
         Try
             ' 21/09 : bit MAINTENU à 1 (plus d'impulsion) — la CPU le remet à 0 en fin de commande
             ModulePLCDuplex.EcrireBit(ADR_DYC, True)
-            Synoptique.EnregistrerAction("CYCLE", "Depart cycle envoye",
+            Synoptique.EnregistrerAction("CYCLE", "Départ cycle envoyé",
                 "BL=" & numeroBL & " (0.4 maintenu a 1)", ADR_DYC, "1", "PLC_WRITE")
         Catch ex As Exception
             Debug.WriteLine("Erreur DYC : " & ex.Message)
@@ -316,8 +316,8 @@ Public Class ModuleArchivageGachees
                     If gacheeFinie Then
                         _abandonConfirmationAffichee = True
                         Synoptique.MontrerConfirmationFinCycle()
-                        Synoptique.EnregistrerAction("COMMANDE", "Fin de cycle : gachee finie (1088.0) - confirmation OUI/NON affichee",
-                            "BL=" & _numeroBL & " gachees=" & _nGachee, ADR_GACHEE_FINIE, "1", "AUTO")
+                        Synoptique.EnregistrerAction("COMMANDE", "Fin de cycle : gâchée finie (1088.0) - confirmation OUI/NON affichée",
+                            "BL=" & _numeroBL & " gâchées=" & _nGachee, ADR_GACHEE_FINIE, "1", "AUTO")
                     End If
                 End If
 
@@ -411,8 +411,8 @@ Public Class ModuleArchivageGachees
                     cmd.Parameters.AddWithValue("@vol", volLivre)
                     cmd.Parameters.AddWithValue("@bl", _numeroBL)
                 End Sub)
-                Synoptique.EnregistrerAction("COMMANDE", "Volume BL reduit (fin de cycle)",
-                    "BL=" & _numeroBL & " gachees=" & nbFaites & " x " & vMax.ToString("0.00") & " m3 = " & volLivre.ToString("0.00") & " m3 (camion " & volCamion.ToString("0.00") & ")",
+                Synoptique.EnregistrerAction("COMMANDE", "Volume BL réduit (fin de cycle)",
+                    "BL=" & _numeroBL & " gâchées=" & nbFaites & " x " & vMax.ToString("0.00") & " m3 = " & volLivre.ToString("0.00") & " m3 (camion " & volCamion.ToString("0.00") & ")",
                     "", "", "AUTO")
             End If
 
@@ -435,7 +435,7 @@ Public Class ModuleArchivageGachees
                 cmd.Parameters.AddWithValue("@vol", volLivre)
             End Sub)
             Synoptique.EnregistrerAction("COMMANDE", motifFin,
-            "BL=" & _numeroBL & " Vol=" & volLivre.ToString("0.00") & "m3 gachees=" & nbFaites,
+            "BL=" & _numeroBL & " Vol=" & volLivre.ToString("0.00") & "m3 gâchées=" & nbFaites,
             ADR_FIN_COMMANDE, If(abandon, "abandon", "1"), "PLC_WRITE")
 
             ' 18/09 : cumuls REEL / THEORIQUE du camion calculés par le CPU
@@ -469,17 +469,17 @@ Public Class ModuleArchivageGachees
             Dim choix As DialogResult = Form_ChoixImpressionBL.Demander(blLivre, gachees, volLivre)
             If choix = DialogResult.Yes Then
                 ModuleImpressionBL.ImprimerBL(blLivre, avecDetail:=True)
-                Synoptique.EnregistrerAction("IMPRESSION", "BL imprime avec detail", "BL=" & blLivre, "", "", "CLIC")
+                Synoptique.EnregistrerAction("IMPRESSION", "BL imprimé avec détail", "BL=" & blLivre, "", "", "CLIC")
             ElseIf choix = DialogResult.No Then
                 ModuleImpressionBL.ImprimerBL(blLivre, avecDetail:=False)
-                Synoptique.EnregistrerAction("IMPRESSION", "BL imprime sans detail", "BL=" & blLivre, "", "", "CLIC")
+                Synoptique.EnregistrerAction("IMPRESSION", "BL imprimé sans détail", "BL=" & blLivre, "", "", "CLIC")
             Else
-                Synoptique.EnregistrerAction("IMPRESSION", "BL non imprime (Quitter)", "BL=" & blLivre, "", "", "CLIC")
+                Synoptique.EnregistrerAction("IMPRESSION", "BL non imprimé (Quitter)", "BL=" & blLivre, "", "", "CLIC")
             End If
             ' 19/09 : acquit fin de chargement (914.1 = 0) seulement après OUI ou NON (impression).
             If choix = DialogResult.Yes OrElse choix = DialogResult.No Then
                 ModulePLCDuplex.EcrireBit(ADR_FIN_COMMANDE, False)
-                Synoptique.EnregistrerAction("COMMANDE", "Acquit fin de chargement (apres impression)", "BL=" & blLivre, ADR_FIN_COMMANDE, "0", "AUTO")
+                Synoptique.EnregistrerAction("COMMANDE", "Acquit fin de chargement (après impression)", "BL=" & blLivre, ADR_FIN_COMMANDE, "0", "AUTO")
             End If
         Catch ex As Exception
             Debug.WriteLine("ChoisirImpressionFinCommande : " & ex.Message)
@@ -602,7 +602,7 @@ Public Class ModuleArchivageGachees
             DecrementerStocks(poseG1, poseSC, poseSL, poseD2,
                               poseS1, poseS2, poseEAU,
                               poseADJ1, poseADJ2, poseADJ3, poseADJ4)
-            Synoptique.EnregistrerAction("GACHEE", "Gachee " & _nGachee & " archivee",
+            Synoptique.EnregistrerAction("GACHEE", "Gâchée " & _nGachee & " archivée",
                 String.Format("BL={0} G{1} | G1={2} SC={3} CIM={4} EAU={5} | EcarCIM={6}",
                     _numeroBL, _nGachee, poseG1, poseSC, poseS1 + poseS2, poseEAU, ecarCIM),
                 "", "", "CLIC")
@@ -699,12 +699,12 @@ Public Class ModuleArchivageGachees
                         cmd.Parameters.AddWithValue("@t" & i, CDbl(theo(i)))
                     Next
                 End Sub)
-            Synoptique.EnregistrerAction("GACHEE", "Cumuls CPU enregistres",
-                String.Format("BL={0} reel TR={1:0}/{2:0}/{3:0}/{4:0} CIM={5:0} EAU={6:0} | theo TR={7:0}/{8:0}/{9:0}/{10:0} CIM={11:0} EAU={12:0}",
+            Synoptique.EnregistrerAction("GACHEE", "Cumuls CPU enregistrés",
+                String.Format("BL={0} réel TR={1:0}/{2:0}/{3:0}/{4:0} CIM={5:0} EAU={6:0} | theo TR={7:0}/{8:0}/{9:0}/{10:0} CIM={11:0} EAU={12:0}",
                     numBL, reel(0), reel(1), reel(2), reel(3), reel(4), reel(5), theo(0), theo(1), theo(2), theo(3), theo(4), theo(5)),
                 "DB1.DBD924/1008", "", "CLIC")
         Catch ex As Exception
-            Synoptique.EnregistrerAction("ALARME", "Cumuls CPU non enregistres", ex.Message, "DB1", "", "ALARME")
+            Synoptique.EnregistrerAction("ALARME", "Cumuls CPU non enregistrés", ex.Message, "DB1", "", "ALARME")
         End Try
     End Sub
 
@@ -902,7 +902,7 @@ Public Class ModuleArchivageGachees
                               g.PoseADJ1, g.PoseADJ2, g.PoseADJ3, g.PoseADJ4)
 
             _dernierMatricule = matricule
-            Synoptique.EnregistrerAction("GACHEE", "Gachee matricule " & matricule & " archivee (CPU " & g.Matricule & ")",
+            Synoptique.EnregistrerAction("GACHEE", "Gâchée matricule " & matricule & " archivée (CPU " & g.Matricule & ")",
                 String.Format("BL={0} G{1} empl.{2} | TR={3:0} CIM={4:0} EAU={5:0} | EcarCIM={6:0.0}",
                     numBL, numGachee, g.Emplacement, totalPoseGran, g.PoseS1, g.PoseEAU, g.EcartS1),
                 "DB71", matricule.ToString(), "CLIC")
@@ -910,7 +910,7 @@ Public Class ModuleArchivageGachees
             Return True
         Catch ex As Exception
             Debug.WriteLine("ArchiverGacheeDB71 : " & ex.Message)
-            Synoptique.EnregistrerAction("ALARME", "Gachee CPU " & g.Matricule & " NON archivee",
+            Synoptique.EnregistrerAction("ALARME", "Gâchée CPU " & g.Matricule & " NON archivée",
                 ex.Message, "DB71", g.Matricule.ToString(), "ALARME")
             Return False
         End Try
@@ -1267,8 +1267,8 @@ Public Class ModuleArchivageGachees
 
 
 
-            Synoptique.EnregistrerAction("COMMANDE", "Commande terminee",
-                "BL=" & _numeroBL & " Gachees=" & _nGachee,
+            Synoptique.EnregistrerAction("COMMANDE", "Commande terminée",
+                "BL=" & _numeroBL & " Gâchées=" & _nGachee,
                 ADR_FIN_COMMANDE, "1", "CLIC")
 
             MessageBox.Show("✅ Commande terminée !" & vbCrLf &

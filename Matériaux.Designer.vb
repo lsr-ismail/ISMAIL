@@ -256,7 +256,7 @@ Partial Class Matériaux
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(143, 61)
         btnAjouter.TabIndex = 145
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' txtMateriauEquivalent

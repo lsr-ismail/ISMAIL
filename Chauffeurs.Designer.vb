@@ -83,7 +83,7 @@ Partial Class Chauffeurs
         Label9.Name = "Label9"
         Label9.Size = New Size(155, 20)
         Label9.TabIndex = 138
-        Label9.Text = "Derniere Modification"
+        Label9.Text = "Dernière Modification"
         ' 
         ' Label10
         ' 
@@ -119,7 +119,7 @@ Partial Class Chauffeurs
         Label4.Name = "Label4"
         Label4.Size = New Size(78, 20)
         Label4.TabIndex = 134
-        Label4.Text = "Telephone"
+        Label4.Text = "Téléphone"
         ' 
         ' Label5
         ' 
@@ -281,7 +281,7 @@ Partial Class Chauffeurs
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(132, 61)
         btnAjouter.TabIndex = 112
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' chkActif

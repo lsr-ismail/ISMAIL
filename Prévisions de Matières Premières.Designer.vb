@@ -155,7 +155,7 @@ Partial Class Prévisions_de_Matières_Premières
         Label14.Name = "Label14"
         Label14.Size = New Size(156, 23)
         Label14.TabIndex = 785
-        Label14.Text = "Ecart max. liant (%)"
+        Label14.Text = "Écart max. liant (%)"
         ' 
         ' Label20
         ' 
@@ -165,7 +165,7 @@ Partial Class Prévisions_de_Matières_Premières
         Label20.Name = "Label20"
         Label20.Size = New Size(187, 23)
         Label20.TabIndex = 784
-        Label20.Text = "Ecart max. granulat (%)"
+        Label20.Text = "Écart max. granulat (%)"
         ' 
         ' Label25
         ' 
@@ -175,7 +175,7 @@ Partial Class Prévisions_de_Matières_Premières
         Label25.Name = "Label25"
         Label25.Size = New Size(189, 23)
         Label25.TabIndex = 790
-        Label25.Text = "Ecart max. adjuvant (%)"
+        Label25.Text = "Écart max. adjuvant (%)"
         ' 
         ' txtEcartADJ
         ' 
@@ -199,7 +199,7 @@ Partial Class Prévisions_de_Matières_Premières
         Label26.Name = "Label26"
         Label26.Size = New Size(151, 23)
         Label26.TabIndex = 786
-        Label26.Text = "Ecart max. eau (%)"
+        Label26.Text = "Écart max. eau (%)"
         ' 
         ' txtDensiteFines
         ' 

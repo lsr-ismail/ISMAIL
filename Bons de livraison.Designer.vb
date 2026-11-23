@@ -143,7 +143,7 @@ Partial Class Bons_de_livraison
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(138, 61)
         btnAjouter.TabIndex = 324
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' Label19
@@ -153,7 +153,7 @@ Partial Class Bons_de_livraison
         Label19.Name = "Label19"
         Label19.Size = New Size(76, 20)
         Label19.TabIndex = 367
-        Label19.Text = "Operateur"
+        Label19.Text = "Opérateur"
         ' 
         ' txtOperateur
         ' 
@@ -187,7 +187,7 @@ Partial Class Bons_de_livraison
         Label12.Name = "Label12"
         Label12.Size = New Size(86, 40)
         Label12.TabIndex = 356
-        Label12.Text = "Planning" & vbCrLf & "Selectionne"
+        Label12.Text = "Planning" & vbCrLf & "Sélectionné"
         ' 
         ' Label4
         ' 
@@ -214,7 +214,7 @@ Partial Class Bons_de_livraison
         Label6.Name = "Label6"
         Label6.Size = New Size(91, 20)
         Label6.TabIndex = 353
-        Label6.Text = "Quantite M3"
+        Label6.Text = "Quantité M3"
         ' 
         ' Label3
         ' 
@@ -223,7 +223,7 @@ Partial Class Bons_de_livraison
         Label3.Name = "Label3"
         Label3.Size = New Size(64, 20)
         Label3.TabIndex = 352
-        Label3.Text = "Vehicule"
+        Label3.Text = "Véhicule"
         ' 
         ' Label2
         ' 
@@ -232,7 +232,7 @@ Partial Class Bons_de_livraison
         Label2.Name = "Label2"
         Label2.Size = New Size(96, 20)
         Label2.TabIndex = 351
-        Label2.Text = "Numero Tour"
+        Label2.Text = "Numéro Tour"
         ' 
         ' Label1
         ' 
@@ -241,7 +241,7 @@ Partial Class Bons_de_livraison
         Label1.Name = "Label1"
         Label1.Size = New Size(83, 20)
         Label1.TabIndex = 350
-        Label1.Text = "Numero BL"
+        Label1.Text = "Numéro BL"
         ' 
         ' txtRECHERCHE
         ' 

@@ -71,7 +71,7 @@ Partial Class Normes
         btnAjouteNorme.Name = "btnAjouteNorme"
         btnAjouteNorme.Size = New Size(178, 61)
         btnAjouteNorme.TabIndex = 211
-        btnAjouteNorme.Text = "AJOUTE"
+        btnAjouteNorme.Text = "AJOUTER"
         btnAjouteNorme.UseVisualStyleBackColor = True
         ' 
         ' btnSupprimeNorme

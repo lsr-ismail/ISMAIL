@@ -324,14 +324,14 @@ Partial Class PanelMain
         ' 
         PlanningFchierToolStripMenuItem.Name = "PlanningFchierToolStripMenuItem"
         PlanningFchierToolStripMenuItem.Size = New Size(299, 30)
-        PlanningFchierToolStripMenuItem.Text = "Planning fchier"
+        PlanningFchierToolStripMenuItem.Text = "Planning fichier"
         ' 
         ' BaseDeDonneesToolStripMenuItem
         ' 
         BaseDeDonneesToolStripMenuItem.DropDownItems.AddRange(New ToolStripItem() {ArticlesToolStripMenuItem, CommentairesToolStripMenuItem, RéférencesCommercialesToolStripMenuItem, ÉlémentsÀBétonnerToolStripMenuItem, SortiesDeMatièresPremièresToolStripMenuItem, EntréesDeMatièresPremièresToolStripMenuItem, AjustementDeStockToolStripMenuItem, AssistanceRegistreDesOccurrencesToolStripMenuItem1, AlarmesMachineToolStripMenuItem1})
         BaseDeDonneesToolStripMenuItem.Name = "BaseDeDonneesToolStripMenuItem"
         BaseDeDonneesToolStripMenuItem.Size = New Size(169, 29)
-        BaseDeDonneesToolStripMenuItem.Text = "Base de Donnees"
+        BaseDeDonneesToolStripMenuItem.Text = "Base de Données"
         ' 
         ' ArticlesToolStripMenuItem
         ' 

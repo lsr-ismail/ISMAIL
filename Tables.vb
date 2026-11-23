@@ -141,7 +141,7 @@ Public Class Tables
             Exit Sub
         End If
         modeEditionTable = True
-        MessageBox.Show("Modifie les champs puis clique sur Actualiser.")
+        MessageBox.Show("Modifiez les champs puis cliquez sur Actualiser.")
     End Sub
 
     ' ═══════════════════════════════════════════════════════════════════

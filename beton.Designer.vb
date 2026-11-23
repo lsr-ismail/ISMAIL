@@ -83,7 +83,7 @@ Partial Class beton
         Label21.Name = "Label21"
         Label21.Size = New Size(64, 28)
         Label21.TabIndex = 148
-        Label21.Text = "beton"
+        Label21.Text = "béton"
         ' 
         ' beton
         ' 

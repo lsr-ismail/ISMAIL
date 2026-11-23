@@ -67,7 +67,7 @@ Partial Class Fournisseurs
         Label8.Name = "Label8"
         Label8.Size = New Size(155, 20)
         Label8.TabIndex = 73
-        Label8.Text = "Derniere Modification"
+        Label8.Text = "Dernière Modification"
         ' 
         ' Label9
         ' 
@@ -94,7 +94,7 @@ Partial Class Fournisseurs
         Label11.Name = "Label11"
         Label11.Size = New Size(123, 20)
         Label11.TabIndex = 70
-        Label11.Text = "Matiere Premiere"
+        Label11.Text = "Matière Première"
         ' 
         ' Label12
         ' 
@@ -295,7 +295,7 @@ Partial Class Fournisseurs
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(137, 61)
         btnAjouter.TabIndex = 41
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' btnNouveau

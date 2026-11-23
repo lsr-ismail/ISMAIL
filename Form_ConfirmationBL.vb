@@ -428,7 +428,7 @@ Public Class Form_ConfirmationBL
                 "Une commande est encore en cours dans l'automate (Départ cycle DB1.DBX0.4 = 1)." & vbCrLf &
                 "Attendez la fin de la commande (la CPU remet le bit à 0), puis relancez.",
                 "Commande en cours", MessageBoxButtons.OK, MessageBoxIcon.Stop)
-            Synoptique.EnregistrerAction("COMMANDE", "Lancement refuse : 0.4 = 1", "commande precedente non terminee", "DB1.DBX0.4", "1", "CLIC")
+            Synoptique.EnregistrerAction("COMMANDE", "Lancement refuse : 0.4 = 1", "commande précédente non terminée", "DB1.DBX0.4", "1", "CLIC")
             Exit Sub
         End If
         ' 3a. Une commande est encore en cours (cycle CPU ou BL EN_COURS) → attendre la fin ou abandonner
@@ -560,7 +560,7 @@ Public Class Form_ConfirmationBL
                                                                             btnCONFIRMER.Enabled = True
                                                                             lblSTATUTCPU.Text = "🛑 Transfert CPU échoué : BL non créé. " & PLCData.DerniereErreur
                                                                             lblSTATUTCPU.ForeColor = Color.Red
-                                                                            Synoptique.EnregistrerAction("ALARME", "Transfert formule CPU echoue",
+                                                                            Synoptique.EnregistrerAction("ALARME", "Transfert formule CPU échoué",
                                                                                 PLCData.DerniereErreur, "DB101", "", "ALARME")
                                                                         End Sub)
                                                          Exit Sub
@@ -582,7 +582,7 @@ Public Class Form_ConfirmationBL
                                                                         lblSTATUTCPU.ForeColor = If(cpuOK, Color.DarkGreen, Color.OrangeRed)
                                                                         btnIMPRIMER.Enabled = True
                                                                         btnCONFIRMER.Enabled = False
-                                                                        Synoptique.EnregistrerAction("BL", "BL confirme",
+                                                                        Synoptique.EnregistrerAction("BL", "BL confirmé",
                                                                             "BL=" & numBL & " Cam=" & codeCamionVal & " Cap=" & capCamionVal & "m3",
                                                                             "", "", "CLIC")
 
@@ -625,7 +625,7 @@ Public Class Form_ConfirmationBL
                                                                                                        Else
                                                                                                            lblSTATUTCPU.Text = "⚠️ Le CPU n'a pas démarré le cycle (vérifier mode auto / défaut / skip)"
                                                                                                            lblSTATUTCPU.ForeColor = Color.OrangeRed
-                                                                                                           Synoptique.EnregistrerAction("ALARME", "Depart cycle sans reponse du CPU",
+                                                                                                           Synoptique.EnregistrerAction("ALARME", "Départ cycle sans réponse du CPU",
                                                                                                                "BL=" & numBL, "DB1.DBX0.4", "", "ALARME")
                                                                                                        End If
                                                                                                    End Sub)

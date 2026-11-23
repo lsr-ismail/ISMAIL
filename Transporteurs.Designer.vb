@@ -138,7 +138,7 @@ Partial Class Transporteurs
         Label4.Name = "Label4"
         Label4.Size = New Size(89, 20)
         Label4.TabIndex = 99
-        Label4.Text = "Equipement"
+        Label4.Text = "Équipement"
         ' 
         ' Label5
         ' 
@@ -320,7 +320,7 @@ Partial Class Transporteurs
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(140, 60)
         btnAjouter.TabIndex = 77
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' Label7
@@ -346,7 +346,7 @@ Partial Class Transporteurs
         Label13.Name = "Label13"
         Label13.Size = New Size(155, 20)
         Label13.TabIndex = 111
-        Label13.Text = "Derniere Modification"
+        Label13.Text = "Dernière Modification"
         ' 
         ' txtDerniereModification
         ' 

@@ -146,7 +146,7 @@ Partial Class Chantiers
         Label11.Name = "Label11"
         Label11.Size = New Size(78, 20)
         Label11.TabIndex = 70
-        Label11.Text = "Telephone"
+        Label11.Text = "Téléphone"
         ' 
         ' Label12
         ' 
@@ -389,7 +389,7 @@ Partial Class Chantiers
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(140, 61)
         btnAjouter.TabIndex = 41
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' Label13
@@ -427,7 +427,7 @@ Partial Class Chantiers
         Label16.Name = "Label16"
         Label16.Size = New Size(144, 20)
         Label16.TabIndex = 83
-        Label16.Text = "Creation Chantier BL"
+        Label16.Text = "Création Chantier BL"
         ' 
         ' Label17
         ' 

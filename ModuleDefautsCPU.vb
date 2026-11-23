@@ -281,7 +281,7 @@ Module ModuleDefautsCPU
                             cmd.Parameters.AddWithValue("@a", "DB" & DB_DEFAUTS & ".DBB" & dd.Octet)
                         End Sub)
                 Next
-                Synoptique.EnregistrerAction("DEFAUTS", "AlarmesConfig initialisee", _liste.Count & " defauts", "", "", "AUTO")
+                Synoptique.EnregistrerAction("DEFAUTS", "AlarmesConfig initialisée", _liste.Count & " défauts", "", "", "AUTO")
             End If
             ChargerCommentaires()
             ' Défauts restés ACTIVE dans la base au démarrage → RESOLUE (le CPU est relu)
@@ -356,7 +356,7 @@ Module ModuleDefautsCPU
                     If String.Equals(d.Adresse, adresse, StringComparison.OrdinalIgnoreCase) Then d.Texte = texte
                 Next
             End SyncLock
-            Synoptique.EnregistrerAction("DEFAUTS", "Commentaire modifie", adresse & " = " & texte, adresse, "", "CLIC")
+            Synoptique.EnregistrerAction("DEFAUTS", "Commentaire modifié", adresse & " = " & texte, adresse, "", "CLIC")
             Return True
         Catch ex As Exception
             MessageBox.Show("Erreur enregistrement commentaire : " & ex.Message)
@@ -413,7 +413,7 @@ Module ModuleDefautsCPU
                     cmd.Parameters.AddWithValue("@ty", d.Classe)
                     cmd.Parameters.AddWithValue("@op", If(String.IsNullOrEmpty(SessionUtilisateur.NomUtilisateur), "", SessionUtilisateur.NomUtilisateur))
                 End Sub)
-            Synoptique.EnregistrerAction("ALARME", "Defaut CPU : " & d.Texte, d.Classe & " n°" & d.Numero, d.Adresse, "1", "ALARME")
+            Synoptique.EnregistrerAction("ALARME", "Défaut CPU : " & d.Texte, d.Classe & " n°" & d.Numero, d.Adresse, "1", "ALARME")
         Catch ex As Exception
             Debug.WriteLine("Apparition defaut : " & ex.Message)
         End Try
@@ -424,7 +424,7 @@ Module ModuleDefautsCPU
             ModuleDb.Executer(
                 "UPDATE dbo.Alarmes SET Etat='RESOLUE', DateResolution=GETDATE() WHERE CodeAlarme=@c AND Etat='ACTIVE'",
                 Sub(cmd) cmd.Parameters.AddWithValue("@c", d.Adresse))
-            Synoptique.EnregistrerAction("DEFAUTS", "Defaut CPU disparu : " & d.Texte, d.Classe, d.Adresse, "0", "AUTO")
+            Synoptique.EnregistrerAction("DEFAUTS", "Défaut CPU disparu : " & d.Texte, d.Classe, d.Adresse, "0", "AUTO")
         Catch ex As Exception
             Debug.WriteLine("Disparition defaut : " & ex.Message)
         End Try

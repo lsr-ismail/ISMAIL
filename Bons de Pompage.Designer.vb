@@ -140,7 +140,7 @@ Partial Class Bons_de_Pompage
         Label26.Name = "Label26"
         Label26.Size = New Size(49, 20)
         Label26.TabIndex = 434
-        Label26.Text = "Duree"
+        Label26.Text = "Durée"
         ' 
         ' txtDuree
         ' 
@@ -469,7 +469,7 @@ Partial Class Bons_de_Pompage
         Label5.Name = "Label5"
         Label5.Size = New Size(84, 20)
         Label5.TabIndex = 455
-        Label5.Text = "Numero BP"
+        Label5.Text = "Numéro BP"
         ' 
         ' Bons_de_Pompage
         ' 

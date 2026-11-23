@@ -54,7 +54,7 @@ Partial Class Éléments_à_bétonner
         Label13.Name = "Label13"
         Label13.Size = New Size(155, 20)
         Label13.TabIndex = 146
-        Label13.Text = "Derniere Modification"
+        Label13.Text = "Dernière Modification"
         ' 
         ' txtRECHERCHE
         ' 
@@ -97,7 +97,7 @@ Partial Class Éléments_à_bétonner
         Label6.Name = "Label6"
         Label6.Size = New Size(143, 20)
         Label6.TabIndex = 132
-        Label6.Text = "Description Element"
+        Label6.Text = "Description Élément"
         ' 
         ' Label3
         ' 
@@ -106,7 +106,7 @@ Partial Class Éléments_à_bétonner
         Label3.Name = "Label3"
         Label3.Size = New Size(100, 20)
         Label3.TabIndex = 131
-        Label3.Text = "Nom Element"
+        Label3.Text = "Nom Élément"
         ' 
         ' Label2
         ' 
@@ -115,7 +115,7 @@ Partial Class Éléments_à_bétonner
         Label2.Name = "Label2"
         Label2.Size = New Size(102, 20)
         Label2.TabIndex = 130
-        Label2.Text = "Code Element"
+        Label2.Text = "Code Élément"
         ' 
         ' Label1
         ' 
@@ -124,7 +124,7 @@ Partial Class Éléments_à_bétonner
         Label1.Name = "Label1"
         Label1.Size = New Size(84, 20)
         Label1.TabIndex = 129
-        Label1.Text = " Id Element"
+        Label1.Text = " Id Élément"
         ' 
         ' Imprimer
         ' 
@@ -218,7 +218,7 @@ Partial Class Éléments_à_bétonner
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(137, 61)
         btnAjouter.TabIndex = 112
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' txtDerniereModification

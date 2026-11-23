@@ -247,7 +247,7 @@ Partial Class Formules
         btnInsererComposition.Name = "btnInsererComposition"
         btnInsererComposition.Size = New Size(136, 35)
         btnInsererComposition.TabIndex = 145
-        btnInsererComposition.Text = "AJOUTE"
+        btnInsererComposition.Text = "AJOUTER"
         btnInsererComposition.UseVisualStyleBackColor = True
         ' 
         ' Label13
@@ -352,7 +352,7 @@ Partial Class Formules
         Label67.Name = "Label67"
         Label67.Size = New Size(124, 20)
         Label67.TabIndex = 206
-        Label67.Text = "Quantite Formule"
+        Label67.Text = "Quantité Formule"
         ' 
         ' Label66
         ' 
@@ -484,7 +484,7 @@ Partial Class Formules
         Label58.Name = "Label58"
         Label58.Size = New Size(149, 20)
         Label58.TabIndex = 248
-        Label58.Text = "Dosage Mini Ou Reel"
+        Label58.Text = "Dosage Mini Ou Réel"
         ' 
         ' txtRapportEC
         ' 
@@ -523,7 +523,7 @@ Partial Class Formules
         Label71.Name = "Label71"
         Label71.Size = New Size(149, 20)
         Label71.TabIndex = 241
-        Label71.Text = "Dosage Mini Ou Reel"
+        Label71.Text = "Dosage Mini Ou Réel"
         ' 
         ' TextBox2
         ' 
@@ -557,7 +557,7 @@ Partial Class Formules
         Label12.Name = "Label12"
         Label12.Size = New Size(116, 20)
         Label12.TabIndex = 233
-        Label12.Text = "Controle Norme"
+        Label12.Text = "Contrôle Norme"
         ' 
         ' Label17
         ' 
@@ -566,7 +566,7 @@ Partial Class Formules
         Label17.Name = "Label17"
         Label17.Size = New Size(125, 20)
         Label17.TabIndex = 232
-        Label17.Text = "Granularite Dmax"
+        Label17.Text = "Granularité Dmax"
         ' 
         ' cmbConsistance
         ' 
@@ -634,7 +634,7 @@ Partial Class Formules
         Label19.Name = "Label19"
         Label19.Size = New Size(78, 20)
         Label19.TabIndex = 220
-        Label19.Text = "Resistance"
+        Label19.Text = "Résistance"
         ' 
         ' Label20
         ' 
@@ -670,7 +670,7 @@ Partial Class Formules
         Label23.Name = "Label23"
         Label23.Size = New Size(89, 20)
         Label23.TabIndex = 216
-        Label23.Text = "Designation"
+        Label23.Text = "Désignation"
         ' 
         ' Label24
         ' 
@@ -802,7 +802,7 @@ Partial Class Formules
         Label27.Name = "Label27"
         Label27.Size = New Size(78, 20)
         Label27.TabIndex = 224
-        Label27.Text = "Telephone"
+        Label27.Text = "Téléphone"
         ' 
         ' Label28
         ' 
@@ -1144,7 +1144,7 @@ Partial Class Formules
         Label48.Name = "Label48"
         Label48.Size = New Size(186, 20)
         Label48.TabIndex = 215
-        Label48.Text = "Qte Livree Egale Fabriquee"
+        Label48.Text = "Qté Livrée Égale Fabriquée"
         ' 
         ' Label49
         ' 
@@ -1153,7 +1153,7 @@ Partial Class Formules
         Label49.Name = "Label49"
         Label49.Size = New Size(101, 20)
         Label49.TabIndex = 214
-        Label49.Text = "Gachee Seche"
+        Label49.Text = "Gâchée Sèche"
         ' 
         ' TabPage5
         ' 
@@ -1191,7 +1191,7 @@ Partial Class Formules
         TabPage5.Name = "TabPage5"
         TabPage5.Size = New Size(864, 603)
         TabPage5.TabIndex = 4
-        TabPage5.Text = "Gestion Plasticite"
+        TabPage5.Text = "Gestion Plasticité"
         TabPage5.UseVisualStyleBackColor = True
         ' 
         ' Label5
@@ -1448,7 +1448,7 @@ Partial Class Formules
         Label3.Name = "Label3"
         Label3.Size = New Size(99, 20)
         Label3.TabIndex = 191
-        Label3.Text = "Famille Beton"
+        Label3.Text = "Famille Béton"
         ' 
         ' Label2
         ' 

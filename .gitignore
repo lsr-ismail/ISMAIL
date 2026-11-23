@@ -3,3 +3,4 @@ obj/
 .vs/
 *.vbproj.user
 *.suo
+*.log

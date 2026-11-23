@@ -136,7 +136,7 @@ Partial Class Entrées_de_matières_premières
         Label2.Name = "Label2"
         Label2.Size = New Size(44, 20)
         Label2.TabIndex = 398
-        Label2.Text = "Unite"
+        Label2.Text = "Unité"
         ' 
         ' txtUnite
         ' 
@@ -170,7 +170,7 @@ Partial Class Entrées_de_matières_premières
         Label4.Name = "Label4"
         Label4.Size = New Size(66, 20)
         Label4.TabIndex = 402
-        Label4.Text = "Quantite"
+        Label4.Text = "Quantité"
         ' 
         ' txtQuantite
         ' 

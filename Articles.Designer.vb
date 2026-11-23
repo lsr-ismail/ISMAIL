@@ -67,7 +67,7 @@ Partial Class Articles
         Label13.Name = "Label13"
         Label13.Size = New Size(155, 20)
         Label13.TabIndex = 146
-        Label13.Text = "Derniere Modification"
+        Label13.Text = "Dernière Modification"
         ' 
         ' txtDerniereModification
         ' 
@@ -108,7 +108,7 @@ Partial Class Articles
         Label9.Name = "Label9"
         Label9.Size = New Size(44, 20)
         Label9.TabIndex = 138
-        Label9.Text = "Unite"
+        Label9.Text = "Unité"
         ' 
         ' Label10
         ' 
@@ -162,7 +162,7 @@ Partial Class Articles
         Label6.Name = "Label6"
         Label6.Size = New Size(89, 20)
         Label6.TabIndex = 132
-        Label6.Text = "Designation"
+        Label6.Text = "Désignation"
         ' 
         ' Label3
         ' 
@@ -318,7 +318,7 @@ Partial Class Articles
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(178, 61)
         btnAjouter.TabIndex = 112
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' PrintDocument1

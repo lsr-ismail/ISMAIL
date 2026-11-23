@@ -101,7 +101,7 @@ Partial Class Factures
         Label7.Name = "Label7"
         Label7.Size = New Size(81, 20)
         Label7.TabIndex = 309
-        Label7.Text = "Periode Au"
+        Label7.Text = "Période Au"
         ' 
         ' Label9
         ' 
@@ -110,7 +110,7 @@ Partial Class Factures
         Label9.Name = "Label9"
         Label9.Size = New Size(86, 20)
         Label9.TabIndex = 303
-        Label9.Text = "Periode Du "
+        Label9.Text = "Période Du "
         ' 
         ' Label10
         ' 
@@ -357,7 +357,7 @@ Partial Class Factures
         Label8.Name = "Label8"
         Label8.Size = New Size(84, 20)
         Label8.TabIndex = 358
-        Label8.Text = "Total Regle"
+        Label8.Text = "Total Réglé"
         ' 
         ' Label12
         ' 
@@ -402,7 +402,7 @@ Partial Class Factures
         Label21.Name = "Label21"
         Label21.Size = New Size(124, 20)
         Label21.TabIndex = 342
-        Label21.Text = "Mode Reglement"
+        Label21.Text = "Mode Règlement"
         ' 
         ' Label22
         ' 
@@ -451,7 +451,7 @@ Partial Class Factures
         Label25.Name = "Label25"
         Label25.Size = New Size(107, 20)
         Label25.TabIndex = 361
-        Label25.Text = "Date Echeance"
+        Label25.Text = "Date Échéance"
         ' 
         ' Label15
         ' 
@@ -460,7 +460,7 @@ Partial Class Factures
         Label15.Name = "Label15"
         Label15.Size = New Size(114, 20)
         Label15.TabIndex = 363
-        Label15.Text = "Numero Facture"
+        Label15.Text = "Numéro Facture"
         ' 
         ' txtNumeroFacture
         ' 
@@ -606,7 +606,7 @@ Partial Class Factures
         Label19.Name = "Label19"
         Label19.Size = New Size(107, 20)
         Label19.TabIndex = 383
-        Label19.Text = "Montant Regle"
+        Label19.Text = "Montant Réglé"
         ' 
         ' txtMontantRegle
         ' 

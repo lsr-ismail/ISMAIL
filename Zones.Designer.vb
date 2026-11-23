@@ -86,7 +86,7 @@ Partial Class Zones
         Label11.Name = "Label11"
         Label11.Size = New Size(155, 20)
         Label11.TabIndex = 136
-        Label11.Text = "Derniere Modification"
+        Label11.Text = "Dernière Modification"
         ' 
         ' Label12
         ' 
@@ -95,7 +95,7 @@ Partial Class Zones
         Label12.Name = "Label12"
         Label12.Size = New Size(101, 20)
         Label12.TabIndex = 135
-        Label12.Text = "Numero Zone"
+        Label12.Text = "Numéro Zone"
         ' 
         ' Label4
         ' 
@@ -266,7 +266,7 @@ Partial Class Zones
         btnAjouter.Name = "btnAjouter"
         btnAjouter.Size = New Size(145, 61)
         btnAjouter.TabIndex = 112
-        btnAjouter.Text = "AJOUTE"
+        btnAjouter.Text = "AJOUTER"
         btnAjouter.UseVisualStyleBackColor = True
         ' 
         ' PrintDocument1
