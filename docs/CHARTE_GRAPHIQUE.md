@@ -1,76 +1,79 @@
 # Charte graphique BETONIA
 
-Le logo BETONIA est en noir et blanc (silos, malaxeur, bandeau noir). La charte en est tirée : **graphite, gris béton, blanc**, avec une seule teinte d'appui (ambre) réservée à la sélection dans les tableaux. Aucune couleur vive décorative.
+Charte **en gris et nuances de gris** (choix du client) : noir graphite, gris béton, blanc. Aucune couleur vive décorative : ni rouge, ni orange, ni bleu. Les seules couleurs conservées sont celles que le **code** pose pour indiquer un état d'exploitation (voir plus bas).
 
 ## Palette
 
 | Rôle | Clair | Sombre |
 |---|---|---|
-| Fond des fenêtres | `#F2F3F5` | `#16181B` |
-| Surface (menus, onglet actif) | `#FAFAFB` | `#1E2126` |
-| Champs de saisie | `#FFFFFF` | `#262A30` |
+| Fond des fenêtres | `#F2F3F5` | `#15171A` |
+| Surface (menus, onglet actif) | `#FFFFFF` | `#1D2024` |
+| Champs de saisie | `#FFFFFF` | `#24282D` |
 | Texte | `#1F2328` | `#E8EAED` |
 | Texte secondaire | `#4B5563` | `#A6ADB5` |
 | Contour des composants | `#7D858E` | `#7F8892` |
-| **Bouton principal** | fond `#1F2328`, texte blanc | fond `#E8EAED`, texte `#16181B` |
-| Bouton principal (survol / appui) | `#3A414A` / `#0F1114` | `#FFFFFF` / `#C9CED3` |
-| **Bouton secondaire** | fond `#FAFAFB`, contour `#1F2328` | fond `#1E2126`, contour `#A6ADB5` |
-| Bouton secondaire (survol / appui) | `#E3E6EA` / `#D3D8DD` | `#2E343B` / `#3A414A` |
-| Sélection dans les grilles | `#FFD98A` (texte `#1F2328`) | `#7A5C00` (texte blanc) |
-| En-tête de grille / bandeau de titre | `#E3E6EA` / `#1F2328` | `#2E343B` |
-| Bouton désactivé | fond `#D9DCE0`, texte `#5F6670` | fond `#2A2E34`, texte `#8B939C` |
+| **Bouton principal** | fond `#2B3036`, texte blanc | fond `#D5D9DF`, texte `#15171A` |
+| Bouton principal (survol / appui) | `#4A525B` / `#15181C` | `#FFFFFF` / `#B7BDC5` |
+| **Bouton secondaire** | fond blanc, contour `#2B3036` | fond `#1D2024`, contour `#A6ADB5` |
+| Bouton secondaire (survol / appui) | `#E1E4E8` / `#CDD2D8` | `#2D3238` / `#3A4047` |
+| Sélection dans les grilles | `#D5D9DF` (texte `#1F2328`) | `#4A525B` (texte blanc) |
+| En-tête de grille | `#E1E4E8` | `#2D3238` |
+| Bandeau de titre | `#2B3036` (texte blanc) | `#2D3238` |
+| Bouton désactivé | fond `#DDE0E4`, texte `#5F6670` | fond `#2A2E34`, texte `#8B939C` |
 
-Le bouton principal est celui de l'action centrale d'un écran (Valider, Enregistrer, Ajouter, Connecter, Confirmer…). Tous les autres sont secondaires. Au survol, la couleur change (voir tableau) et le curseur devient une main.
+## Boutons
+
+- **Arrondis** (rayon 9 px, contour lissé), **une seule hauteur : 36 px** (52 px pour un texte sur deux lignes). Largeur proportionnée au texte (110 px minimum) ; elle n'est jamais agrandie pour ne rien chevaucher.
+- **Principal** = action centrale de l'écran (Valider, Enregistrer, Ajouter, Connecter, Confirmer…) ; tous les autres sont **secondaires**. Au survol, la couleur change et le curseur devient une main.
+- Les petits boutons (flèches, + / −) gardent leur largeur ; les boutons avec image ne sont pas redessinés.
 
 ## Typographie (Segoe UI)
 
-| Usage | Taille |
-|---|---|
-| Libellés secondaires, petits textes | 9 pt |
-| Texte courant, champs, boutons | 10 pt |
-| Sous-titres | 12 pt |
-| Titres | 14 pt |
-| Grands affichages (poids, compteurs) | taille d'origine (≥ 15 pt) |
+9 pt (petits textes) · 10 pt (courant, champs, boutons) · 12 pt (sous-titres) · 14 pt (titres). Les tailles ne sont **jamais agrandies** (11 à 14,9 pt deviennent 12 pt) pour éviter les débordements. Les polices à chasse fixe et de symboles sont conservées.
 
-Les polices à chasse fixe (Consolas, Courier) et les polices de symboles sont conservées.
+## Mise en page
+
+- Les libellés sont centrés verticalement sur le champ de leur ligne et alignés à gauche par colonne.
+- Un grand composant (tableau, onglets, groupe) cède la place aux champs voisins qui le chevauchent.
+- **Adaptation à l'écran** : les fenêtres principales s'ouvrent agrandies ; les tableaux, onglets et groupes suivent les bords de la fenêtre, les boutons d'angle droit suivent le bord droit. Les petites boîtes de dialogue et l'écran de connexion gardent leur taille.
+- Écrans exclus de ces règles de mise en page (leurs positions suivent le dessin du synoptique) : Synoptique, écran principal, Marche forcée, Assistance PLC, paramétrage équipement.
 
 ## Normes respectées
 
-- **WCAG 2.1 niveau AA** (référentiel repris par le RGAA 4 et la norme EN 301 549) : contraste ≥ 4,5:1 pour le texte, ≥ 3:1 pour les contours de composants. Tableau mesuré ci-dessous.
-- Aucune information portée par la seule couleur : les états AUTO / FORÇAGE, marche / arrêt restent doublés d'un texte.
-- Taille minimale de texte : 9 pt.
+- **WCAG 2.1 niveau AA** (repris par le RGAA 4 et la norme EN 301 549) : contraste ≥ 4,5:1 pour le texte, ≥ 3:1 pour les contours. Mesuré ci-dessous : **tout est conforme**.
+- Aucune information portée par la seule couleur ; taille de texte minimale : 9 pt.
 
 ### Contrastes mesurés
 
 | Paire | Clair | Sombre | Seuil |
 |---|---|---|---|
-| Texte / fond | 14.23 : 1 ✔ | 14.76 : 1 ✔ | 4.5 : 1 |
-| Texte secondaire / fond | 6.81 : 1 ✔ | 7.85 : 1 ✔ | 4.5 : 1 |
-| Texte / champ de saisie | 15.8 : 1 ✔ | 11.96 : 1 ✔ | 4.5 : 1 |
-| Bouton principal (texte / fond) | 15.8 : 1 ✔ | 14.76 : 1 ✔ | 4.5 : 1 |
-| Bouton principal survol | 10.32 : 1 ✔ | 17.79 : 1 ✔ | 4.5 : 1 |
-| Bouton secondaire (texte / fond) | 15.14 : 1 ✔ | 13.39 : 1 ✔ | 4.5 : 1 |
-| Bouton secondaire survol | 12.62 : 1 ✔ | 10.43 : 1 ✔ | 4.5 : 1 |
-| Sélection grille (texte / fond) | 11.69 : 1 ✔ | 6.25 : 1 ✔ | 4.5 : 1 |
-| En-tête de grille | 12.62 : 1 ✔ | 10.43 : 1 ✔ | 4.5 : 1 |
-| Lien / fond | 5.75 : 1 ✔ | 8.44 : 1 ✔ | 4.5 : 1 |
-| Contour des champs / fond (3:1) | 3.37 : 1 ✔ | 4.95 : 1 ✔ | 3 : 1 |
+| Texte / fond | 14.23 : 1 ✔ | 14.9 : 1 ✔ | 4.5 : 1 |
+| Texte secondaire / fond | 6.81 : 1 ✔ | 7.92 : 1 ✔ | 4.5 : 1 |
+| Texte / champ de saisie | 15.8 : 1 ✔ | 12.3 : 1 ✔ | 4.5 : 1 |
+| Bouton principal | 13.3 : 1 ✔ | 12.67 : 1 ✔ | 4.5 : 1 |
+| Bouton principal (survol) | 7.93 : 1 ✔ | 17.96 : 1 ✔ | 4.5 : 1 |
+| Bouton secondaire | 13.3 : 1 ✔ | 13.57 : 1 ✔ | 4.5 : 1 |
+| Bouton secondaire (survol) | 10.43 : 1 ✔ | 10.72 : 1 ✔ | 4.5 : 1 |
+| Sélection dans les grilles | 11.15 : 1 ✔ | 7.93 : 1 ✔ | 4.5 : 1 |
+| En-tête de grille | 12.39 : 1 ✔ | 10.72 : 1 ✔ | 4.5 : 1 |
+| Bandeau de titre | 13.3 : 1 ✔ | 10.72 : 1 ✔ | 4.5 : 1 |
+| Lien | 9.29 : 1 ✔ | 11.33 : 1 ✔ | 4.5 : 1 |
+| Contour des champs (seuil 3:1) | 3.37 : 1 ✔ | 4.99 : 1 ✔ | 3 : 1 |
 
+## Couleurs d'état conservées
 
-## Ce qui est conservé volontairement
-
-Sur les écrans de conduite (Synoptique, Marche forcée, Assistance PLC, paramétrage équipement) et pour les boutons d'état listés dans `Theme/BoutonsSemantiques.vb`, les couleurs vives posées par le code (vert = actif, rouge = arrêt…) **ne sont pas repeintes** : elles portent un sens d'exploitation. Elles reçoivent seulement l'effet de survol.
+Les boutons d'état de la liste `Theme/BoutonsSemantiques.vb` (Synoptique : marche / arrêt, forçages) et tout bouton que le **code** recolore pendant l'exploitation (par exemple AUTO → FORÇAGE actif) gardent la couleur posée par le code : elle signale un état. Les boutons statiques sont, eux, en gris. Dans les tableaux, les fonds colorés posés par le code sont convertis en gris de même clarté et les textes colorés reprennent la couleur du thème.
 
 ## Utilisation
 
-- Mode clair / sombre : menu **Affichage → Mode sombre** (écran principal) ou bouton en bas à gauche de l'écran de connexion. Le choix est mémorisé dans `%APPDATA%\Betonia\theme.ini`.
-- Le thème s'applique automatiquement à toute fenêtre qui s'ouvre (`Theme/ThemeManager.vb`) : **aucun formulaire n'a besoin d'être modifié** pour en bénéficier.
-- Nouveau bouton d'état dont le code change la couleur : ajouter son nom dans `Theme/BoutonsSemantiques.vb`.
-- Aperçu : `Outils/CaptureEcrans` génère des captures PNG des écrans en mode clair et sombre.
+- **Affichage → Mode sombre** (écran principal) ou bouton en bas à gauche de l'écran de connexion ; choix mémorisé dans `%APPDATA%\Betonia\theme.ini`.
+- Le thème s'applique à toute fenêtre qui s'ouvre (`Theme/ThemeManager.vb`) : aucun formulaire n'a à être modifié.
+- Nouveau bouton d'état recoloré par le code : ajouter son nom dans `Theme/BoutonsSemantiques.vb`.
+- `Outils/CaptureEcrans` produit des captures PNG des écrans (clair / sombre) et la liste des chevauchements.
 
 ## Limites connues
 
-- Les images du synoptique et les graphiques dessinés par le code gardent leurs couleurs.
-- Les cases à cocher, barres de défilement et bordures des champs texte restent dessinées par Windows (légèrement plus claires en mode sombre).
-- Les boîtes de dialogue `MessageBox` sont gérées par Windows et ne suivent pas le thème.
-- Les écrans qui colorent leurs lignes par type (ex. configuration des silos : trémies bleues, ciments orange…) gardent ce codage de couleurs, qui est une information métier.
+- Images du synoptique et graphiques dessinés par le code : couleurs d'origine.
+- Cases à cocher, barres de défilement, sélecteur de date et contours des champs texte restent dessinés par Windows (plus clairs en mode sombre).
+- Les boîtes `MessageBox` sont gérées par Windows et ne suivent pas le thème.
+- Quelques chevauchements d'origine subsistent (titres derrière des boutons, étiquettes longues dans Configuration centrale / Automate) : ils sont listés par l'outil de capture.

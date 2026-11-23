@@ -161,7 +161,7 @@ Partial Class Sorties_de_matières_premières
         lblNombre.Name = "lblNombre"
         lblNombre.Size = New Size(81, 20)
         lblNombre.TabIndex = 408
-        lblNombre.Text = "lblNombre"
+        lblNombre.Text = "—"
         ' 
         ' Label6
         ' 

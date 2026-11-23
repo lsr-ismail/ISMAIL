@@ -98,7 +98,7 @@ Partial Class Références_commerciales
         Label13.Name = "Label13"
         Label13.Size = New Size(73, 20)
         Label13.TabIndex = 146
-        Label13.Text = "txtCiment"
+        Label13.Text = "Ciment"
         ' 
         ' txtCiment
         ' 
@@ -114,7 +114,7 @@ Partial Class Références_commerciales
         Label7.Name = "Label7"
         Label7.Size = New Size(155, 20)
         Label7.TabIndex = 144
-        Label7.Text = "txtProprietesSpeciales"
+        Label7.Text = "Propriétés spéciales"
         ' 
         ' txtProprietesSpeciales
         ' 
@@ -155,7 +155,7 @@ Partial Class Références_commerciales
         Label8.Name = "Label8"
         Label8.Size = New Size(91, 20)
         Label8.TabIndex = 139
-        Label8.Text = "txtAdjuvants"
+        Label8.Text = "Adjuvants"
         ' 
         ' Label9
         ' 
@@ -164,7 +164,7 @@ Partial Class Références_commerciales
         Label9.Name = "Label9"
         Label9.Size = New Size(90, 20)
         Label9.TabIndex = 138
-        Label9.Text = "txtAdditions"
+        Label9.Text = "Additions"
         ' 
         ' Label10
         ' 
@@ -173,7 +173,7 @@ Partial Class Références_commerciales
         Label10.Name = "Label10"
         Label10.Size = New Size(132, 20)
         Label10.TabIndex = 137
-        Label10.Text = "txtTeneurChlorures"
+        Label10.Text = "Teneur chlorures"
         ' 
         ' Label11
         ' 
@@ -182,7 +182,7 @@ Partial Class Références_commerciales
         Label11.Name = "Label11"
         Label11.Size = New Size(136, 20)
         Label11.TabIndex = 136
-        Label11.Text = "txtClasseExposition"
+        Label11.Text = "Classe exposition"
         ' 
         ' Label12
         ' 
@@ -191,7 +191,7 @@ Partial Class Références_commerciales
         Label12.Name = "Label12"
         Label12.Size = New Size(161, 20)
         Label12.TabIndex = 135
-        Label12.Text = "txtClasseCompactation"
+        Label12.Text = "Classe compactation"
         ' 
         ' Label4
         ' 
@@ -391,7 +391,7 @@ Partial Class Références_commerciales
         Label14.Name = "Label14"
         Label14.Size = New Size(114, 20)
         Label14.TabIndex = 172
-        Label14.Text = "txtChampLibre4"
+        Label14.Text = "Champ libre 4"
         ' 
         ' txtChampLibre4
         ' 
@@ -407,7 +407,7 @@ Partial Class Références_commerciales
         Label15.Name = "Label15"
         Label15.Size = New Size(114, 20)
         Label15.TabIndex = 170
-        Label15.Text = "txtChampLibre3"
+        Label15.Text = "Champ libre 3"
         ' 
         ' txtChampLibre3
         ' 
@@ -423,7 +423,7 @@ Partial Class Références_commerciales
         Label16.Name = "Label16"
         Label16.Size = New Size(114, 20)
         Label16.TabIndex = 168
-        Label16.Text = "txtChampLibre2"
+        Label16.Text = "Champ libre 2"
         ' 
         ' Label17
         ' 
@@ -432,7 +432,7 @@ Partial Class Références_commerciales
         Label17.Name = "Label17"
         Label17.Size = New Size(114, 20)
         Label17.TabIndex = 167
-        Label17.Text = "txtChampLibre1"
+        Label17.Text = "Champ libre 1"
         ' 
         ' Label18
         ' 
@@ -441,7 +441,7 @@ Partial Class Références_commerciales
         Label18.Name = "Label18"
         Label18.Size = New Size(92, 20)
         Label18.TabIndex = 166
-        Label18.Text = "txtDurabilite"
+        Label18.Text = "Durabilité"
         ' 
         ' Label19
         ' 
@@ -450,7 +450,7 @@ Partial Class Références_commerciales
         Label19.Name = "Label19"
         Label19.Size = New Size(191, 20)
         Label19.TabIndex = 165
-        Label19.Text = "txtMinimumTeneurAirBeton"
+        Label19.Text = "Minimum teneur air béton"
         ' 
         ' Label20
         ' 
@@ -459,7 +459,7 @@ Partial Class Références_commerciales
         Label20.Name = "Label20"
         Label20.Size = New Size(100, 20)
         Label20.TabIndex = 164
-        Label20.Text = "txtClasseVebe"
+        Label20.Text = "Classe vebe"
         ' 
         ' Label21
         ' 
@@ -477,7 +477,7 @@ Partial Class Références_commerciales
         Label22.Name = "Label22"
         Label22.Size = New Size(145, 20)
         Label22.TabIndex = 162
-        Label22.Text = "txtClasseConsistance"
+        Label22.Text = "Classe consistance"
         ' 
         ' Label23
         ' 
@@ -486,7 +486,7 @@ Partial Class Références_commerciales
         Label23.Name = "Label23"
         Label23.Size = New Size(127, 20)
         Label23.TabIndex = 161
-        Label23.Text = "txtClasseDiffusion"
+        Label23.Text = "Classe diffusion"
         ' 
         ' Label24
         ' 
@@ -495,7 +495,7 @@ Partial Class Références_commerciales
         Label24.Name = "Label24"
         Label24.Size = New Size(72, 20)
         Label24.TabIndex = 160
-        Label24.Text = "txtNorme"
+        Label24.Text = "Norme"
         ' 
         ' Label25
         ' 
@@ -504,7 +504,7 @@ Partial Class Références_commerciales
         Label25.Name = "Label25"
         Label25.Size = New Size(138, 20)
         Label25.TabIndex = 159
-        Label25.Text = "txtMasseVolumique"
+        Label25.Text = "Masse volumique"
         ' 
         ' txtChampLibre2
         ' 
@@ -583,7 +583,7 @@ Partial Class Références_commerciales
         Label26.Name = "Label26"
         Label26.Size = New Size(168, 20)
         Label26.TabIndex = 174
-        Label26.Text = "txtDerniereModification"
+        Label26.Text = "Dernière modification"
         ' 
         ' txtDerniereModification
         ' 

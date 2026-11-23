@@ -409,7 +409,7 @@ Partial Class Produits
         Label8.Name = "Label8"
         Label8.Size = New Size(62, 20)
         Label8.TabIndex = 309
-        Label8.Text = "chkActif"
+        Label8.Text = "Actif"
         ' 
         ' Label9
         ' 

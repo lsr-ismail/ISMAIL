@@ -292,7 +292,7 @@ Partial Class Formules
         TabPage1.Padding = New Padding(3)
         TabPage1.Size = New Size(864, 603)
         TabPage1.TabIndex = 0
-        TabPage1.Text = "composition"
+        TabPage1.Text = "Composition"
         TabPage1.UseVisualStyleBackColor = True
         ' 
         ' chkAdjuvantPourcentDosage
@@ -1063,7 +1063,7 @@ Partial Class Formules
         Label38.Name = "Label38"
         Label38.Size = New Size(149, 20)
         Label38.TabIndex = 227
-        Label38.Text = "txtRemarqueCentrale"
+        Label38.Text = "Remarque centrale"
         ' 
         ' Label39
         ' 
@@ -1072,7 +1072,7 @@ Partial Class Formules
         Label39.Name = "Label39"
         Label39.Size = New Size(171, 20)
         Label39.TabIndex = 224
-        Label39.Text = "txtRemarqueLaboratoire"
+        Label39.Text = "Remarque laboratoire"
         ' 
         ' Label40
         ' 
@@ -1081,7 +1081,7 @@ Partial Class Formules
         Label40.Name = "Label40"
         Label40.Size = New Size(202, 20)
         Label40.TabIndex = 223
-        Label40.Text = "cmbDestinationAdjuvantPese"
+        Label40.Text = "Destination adjuvant pesé"
         ' 
         ' Label42
         ' 
@@ -1090,7 +1090,7 @@ Partial Class Formules
         Label42.Name = "Label42"
         Label42.Size = New Size(155, 20)
         Label42.TabIndex = 221
-        Label42.Text = "txtNiveauPerformance"
+        Label42.Text = "Niveau performance"
         ' 
         ' Label43
         ' 
@@ -1099,7 +1099,7 @@ Partial Class Formules
         Label43.Name = "Label43"
         Label43.Size = New Size(217, 20)
         Label43.TabIndex = 220
-        Label43.Text = "txtReductionChargeMaxiTremie"
+        Label43.Text = "Réduction charge maxi trémie"
         ' 
         ' Label44
         ' 
@@ -1108,7 +1108,7 @@ Partial Class Formules
         Label44.Name = "Label44"
         Label44.Size = New Size(136, 20)
         Label44.TabIndex = 219
-        Label44.Text = "chkFormuleInactive"
+        Label44.Text = "Formule inactive"
         ' 
         ' Label45
         ' 
@@ -1201,7 +1201,7 @@ Partial Class Formules
         Label5.Name = "Label5"
         Label5.Size = New Size(158, 20)
         Label5.TabIndex = 274
-        Label5.Text = "txtDefautPlasticiteMax"
+        Label5.Text = "Défaut plasticité max"
         ' 
         ' Label6
         ' 
@@ -1210,7 +1210,7 @@ Partial Class Formules
         Label6.Name = "Label6"
         Label6.Size = New Size(155, 20)
         Label6.TabIndex = 273
-        Label6.Text = "txtDefautPlasticiteMin"
+        Label6.Text = "Défaut plasticité min"
         ' 
         ' txtDefautPlasticiteMax
         ' 
@@ -1233,7 +1233,7 @@ Partial Class Formules
         Label7.Name = "Label7"
         Label7.Size = New Size(169, 20)
         Label7.TabIndex = 270
-        Label7.Text = "txtPourcentageEauPesee"
+        Label7.Text = "Pourcentage eau pesée"
         ' 
         ' Label8
         ' 
@@ -1242,7 +1242,7 @@ Partial Class Formules
         Label8.Name = "Label8"
         Label8.Size = New Size(109, 20)
         Label8.TabIndex = 269
-        Label8.Text = "txtEauPlasticite"
+        Label8.Text = "Eau plasticité"
         ' 
         ' txtPourcentageEauPesee
         ' 
@@ -1265,7 +1265,7 @@ Partial Class Formules
         Label59.Name = "Label59"
         Label59.Size = New Size(149, 20)
         Label59.TabIndex = 266
-        Label59.Text = "txtTempsHygrometre"
+        Label59.Text = "Temps hygromètre"
         ' 
         ' Label60
         ' 
@@ -1274,7 +1274,7 @@ Partial Class Formules
         Label60.Name = "Label60"
         Label60.Size = New Size(130, 20)
         Label60.TabIndex = 265
-        Label60.Text = "txtEauHygrometre"
+        Label60.Text = "Eau hygromètre"
         ' 
         ' txtTempsHygrometre
         ' 
@@ -1297,7 +1297,7 @@ Partial Class Formules
         Label55.Name = "Label55"
         Label55.Size = New Size(144, 20)
         Label55.TabIndex = 261
-        Label55.Text = "txtPhaseHygrometre"
+        Label55.Text = "Phase hygromètre"
         ' 
         ' Label56
         ' 
@@ -1306,7 +1306,7 @@ Partial Class Formules
         Label56.Name = "Label56"
         Label56.Size = New Size(238, 20)
         Label56.TabIndex = 260
-        Label56.Text = "txtNumeroProgrammeHygrometre"
+        Label56.Text = "N° programme hygromètre"
         ' 
         ' Label57
         ' 
@@ -1315,7 +1315,7 @@ Partial Class Formules
         Label57.Name = "Label57"
         Label57.Size = New Size(142, 20)
         Label57.TabIndex = 259
-        Label57.Text = "txtToleranceEauMax"
+        Label57.Text = "Tolérance eau max"
         ' 
         ' txtPhaseHygrometre
         ' 
@@ -1354,7 +1354,7 @@ Partial Class Formules
         Label53.Name = "Label53"
         Label53.Size = New Size(193, 20)
         Label53.TabIndex = 254
-        Label53.Text = "txtTempsMalaxagePlasticite"
+        Label53.Text = "Temps malaxage plasticité"
         ' 
         ' Label54
         ' 
@@ -1363,7 +1363,7 @@ Partial Class Formules
         Label54.Name = "Label54"
         Label54.Size = New Size(191, 20)
         Label54.TabIndex = 253
-        Label54.Text = "txtTempsDecalagePlasticite"
+        Label54.Text = "Temps décalage plasticité"
         ' 
         ' txtToleranceEauMin
         ' 
@@ -1393,7 +1393,7 @@ Partial Class Formules
         Label31.Name = "Label31"
         Label31.Size = New Size(147, 20)
         Label31.TabIndex = 249
-        Label31.Text = "txtPhaseEauPlasticite"
+        Label31.Text = "Phase eau plasticité"
         ' 
         ' Label51
         ' 
@@ -1402,7 +1402,7 @@ Partial Class Formules
         Label51.Name = "Label51"
         Label51.Size = New Size(124, 20)
         Label51.TabIndex = 247
-        Label51.Text = "txtPuissanceVisee"
+        Label51.Text = "Puissance visée"
         ' 
         ' Label50
         ' 
@@ -1411,7 +1411,7 @@ Partial Class Formules
         Label50.Name = "Label50"
         Label50.Size = New Size(106, 20)
         Label50.TabIndex = 248
-        Label50.Text = "txtPasPlasticite"
+        Label50.Text = "Pas plasticité"
         ' 
         ' txtPuissanceVisee
         ' 
@@ -1688,7 +1688,7 @@ Partial Class Formules
         Label15.Name = "Label15"
         Label15.Size = New Size(127, 20)
         Label15.TabIndex = 282
-        Label15.Text = "cmbUniteFormule"
+        Label15.Text = "Unité formule"
         ' 
         ' btnEnregistrerFormule
         ' 

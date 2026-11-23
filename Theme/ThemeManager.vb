@@ -67,6 +67,9 @@ Public NotInheritable Class ThemeManager
         Public FondSurvol As Color
         Public Survole As Boolean
         Public PoseEnCours As Boolean         ' true pendant nos propres affectations de couleur
+        Public Hover As Boolean               ' souris au-dessus (dessin des boutons arrondis)
+        Public Appuye As Boolean              ' bouton de souris enfoncé
+        Public RayonRegion As Integer = -1
     End Class
 
     Public Shared ReadOnly Property Mode As ModeTheme
@@ -129,10 +132,12 @@ Public NotInheritable Class ThemeManager
             End If
             f.SuspendLayout()
             AppliquerArbre(f)
+            NormaliserMiseEnPage(f)
             f.Text = TitreAffiche(f)
             HabillerConnexion(f)
             InstallerBasculeur(f)
-            f.ResumeLayout(False)
+            f.ResumeLayout(True)
+            AdapterEcran(f)
             ThemeBarreTitre(f)
             f.Invalidate(True)
         Catch ex As Exception
@@ -220,6 +225,181 @@ Public NotInheritable Class ThemeManager
         End Try
     End Sub
 
+    ' ═════════════ mise en page : boutons unifiés, alignements, adaptation à l'écran ═════════════
+    Private Const HAUTEUR_BOUTON As Integer = 36          ' hauteur unique des boutons (une ligne de texte)
+    Private Const HAUTEUR_BOUTON_2L As Integer = 52       ' boutons à deux lignes
+    Private Const LARGEUR_BOUTON_MIN As Integer = 110
+    Private Shared ReadOnly _miseEnPage As New ConditionalWeakTable(Of Form, Object)()
+
+    Private Shared Function EstChamp(c As Control) As Boolean
+        Return TypeOf c Is TextBoxBase OrElse TypeOf c Is ComboBox OrElse TypeOf c Is NumericUpDown OrElse
+               TypeOf c Is DateTimePicker OrElse TypeOf c Is MaskedTextBox
+    End Function
+
+    Private Shared Function EstGrandComposant(c As Control) As Boolean
+        If TypeOf c Is DataGridView OrElse TypeOf c Is ListView OrElse TypeOf c Is TreeView OrElse TypeOf c Is ListBox OrElse
+           TypeOf c Is TabControl OrElse TypeOf c Is RichTextBox Then Return True
+        If TypeOf c Is TextBoxBase AndAlso CType(c, TextBoxBase).Multiline Then Return True
+        If TypeOf c Is GroupBox OrElse TypeOf c Is Panel Then Return c.Width >= 250 AndAlso c.Height >= 120
+        Return False
+    End Function
+
+    Private Shared Sub NormaliserMiseEnPage(f As Form)
+        Try
+            Dim marque As Object = Nothing
+            If _miseEnPage.TryGetValue(f, marque) Then Return
+            _miseEnPage.Add(f, New Object())
+            If EstEcranProcess(f) OrElse TypeOf f Is PanelMain Then Return
+            ' 1) taille des boutons, 2) alignement libellés / champs, 3) suppression des chevauchements
+            UnifierBoutons(f)
+            AlignerLibelles(f)
+            ResoudreChevauchements(f)
+            ' 4) ancrages : les grands composants suivront les bords de la fenêtre agrandie (fenêtres principales uniquement)
+            If TypeOf f Is LoginForm OrElse f.Modal OrElse f.MdiParent IsNot Nothing Then Return
+            If f.Width * f.Height < 600 * 400 Then Return
+            AncrerEtirement(f)
+            _aAgrandir.Add(f)
+        Catch ex As Exception
+            Debug.WriteLine("ThemeManager.NormaliserMiseEnPage : " & ex.Message)
+        End Try
+    End Sub
+
+    Private Shared ReadOnly _aAgrandir As New List(Of Form)()
+
+    ''' <summary>Agrandit les fenêtres principales à la taille de l'écran, une fois la mise en page figée à la taille de conception.</summary>
+    Private Shared Sub AdapterEcran(f As Form)
+        Try
+            If Not _aAgrandir.Remove(f) Then Return
+            f.PerformLayout()                            ' fige les distances d'ancrage à la taille d'origine
+            f.FormBorderStyle = FormBorderStyle.Sizable
+            f.MaximizeBox = True
+            f.WindowState = FormWindowState.Maximized    ' les composants ancrés s'étirent
+        Catch ex As Exception
+            Debug.WriteLine("ThemeManager.AdapterEcran : " & ex.Message)
+        End Try
+    End Sub
+
+    ' ── chevauchements : un grand composant (grille, onglets, groupe) cède la place aux champs / libellés voisins ──
+    Private Shared Sub ResoudreChevauchements(racine As Control)
+        Dim enfants As List(Of Control) = racine.Controls.Cast(Of Control)().Where(Function(x) x.Visible AndAlso x.Dock = DockStyle.None AndAlso x.Width > 3 AndAlso x.Height > 3).ToList()
+        For Each g As Control In enfants.Where(AddressOf EstGrandComposant).ToList()
+            For Each a As Control In enfants
+                If a Is g OrElse EstGrandComposant(a) OrElse TypeOf a Is PictureBox Then Continue For
+                If TypeOf a Is Label AndAlso a.Width > 420 Then Continue For                    ' titres larges posés derrière d'autres contrôles
+                Dim r As Rectangle = Rectangle.Intersect(a.Bounds, g.Bounds)
+                If r.IsEmpty OrElse r.Width < 6 OrElse r.Height < 6 Then Continue For
+                If a.Top < g.Top AndAlso a.Bottom > g.Top AndAlso a.Bottom - g.Top <= 60 Then
+                    Dim d As Integer = a.Bottom - g.Top + 6                                       ' g passe sous a
+                    g.Top += d
+                    g.Height = Math.Max(40, g.Height - d)
+                ElseIf a.Left < g.Left AndAlso a.Right > g.Left AndAlso a.Right - g.Left <= 60 Then
+                    Dim d As Integer = a.Right - g.Left + 8                                        ' g se décale à droite de a
+                    g.Left += d
+                    g.Width = Math.Max(80, g.Width - d)
+                End If
+            Next
+        Next
+        ' libellé qui déborde sur le champ à sa droite : on raccourcit son cadre si le texte tient
+        For Each l As Label In enfants.OfType(Of Label)()
+            If l.Text.Length = 0 OrElse l.Height > 60 Then Continue For
+            For Each fld As Control In enfants.Where(AddressOf EstChamp)
+                If fld.Left > l.Left AndAlso fld.Left < l.Right AndAlso Math.Abs((fld.Top + fld.Height \ 2) - (l.Top + l.Height \ 2)) <= 20 Then
+                    Dim nouvelle As Integer = fld.Left - l.Left - 4
+                    Dim texteW As Integer = TextRenderer.MeasureText(l.Text.Trim(), l.Font).Width
+                    If texteW <= nouvelle AndAlso nouvelle >= 20 Then
+                        l.AutoSize = False
+                        l.Width = nouvelle
+                    End If
+                End If
+            Next
+        Next
+        For Each c As Control In racine.Controls
+            If c.HasChildren AndAlso Not (TypeOf c Is DataGridView) Then ResoudreChevauchements(c)
+        Next
+    End Sub
+
+    ' ── boutons : une seule hauteur, largeur proportionnée au texte (jamais agrandie : pas de chevauchement) ──
+    Private Shared Sub UnifierBoutons(racine As Control)
+        For Each c As Control In racine.Controls
+            Dim b As Button = TryCast(c, Button)
+            If b IsNot Nothing Then
+                If b.Dock = DockStyle.None AndAlso b.Image Is Nothing AndAlso b.BackgroundImage Is Nothing AndAlso b.Width >= 60 AndAlso b.Visible Then
+                    Dim lignes As String() = b.Text.Replace(vbCrLf, vbLf).Split(vbLf(0))
+                    Dim deuxLignes As Boolean = lignes.Length > 1
+                    Dim h As Integer = If(deuxLignes, HAUTEUR_BOUTON_2L, HAUTEUR_BOUTON)
+                    Dim tw As Integer = 0
+                    For Each l In lignes
+                        tw = Math.Max(tw, TextRenderer.MeasureText(l, b.Font).Width)
+                    Next
+                    Dim wCible As Integer = Math.Max(LARGEUR_BOUTON_MIN, tw + 36)
+                    b.AutoSize = False
+                    b.Height = h
+                    If b.Width > wCible Then b.Width = wCible
+                End If
+            End If
+            If c.HasChildren Then UnifierBoutons(c)
+        Next
+    End Sub
+
+    ' ── libellés : centrés verticalement sur le champ de leur ligne, colonnes alignées à gauche ──
+    Private Shared Sub AlignerLibelles(racine As Control)
+        Dim libelles As New List(Of Label)
+        For Each c As Control In racine.Controls
+            Dim l As Label = TryCast(c, Label)
+            If l IsNot Nothing AndAlso l.Dock = DockStyle.None AndAlso l.Visible AndAlso l.Text.Length > 0 AndAlso l.Height < 60 Then
+                Dim champ As Control = racine.Controls.Cast(Of Control)().
+                    Where(Function(x) EstChamp(x) AndAlso x.Visible AndAlso x.Left >= l.Right - 6 AndAlso x.Left - l.Right < 220 AndAlso
+                                      Math.Abs((x.Top + x.Height \ 2) - (l.Top + l.Height \ 2)) <= 16).
+                    OrderBy(Function(x) x.Left - l.Right).FirstOrDefault()
+                If champ IsNot Nothing Then
+                    l.Top = champ.Top + (champ.Height - l.Height) \ 2
+                    libelles.Add(l)
+                End If
+            End If
+            If c.HasChildren Then AlignerLibelles(c)
+        Next
+        ' colonnes de libellés : même bord gauche pour ceux qui sont à moins de 14 px les uns des autres
+        Dim tries = libelles.OrderBy(Function(x) x.Left).ToList()
+        Dim i As Integer = 0
+        Do While i < tries.Count
+            Dim groupe As New List(Of Label) From {tries(i)}
+            Dim j As Integer = i + 1
+            Do While j < tries.Count AndAlso tries(j).Left - groupe(0).Left <= 14
+                groupe.Add(tries(j)) : j += 1
+            Loop
+            If groupe.Count > 1 Then
+                Dim gauche As Integer = groupe.Min(Function(x) x.Left)
+                For Each l In groupe
+                    l.Left = gauche
+                Next
+            End If
+            i = j
+        Loop
+    End Sub
+
+    ' ── adaptation à l'écran : les grands composants suivent les bords de la fenêtre, les boutons de droite aussi ──
+    Private Shared Sub AncrerEtirement(conteneur As Control)
+        Dim w As Integer = conteneur.ClientSize.Width, h As Integer = conteneur.ClientSize.Height
+        For Each c As Control In conteneur.Controls
+            If c.Dock <> DockStyle.None Then Continue For
+            Dim procheDroite As Boolean = (w - c.Right) <= 48
+            Dim procheBas As Boolean = (h - c.Bottom) <= 48
+            Dim ancre As AnchorStyles = AnchorStyles.Top Or AnchorStyles.Left
+            If EstGrandComposant(c) Then
+                If procheDroite Then ancre = ancre Or AnchorStyles.Right
+                If procheBas Then ancre = ancre Or AnchorStyles.Bottom
+            Else
+                ' petit composant collé au bord : il suit le bord au lieu de s'étirer
+                If procheDroite AndAlso c.Left > w \ 2 Then ancre = (ancre And Not AnchorStyles.Left) Or AnchorStyles.Right
+                ' (pas d'ancrage en bas pour les petits composants : cela séparerait des groupes de cases à cocher / champs)
+            End If
+            c.Anchor = ancre
+            If c.HasChildren AndAlso (TypeOf c Is GroupBox OrElse TypeOf c Is Panel OrElse TypeOf c Is TabControl OrElse TypeOf c Is TabPage OrElse TypeOf c Is SplitContainer) Then
+                AncrerEtirement(c)
+            End If
+        Next
+    End Sub
+
     ' ═════════════ titres de fenêtres : « BETONIA — Nom lisible » ═════════════
     Private Shared Function TitreAffiche(f As Form) As String
         Try
@@ -284,6 +464,18 @@ Public NotInheritable Class ThemeManager
         Return _p.Fond
     End Function
 
+    ''' <summary>Gris de même clarté perçue, recadré pour rester dans la gamme du thème (ni blanc pur, ni noir pur).</summary>
+    Private Shared Function EnGris(c As Color) As Color
+        Dim l As Double = 0.299 * c.R + 0.587 * c.G + 0.114 * c.B
+        Dim v As Integer
+        If _mode = ModeTheme.Sombre Then
+            v = CInt(40 + l / 255.0 * 40)        ' 40..80 : gris sombres
+        Else
+            v = CInt(214 + l / 255.0 * 30)       ' 214..244 : gris clairs
+        End If
+        Return Color.FromArgb(255, v, v, v)
+    End Function
+
     Private Shared Function Eclaircir(c As Color, delta As Single) As Color
         ' delta > 0 éclaircit, delta < 0 assombrit (mélange vers blanc / noir)
         If delta >= 0 Then
@@ -326,7 +518,8 @@ Public NotInheritable Class ThemeManager
             cible = _p.Texte
             If ThemePalette.Contraste(cible, fond) < 4.5 Then cible = _p.MeilleurTexte(fond)
         Else
-            cible = st.OrigTexte
+            ' charte en gris : texte coloré -> texte du thème, sauf sur les écrans de conduite (voyants et états : couleur d'origine)
+            cible = If(EstEcranProcess(c), st.OrigTexte, _p.Texte)
             If ThemePalette.Contraste(cible, fond) < 3.0 Then cible = _p.MeilleurTexte(fond)
         End If
         Return cible
@@ -345,9 +538,9 @@ Public NotInheritable Class ThemeManager
             cible = 9.0F
         ElseIf t < 11.0F Then
             cible = 10.0F
-        ElseIf t < 12.5F Then
-            cible = 12.0F
-        ElseIf t < 14.5F Then
+        ElseIf t < 15.0F Then
+            cible = 12.0F                 ' 11 à 14,9 pt -> 12 pt (jamais agrandi : évite les débordements)
+        ElseIf t < 17.0F Then
             cible = 14.0F
         Else
             cible = CSng(Math.Round(t))
@@ -450,15 +643,15 @@ Public NotInheritable Class ThemeManager
     End Function
 
     Private Shared Sub ThemeBandeau(c As Control, st As EtatControle)
-        Dim fond As Color = If(_mode = ModeTheme.Sombre, _p.EnteteGrille, _p.Primaire)
+        Dim fond As Color = _p.Bandeau
         PoserFond(c, st, fond)
-        PoserTexte(c, st, _p.MeilleurTexte(fond))
+        PoserTexte(c, st, _p.BandeauTexte)
         For Each enfant As Control In c.Controls
             If TypeOf enfant Is Label Then
                 Dim ee As EtatControle = Capturer(enfant)
                 If enfant.BackColor.A < 255 OrElse EstNeutre(ee.OrigFond) OrElse True Then
                     PoserFond(enfant, ee, fond)
-                    PoserTexte(enfant, ee, _p.MeilleurTexte(fond))
+                    PoserTexte(enfant, ee, _p.BandeauTexte)
                 End If
             End If
         Next
@@ -536,8 +729,6 @@ Public NotInheritable Class ThemeManager
                 st.Role = "Ignore"
             ElseIf BoutonsSemantiques.Noms.Contains(b.Name) Then
                 st.Role = "Semantique"       ' couleur d'état pilotée par le code : jamais repeint
-            ElseIf Not EstNeutre(st.OrigFond) AndAlso EstEcranProcess(b) Then
-                st.Role = "Semantique"       ' écrans de conduite : les couleurs vives y portent un sens (AUTO / FORÇAGE, marche / arrêt)
             ElseIf EstPrimaire(b) Then
                 st.Role = "Primaire"
             Else
@@ -548,7 +739,15 @@ Public NotInheritable Class ThemeManager
             AddHandler b.MouseLeave, AddressOf BoutonSorti
             AddHandler b.EnabledChanged, AddressOf BoutonActivation
             AddHandler b.BackColorChanged, AddressOf BoutonCouleurChangee
-            AddHandler b.Paint, AddressOf BoutonDessinDesactive
+            If st.Role <> "Ignore" Then
+                AddHandler b.Paint, AddressOf BoutonDessin
+                AddHandler b.MouseEnter, Sub(s, e) MarquerSurvol(b, True, False)
+                AddHandler b.MouseLeave, Sub(s, e) MarquerSurvol(b, False, False)
+                AddHandler b.MouseDown, Sub(s, e) MarquerSurvol(b, True, True)
+                AddHandler b.MouseUp, Sub(s, e) MarquerSurvol(b, b.ClientRectangle.Contains(b.PointToClient(Cursor.Position)), False)
+                AddHandler b.SizeChanged, Sub(s, e) ArrondirRegion(b)
+                ArrondirRegion(b)
+            End If
         End If
         Select Case st.Role
             Case "Ignore"
@@ -560,7 +759,7 @@ Public NotInheritable Class ThemeManager
         End Select
         b.UseVisualStyleBackColor = False
         b.FlatStyle = FlatStyle.Flat
-        b.FlatAppearance.BorderSize = 1
+        b.FlatAppearance.BorderSize = 0              ' le contour arrondi est dessiné par BoutonDessin
         AppliquerCouleursBouton(b, st)
     End Sub
 
@@ -598,20 +797,89 @@ Public NotInheritable Class ThemeManager
         End Try
     End Sub
 
-    ' Windows dessine le texte des boutons « plats » désactivés avec une teinte fixe, illisible sur fond sombre : on le redessine
-    Private Shared Sub BoutonDessinDesactive(sender As Object, e As PaintEventArgs)
+    ' ── boutons arrondis : dessin lissé (fond, contour, texte) par-dessus le dessin de base ─────────────
+    Private Const RAYON_BOUTON As Integer = 9
+
+    Private Shared Function ChemiseArrondi(r As Rectangle, rayon As Integer) As Drawing2D.GraphicsPath
+        Dim d As Integer = Math.Max(2, Math.Min(rayon * 2, Math.Min(r.Width, r.Height)))
+        Dim p As New Drawing2D.GraphicsPath()
+        p.AddArc(r.X, r.Y, d, d, 180, 90)
+        p.AddArc(r.Right - d, r.Y, d, d, 270, 90)
+        p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90)
+        p.AddArc(r.X, r.Bottom - d, d, d, 90, 90)
+        p.CloseFigure()
+        Return p
+    End Function
+
+    ' le contrôle est découpé en rectangle arrondi : les coins ne sont plus peints
+    Private Shared Sub ArrondirRegion(b As Button)
+        Try
+            If b.Width < 8 OrElse b.Height < 8 Then Return
+            Using p As Drawing2D.GraphicsPath = ChemiseArrondi(New Rectangle(0, 0, b.Width, b.Height), RAYON_BOUTON)
+                Dim ancien As Region = b.Region
+                b.Region = New Region(p)
+                If ancien IsNot Nothing Then ancien.Dispose()
+            End Using
+        Catch
+        End Try
+    End Sub
+
+    Private Shared Sub MarquerSurvol(b As Button, hover As Boolean, appuye As Boolean)
+        Dim st As EtatControle = Nothing
+        If _etat.TryGetValue(b, st) Then
+            st.Hover = hover : st.Appuye = appuye
+            b.Invalidate()
+        End If
+    End Sub
+
+    Private Shared Sub BoutonDessin(sender As Object, e As PaintEventArgs)
         Try
             Dim b As Button = CType(sender, Button)
             Dim st As EtatControle = Nothing
-            If b.Enabled OrElse Not _etat.TryGetValue(b, st) Then Return
-            If st.Role <> "Primaire" AndAlso st.Role <> "Secondaire" Then Return
-            Dim r As Rectangle = b.ClientRectangle
-            r.Inflate(-1, -1)
-            Using br As New SolidBrush(_p.Desactive)
-                e.Graphics.FillRectangle(br, r)
+            If Not _etat.TryGetValue(b, st) Then Return
+            Dim fond, texte, bord As Color
+            If Not b.Enabled AndAlso (st.Role = "Primaire" OrElse st.Role = "Secondaire") Then
+                fond = _p.Desactive : texte = _p.DesactiveTexte : bord = _p.Desactive
+            ElseIf st.Role = "Primaire" Then
+                fond = If(st.Appuye, _p.PrimaireActif, If(st.Hover, _p.PrimaireSurvol, _p.Primaire))
+                texte = _p.PrimaireTexte : bord = fond
+            ElseIf st.Role = "Secondaire" Then
+                fond = If(st.Appuye, _p.SecondaireActif, If(st.Hover, _p.SecondaireSurvol, _p.SecondaireFond))
+                texte = _p.SecondaireTexte : bord = _p.SecondaireBord
+            Else
+                ' bouton d'état : couleur posée par le code (le survol modifie déjà BackColor)
+                fond = b.BackColor : texte = b.ForeColor
+                bord = Eclaircir(fond, -0.30F)
+                If Not b.Enabled Then texte = Color.FromArgb(150, texte)
+            End If
+            Dim g As Graphics = e.Graphics
+            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+            Dim r As New Rectangle(0, 0, b.Width - 1, b.Height - 1)
+            Using chemin As Drawing2D.GraphicsPath = ChemiseArrondi(r, RAYON_BOUTON)
+                Using br As New SolidBrush(fond)
+                    g.FillPath(br, chemin)
+                End Using
+                Using pen As New Pen(bord, 1.6F)
+                    g.DrawPath(pen, chemin)
+                End Using
+                If b.Focused Then
+                    Dim ri As Rectangle = Rectangle.Inflate(r, -3, -3)
+                    Using cf As Drawing2D.GraphicsPath = ChemiseArrondi(ri, Math.Max(2, RAYON_BOUTON - 3))
+                        Using pf As New Pen(texte, 1.0F) With {.DashStyle = Drawing2D.DashStyle.Dot}
+                            g.DrawPath(pf, cf)
+                        End Using
+                    End Using
+                End If
             End Using
-            TextRenderer.DrawText(e.Graphics, b.Text, b.Font, r, _p.DesactiveTexte,
-                                  TextFormatFlags.HorizontalCenter Or TextFormatFlags.VerticalCenter Or TextFormatFlags.WordBreak Or TextFormatFlags.EndEllipsis)
+            Dim flags As TextFormatFlags = TextFormatFlags.WordBreak Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPadding
+            Select Case b.TextAlign
+                Case ContentAlignment.MiddleLeft, ContentAlignment.TopLeft, ContentAlignment.BottomLeft : flags = flags Or TextFormatFlags.Left
+                Case ContentAlignment.MiddleRight, ContentAlignment.TopRight, ContentAlignment.BottomRight : flags = flags Or TextFormatFlags.Right
+                Case Else : flags = flags Or TextFormatFlags.HorizontalCenter
+            End Select
+            flags = flags Or TextFormatFlags.VerticalCenter
+            Dim zoneTexte As Rectangle = Rectangle.Inflate(r, -8, -2)
+            TextRenderer.DrawText(g, b.Text, b.Font, zoneTexte, texte, flags)
         Catch
         End Try
     End Sub
@@ -685,7 +953,11 @@ Public NotInheritable Class ThemeManager
         Try
             Dim s As DataGridViewCellStyle = e.CellStyle
             If s Is Nothing OrElse s.BackColor.IsEmpty Then Return
-            If ThemePalette.Contraste(s.ForeColor, s.BackColor) < 3.0 Then s.ForeColor = _p.MeilleurTexte(s.BackColor)
+            ' charte en gris : les fonds colorés posés par le code sont convertis en gris de même clarté (le texte du tableau
+            ' continue de porter l'information) ; les textes colorés reprennent la couleur de texte du thème
+            If Not EstNeutre(s.BackColor) Then s.BackColor = EnGris(s.BackColor)
+            If Not EstNeutre(s.ForeColor) Then s.ForeColor = _p.Texte
+            If ThemePalette.Contraste(s.ForeColor, s.BackColor) < 4.5 Then s.ForeColor = _p.MeilleurTexte(s.BackColor)
         Catch
         End Try
     End Sub
@@ -751,7 +1023,7 @@ Public NotInheritable Class ThemeManager
                         End Using
                         g.DrawRectangle(pen, r.X, r.Y, r.Width - 1, r.Height - 1)
                         If sel Then
-                            Using brA As New SolidBrush(p.Primaire)
+                            Using brA As New SolidBrush(p.Accent)
                                 g.FillRectangle(brA, r.X + 1, r.Y, r.Width - 2, 3)
                             End Using
                             Using brS As New SolidBrush(p.Surface)

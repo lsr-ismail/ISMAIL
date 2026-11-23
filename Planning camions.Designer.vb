@@ -78,7 +78,7 @@ Partial Class Planning_camions
         lblNombre.Name = "lblNombre"
         lblNombre.Size = New Size(81, 20)
         lblNombre.TabIndex = 403
-        lblNombre.Text = "lblNombre"
+        lblNombre.Text = "—"
         ' 
         ' btnImprimer
         ' 
@@ -95,7 +95,7 @@ Partial Class Planning_camions
         btnNouveau.Name = "btnNouveau"
         btnNouveau.Size = New Size(146, 61)
         btnNouveau.TabIndex = 401
-        btnNouveau.Text = "btnNouveau"
+        btnNouveau.Text = "Nouveau"
         btnNouveau.UseVisualStyleBackColor = True
         ' 
         ' Label19
@@ -105,7 +105,7 @@ Partial Class Planning_camions
         Label19.Name = "Label19"
         Label19.Size = New Size(96, 20)
         Label19.TabIndex = 400
-        Label19.Text = "txtNumeroBL"
+        Label19.Text = "Numéro BL"
         ' 
         ' txtNumeroBL
         ' 
@@ -121,7 +121,7 @@ Partial Class Planning_camions
         Label11.Name = "Label11"
         Label11.Size = New Size(106, 20)
         Label11.TabIndex = 397
-        Label11.Text = "txtObservation"
+        Label11.Text = "Observation"
         ' 
         ' Label12
         ' 
@@ -130,7 +130,7 @@ Partial Class Planning_camions
         Label12.Name = "Label12"
         Label12.Size = New Size(109, 20)
         Label12.TabIndex = 396
-        Label12.Text = "txtNumeroTour"
+        Label12.Text = "Numéro tour"
         ' 
         ' Label4
         ' 
@@ -139,7 +139,7 @@ Partial Class Planning_camions
         Label4.Name = "Label4"
         Label4.Size = New Size(104, 20)
         Label4.TabIndex = 395
-        Label4.Text = "txtQuantiteM3"
+        Label4.Text = "Quantité (m³)"
         ' 
         ' Label5
         ' 
@@ -148,7 +148,7 @@ Partial Class Planning_camions
         Label5.Name = "Label5"
         Label5.Size = New Size(110, 20)
         Label5.TabIndex = 394
-        Label5.Text = "txtHeureRetour"
+        Label5.Text = "Heure retour"
         ' 
         ' Label6
         ' 
@@ -157,7 +157,7 @@ Partial Class Planning_camions
         Label6.Name = "Label6"
         Label6.Size = New Size(112, 20)
         Label6.TabIndex = 393
-        Label6.Text = "txtHeureDepart"
+        Label6.Text = "Heure départ"
         ' 
         ' Label3
         ' 
@@ -166,7 +166,7 @@ Partial Class Planning_camions
         Label3.Name = "Label3"
         Label3.Size = New Size(90, 20)
         Label3.TabIndex = 392
-        Label3.Text = "txtChauffeur"
+        Label3.Text = "Chauffeur"
         ' 
         ' Label2
         ' 
@@ -175,7 +175,7 @@ Partial Class Planning_camions
         Label2.Name = "Label2"
         Label2.Size = New Size(110, 20)
         Label2.TabIndex = 391
-        Label2.Text = "txtNomCamion"
+        Label2.Text = "Nom camion"
         ' 
         ' Label1
         ' 
@@ -184,7 +184,7 @@ Partial Class Planning_camions
         Label1.Name = "Label1"
         Label1.Size = New Size(112, 20)
         Label1.TabIndex = 390
-        Label1.Text = "txtCodeCamion"
+        Label1.Text = "Code camion"
         ' 
         ' txtObservation
         ' 
@@ -349,7 +349,7 @@ Partial Class Planning_camions
         Label7.Name = "Label7"
         Label7.Size = New Size(77, 20)
         Label7.TabIndex = 405
-        Label7.Text = "cmbStatut"
+        Label7.Text = "Statut"
         ' 
         ' btnEnCours
         ' 
@@ -357,7 +357,7 @@ Partial Class Planning_camions
         btnEnCours.Name = "btnEnCours"
         btnEnCours.Size = New Size(146, 61)
         btnEnCours.TabIndex = 406
-        btnEnCours.Text = "btnEnCours"
+        btnEnCours.Text = "En cours"
         btnEnCours.UseVisualStyleBackColor = True
         ' 
         ' btnTerminer
@@ -366,7 +366,7 @@ Partial Class Planning_camions
         btnTerminer.Name = "btnTerminer"
         btnTerminer.Size = New Size(146, 61)
         btnTerminer.TabIndex = 407
-        btnTerminer.Text = "btnTerminer"
+        btnTerminer.Text = "Terminer"
         btnTerminer.UseVisualStyleBackColor = True
         ' 
         ' Planning_camions

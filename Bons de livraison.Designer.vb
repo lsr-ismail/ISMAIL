@@ -169,7 +169,7 @@ Partial Class Bons_de_livraison
         lblTotalM3.Name = "lblTotalM3"
         lblTotalM3.Size = New Size(80, 20)
         lblTotalM3.TabIndex = 358
-        lblTotalM3.Text = "lblTotalM3"
+        lblTotalM3.Text = "—"
         ' 
         ' Label11
         ' 
@@ -324,7 +324,7 @@ Partial Class Bons_de_livraison
         lblNombre.Name = "lblNombre"
         lblNombre.Size = New Size(81, 20)
         lblNombre.TabIndex = 370
-        lblNombre.Text = "lblNombre"
+        lblNombre.Text = "—"
         ' 
         ' Label7
         ' 

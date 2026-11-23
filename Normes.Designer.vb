@@ -186,7 +186,7 @@ Partial Class Normes
         Label1.Name = "Label1"
         Label1.Size = New Size(136, 20)
         Label1.TabIndex = 228
-        Label1.Text = "txtClasseExposition"
+        Label1.Text = "Classe exposition"
         ' 
         ' Label2
         ' 
@@ -195,7 +195,7 @@ Partial Class Normes
         Label2.Name = "Label2"
         Label2.Size = New Size(138, 20)
         Label2.TabIndex = 229
-        Label2.Text = "txtRapportECLimite"
+        Label2.Text = "Rapport E/C limite"
         ' 
         ' Label3
         ' 
@@ -204,7 +204,7 @@ Partial Class Normes
         Label3.Name = "Label3"
         Label3.Size = New Size(136, 20)
         Label3.TabIndex = 230
-        Label3.Text = "txtClasseResistance"
+        Label3.Text = "Classe résistance"
         ' 
         ' Label6
         ' 
@@ -213,7 +213,7 @@ Partial Class Normes
         Label6.Name = "Label6"
         Label6.Size = New Size(131, 20)
         Label6.TabIndex = 231
-        Label6.Text = "txtTeneurMiniLiant"
+        Label6.Text = "Teneur mini liant"
         ' 
         ' Label5
         ' 
@@ -222,7 +222,7 @@ Partial Class Normes
         Label5.Name = "Label5"
         Label5.Size = New Size(68, 20)
         Label5.TabIndex = 232
-        Label5.Text = "txtCoefD"
+        Label5.Text = "Coef D"
         ' 
         ' Label4
         ' 
@@ -231,7 +231,7 @@ Partial Class Normes
         Label4.Name = "Label4"
         Label4.Size = New Size(64, 20)
         Label4.TabIndex = 233
-        Label4.Text = "txtCoefL"
+        Label4.Text = "Coef L"
         ' 
         ' Label12
         ' 
@@ -240,7 +240,7 @@ Partial Class Normes
         Label12.Name = "Label12"
         Label12.Size = New Size(65, 20)
         Label12.TabIndex = 234
-        Label12.Text = "txtCoefS"
+        Label12.Text = "Coef S"
         ' 
         ' Label11
         ' 
@@ -249,7 +249,7 @@ Partial Class Normes
         Label11.Name = "Label11"
         Label11.Size = New Size(67, 20)
         Label11.TabIndex = 235
-        Label11.Text = "txtCoefU"
+        Label11.Text = "Coef U"
         ' 
         ' Label10
         ' 
@@ -258,7 +258,7 @@ Partial Class Normes
         Label10.Name = "Label10"
         Label10.Size = New Size(66, 20)
         Label10.TabIndex = 236
-        Label10.Text = "txtCoefV"
+        Label10.Text = "Coef V"
         Label10.TextAlign = ContentAlignment.TopCenter
         ' 
         ' btnNouveauNorme

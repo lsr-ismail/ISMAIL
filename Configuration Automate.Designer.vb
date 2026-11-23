@@ -8868,7 +8868,7 @@ Partial Class Configuration_Automate
         btnCorrAutoS1.Name = "btnCorrAutoS1"
         btnCorrAutoS1.Size = New Size(94, 29)
         btnCorrAutoS1.TabIndex = 373
-        btnCorrAutoS1.Text = "btnCorrAutoS1"
+        btnCorrAutoS1.Text = "NON"
         btnCorrAutoS1.UseVisualStyleBackColor = True
         ' 
         ' txtSondeD4S1
@@ -9162,7 +9162,7 @@ Partial Class Configuration_Automate
         btnCorrAutoS2.Name = "btnCorrAutoS2"
         btnCorrAutoS2.Size = New Size(94, 29)
         btnCorrAutoS2.TabIndex = 439
-        btnCorrAutoS2.Text = "btnCorrAutoS1"
+        btnCorrAutoS2.Text = "NON"
         btnCorrAutoS2.UseVisualStyleBackColor = True
         ' 
         ' txtSondeD4S2
@@ -9456,7 +9456,7 @@ Partial Class Configuration_Automate
         btnCorrAutoS3.Name = "btnCorrAutoS3"
         btnCorrAutoS3.Size = New Size(94, 29)
         btnCorrAutoS3.TabIndex = 439
-        btnCorrAutoS3.Text = "btnCorrAutoS1"
+        btnCorrAutoS3.Text = "NON"
         btnCorrAutoS3.UseVisualStyleBackColor = True
         ' 
         ' txtSondeD4S3
@@ -9750,7 +9750,7 @@ Partial Class Configuration_Automate
         btnCorrAutoS4.Name = "btnCorrAutoS4"
         btnCorrAutoS4.Size = New Size(94, 29)
         btnCorrAutoS4.TabIndex = 439
-        btnCorrAutoS4.Text = "btnCorrAutoS1"
+        btnCorrAutoS4.Text = "NON"
         btnCorrAutoS4.UseVisualStyleBackColor = True
         ' 
         ' txtSondeD4S4
@@ -10044,7 +10044,7 @@ Partial Class Configuration_Automate
         btnCorrAutoS5.Name = "btnCorrAutoS5"
         btnCorrAutoS5.Size = New Size(94, 29)
         btnCorrAutoS5.TabIndex = 499
-        btnCorrAutoS5.Text = "btnCorrAutoS1"
+        btnCorrAutoS5.Text = "NON"
         btnCorrAutoS5.UseVisualStyleBackColor = True
         ' 
         ' txtSondeD4S5
@@ -10338,7 +10338,7 @@ Partial Class Configuration_Automate
         btnCorrAutoS6.Name = "btnCorrAutoS6"
         btnCorrAutoS6.Size = New Size(94, 29)
         btnCorrAutoS6.TabIndex = 499
-        btnCorrAutoS6.Text = "btnCorrAutoS1"
+        btnCorrAutoS6.Text = "NON"
         btnCorrAutoS6.UseVisualStyleBackColor = True
         ' 
         ' txtSondeD4S6
@@ -10632,7 +10632,7 @@ Partial Class Configuration_Automate
         btnCorrAutoS7.Name = "btnCorrAutoS7"
         btnCorrAutoS7.Size = New Size(94, 29)
         btnCorrAutoS7.TabIndex = 499
-        btnCorrAutoS7.Text = "btnCorrAutoS1"
+        btnCorrAutoS7.Text = "NON"
         btnCorrAutoS7.UseVisualStyleBackColor = True
         ' 
         ' txtSondeD4S7
@@ -10926,7 +10926,7 @@ Partial Class Configuration_Automate
         btnCorrAutoTH.Name = "btnCorrAutoTH"
         btnCorrAutoTH.Size = New Size(94, 29)
         btnCorrAutoTH.TabIndex = 499
-        btnCorrAutoTH.Text = "btnCorrAutoS1"
+        btnCorrAutoTH.Text = "NON"
         btnCorrAutoTH.UseVisualStyleBackColor = True
         ' 
         ' txtSondeD4TH
@@ -11220,7 +11220,7 @@ Partial Class Configuration_Automate
         btnCorrAutoDEN.Name = "btnCorrAutoDEN"
         btnCorrAutoDEN.Size = New Size(94, 29)
         btnCorrAutoDEN.TabIndex = 499
-        btnCorrAutoDEN.Text = "btnCorrAutoS1"
+        btnCorrAutoDEN.Text = "NON"
         btnCorrAutoDEN.UseVisualStyleBackColor = True
         ' 
         ' txtSondeD4DEN

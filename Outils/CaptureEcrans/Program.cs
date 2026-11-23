@@ -44,6 +44,11 @@ internal static class Program
                 Application.DoEvents();
                 if (mode != "Aucun") mAppliquer.Invoke(null, new object[] { f });
                 for (int i = 0; i < 6; i++) { Application.DoEvents(); Thread.Sleep(60); }
+                // contrôle de mise en page : contrôles frères qui se chevauchent
+                var chevauchements = new List<string>();
+                Chercher(f, chevauchements);
+                File.WriteAllLines(Path.Combine(sortie, $"{nom}_{mode}.chevauchements.txt"), chevauchements);
+                Console.WriteLine($"     chevauchements : {chevauchements.Count}");
                 using var bmp = new Bitmap(f.Width, f.Height);
                 f.DrawToBitmap(bmp, new Rectangle(0, 0, f.Width, f.Height));
                 string fichier = Path.Combine(sortie, $"{nom}_{mode}.png");
@@ -57,5 +62,25 @@ internal static class Program
             }
         }
         return 0;
+    }
+
+    private static string Nom(Control c) => $"{c.GetType().Name} '{c.Name}'" + (string.IsNullOrWhiteSpace(c.Text) || c.Text.Length > 30 ? "" : $" \"{c.Text.Replace("\r\n", " ").Replace("\n", " ")}\"");
+
+    private static void Chercher(Control parent, List<string> sortie)
+    {
+        var enfants = parent.Controls.Cast<Control>().Where(c => c.Visible && c.Dock == DockStyle.None && c.Width > 3 && c.Height > 3).ToList();
+        for (int i = 0; i < enfants.Count; i++)
+            for (int j = i + 1; j < enfants.Count; j++)
+            {
+                var a = enfants[i]; var b = enfants[j];
+                // un fond (panneau, image) sous un contrôle n'est pas un défaut
+                if (a is PictureBox || b is PictureBox) continue;
+                var r = Rectangle.Intersect(a.Bounds, b.Bounds);
+                if (r.IsEmpty || r.Width * r.Height < 40) continue;
+                // une étiquette dont le cadre déborde de quelques pixels n'est pas gênante : on ignore moins de 6 px de recouvrement
+                if (r.Width < 6 || r.Height < 6) continue;
+                sortie.Add($"{Nom(a)} {a.Bounds}  ×  {Nom(b)} {b.Bounds}  => {r.Width}x{r.Height}");
+            }
+        foreach (var c in parent.Controls.Cast<Control>().Where(c => c.HasChildren)) Chercher(c, sortie);
     }
 }

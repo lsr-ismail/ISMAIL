@@ -180,7 +180,7 @@ Partial Class Stocks
         lblNombre.Name = "lblNombre"
         lblNombre.Size = New Size(81, 20)
         lblNombre.TabIndex = 238
-        lblNombre.Text = "lblNombre"
+        lblNombre.Text = "—"
         ' 
         ' Label11
         ' 
